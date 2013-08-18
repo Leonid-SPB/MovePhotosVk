@@ -17,7 +17,7 @@ var Settings = {
 (function( $, hs ) {
 	var defaults = {
 		AddThumbDelay: 50,
-		AjaxLoaderGifSrc: "loader.gif",
+		AjaxLoaderGifSrc: "graphics/loader.gif",
 		ThumbsInRow: 5
 	};
 	
@@ -53,7 +53,7 @@ var Settings = {
 			thumb_parent.append(loader_gif);
 			thumb_li.append(thumb_parent, $("<a class=\"bg\">&nbsp;</a>"));
 			
-			var zoom_icon = $("<div class=\"ThumbsViewer_zoom-ico\"><img src=\"Zoom-In-icon.png\"></div>");
+			var zoom_icon = $("<div class=\"ThumbsViewer_zoom-ico\"><img src=\"graphics/Zoom-In-icon.png\"></div>");
 			zoom_icon.data('ThumbsViewer', {img_src: img.src_big});
 			thumb_parent.append(zoom_icon);
 			
