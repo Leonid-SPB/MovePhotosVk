@@ -100,7 +100,8 @@ var Settings = {
 			data.abort = true;
 			
 			if(!thumbsAr.length){
-				return;
+                d.reject();
+				return d.promise();
 			}
 			
 			data.revSortOrder = revSort;
@@ -161,17 +162,17 @@ var Settings = {
 				return;
 			}
 			
-			var thumsSelected = 0;
+			var thumbsSelected = 0;
 			var thumbsTotal = 0;
 			
 			$this.find(".ThumbsViewer-thumb_block").each(function(){
 				++thumbsTotal;
 				if( $(this).hasClass("selected") ){
-					++thumsSelected;
+					++thumbsSelected;
 				}
 			});
 			
-			if(thumsSelected == thumbsTotal){
+			if(thumbsSelected == thumbsTotal){
 				$this.find(".ThumbsViewer-thumb_block").removeClass("selected");
 				data.thumbsSelected = 0;
 			}else{
@@ -203,16 +204,16 @@ var Settings = {
 			var selLastIndex = Math.min(selFirstIndex + rowsOnScreen*defaults.ThumbsInRow, $thumbs.length);
 			$thumbs = $thumbs.slice(selFirstIndex, selLastIndex);
 			
-			var thumsSelected = 0;
+			var thumbsSelected = 0;
 			var thumbsTotal = 0;
 			$thumbs.each(function(){
 				++thumbsTotal;
 				if( $(this).hasClass("selected") ){
-					++thumsSelected;
+					++thumbsSelected;
 				}
 			});
 			
-			if(thumsSelected == thumbsTotal){
+			if(thumbsSelected == thumbsTotal){
 				$thumbs.removeClass("selected");
 			}else{
 				$thumbs.addClass("selected");
@@ -477,7 +478,7 @@ function validateApp(vkSid, appLocation, delay){
 $.fn.addme = function(name) {
 	this.each(function() {
 		var $this = $(this);
-		var htmlstr = "<div style=\"text-align: center;\"><a href=\"http://vk.com/l.azarenkov\" target=\"addme\"><div class=\"clear_fix\" style=\"display: inline-block; height: 30px;\"><img width=\"30px\" height=\"30px\" class=\"adbox-logo\" src=\"http://cs319724.userapi.com/v319724876/53cf/H1pNnL_LDrw.jpg\"></img>";
+		var htmlstr = "<div style=\"text-align: center;\"><a href=\"http://vk.com/l.azarenkov\" target=\"addme\"><div class=\"clear_fix\" style=\"display: inline-block; height: 30px;\"><img width=\"30px\" height=\"30px\" class=\"adbox-logo\" src=\"http://cs319724.userapi.com/v319724876/53cf/H1pNnL_LDrw.jpg\" />";
 		var text = name + ", добавь меня в друзья! =)";
 		htmlstr += "<div class=\"adbox-text\" style=\"margin-top:8px; font-size: 14px;\">" + text + "</div></div></a></div>";
 				
@@ -856,7 +857,7 @@ $.extend(AmApiExport, {
 
 //init
 var d = $.Deferred();
-$(document).ready( function(){
+$(function(){
 	Settings.vkUserId = getParameterByName("viewer_id");
 	Settings.vkSid    = getParameterByName("sid");
 	

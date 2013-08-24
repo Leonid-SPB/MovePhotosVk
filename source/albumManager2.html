@@ -26,38 +26,38 @@
 		<br />
 		
 		<div id="welcome_dialog" title="Добро Пожаловать!" style="display: none;">
-			<p class="weclome_p">Спасибо, что установили приложение &quot;<span style="font-weight: bold">Перенос фото 2.0</span>&quot;!</p>
-			<p class="weclome_p">Ознакомиться с возможностями приложения можно в разделе <span class="italic_bold">Помощь</span> (ссылка сверху).</p>
-			<p class="weclome_p">Приятной работы!</p>
+			<p class="welcome_p">Спасибо, что установили приложение &quot;<span style="font-weight: bold">Перенос фото 2.0</span>&quot;!</p>
+			<p class="welcome_p">Ознакомиться с возможностями приложения можно в разделе <span class="italic_bold">Помощь</span> (ссылка сверху).</p>
+			<p class="welcome_p">Приятной работы!</p>
 		</div>
 		
 		<div id="rateus_dialog" title="Перемещение завершено!" style="display: none;">
-			<p class="weclome_p">Оцените приложение, если оно Вам понравилось, и рекомендуйте друзьям!</p>
+			<p class="welcome_p">Оцените приложение, если оно Вам понравилось, и рекомендуйте друзьям!</p>
 		</div>
 		
 		<form name="Form1" action="">
 
 		<div style="width: 100%" class="clear_fix">
 			<div style="width: 50%; text-align: center; float: left">
-				<label for="SrcAlbumList"><strong>Откуда:</strong></label>
+				<label for="Form1_SrcAlbumList"><strong>Откуда:</strong></label>
 				<select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" name="SrcAlbumList" size="1" id="Form1_SrcAlbumList"  onchange="AmApi.srcAlbumChanged()">
 					<option value="not selected">Альбом не выбран</option>
 					<option value="-15" class="italic_bold">Сохраненные фотографии</option>
 					<option value="-7" class="italic_bold">Фото на моей стене</option>
 				</select>
 				<br /><br />
-				<label for="SrcPhotosNum"><strong>Изображений в альбоме:</strong></label>
+				<label for="Form1_SrcPhotosNum"><strong>Изображений в альбоме:</strong></label>
 				<input class="ui-widget ui-widget-content ui-corner-all" style="padding-right: 0.5em; text-align: right;" name="SrcPhotosNum" type="text" id="Form1_SrcPhotosNum" size="4" readonly="readonly" />
 			</div>
 
 			<div style="width: 50%; text-align: center; float: left">
-				<label for="DstAlbumList"><strong>Куда:</strong></label>
+				<label for="Form1_DstAlbumList"><strong>Куда:</strong></label>
 				<select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" name="DstAlbumList" size="1" id="Form1_DstAlbumList"  onchange="AmApi.dstAlbumChanged()">
 					<option value="not selected">Альбом не выбран</option>
 					<option value="save" class="italic_bold">Сохранить локально</option>
 				</select>
 				<br /><br />
-				<label for="DstPhotosNum"><strong>Изображений в альбоме:</strong></label>
+				<label for="Form1_DstPhotosNum"><strong>Изображений в альбоме:</strong></label>
 				<input class="ui-widget ui-widget-content ui-corner-all" style="padding-right: 0.5em; text-align: right;" name="DstPhotosNum" type="text" id="Form1_DstPhotosNum" size="4" readonly="readonly" />
 				<br /><br />
 			</div>
@@ -72,7 +72,7 @@
 		<br />
 		<div style="width: 100%" class="clear_fix">
 			<div style="float: left;"><strong>Выбрано фотографий: <span id="selectedPhotosNum">0</span>.</strong> <a onclick="AmApi.selToggleAll();">Снять/выделить все</a>; <a onclick="AmApi.selToggleVisible();">Снять/выделить показанные</a></div>
-			<div style="overflow: hidden; text-align: right;"><label for="RevThumbSort"><strong>Обратная сортировка</strong></label><input type="checkbox" name="RevThumbSort" id="Form1_RevThumbSort" class="no_glow_on_focus" onclick="AmApi.revThumbSortChkClick();"></div>
+			<div style="overflow: hidden; text-align: right;"><label for="Form1_RevThumbSort"><strong>Обратная сортировка</strong></label><input type="checkbox" name="RevThumbSort" id="Form1_RevThumbSort" class="no_glow_on_focus" onclick="AmApi.revThumbSortChkClick();"></div>
 		</div>
 		
 		</form>
