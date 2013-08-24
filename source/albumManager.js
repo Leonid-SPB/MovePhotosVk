@@ -53,7 +53,7 @@ var Settings = {
 			thumb_parent.append(loader_gif);
 			thumb_li.append(thumb_parent, $("<a class=\"bg\">&nbsp;</a>"));
 			
-			var zoom_icon = $("<div class=\"ThumbsViewer_zoom-ico\"><img src=\"graphics/Zoom-In-icon.png\"></div>");
+			var zoom_icon = $("<div class=\"ThumbsViewer_zoom-ico\"><img src=\"graphics/Zoom-In-icon.png\" /></div>");
 			zoom_icon.data('ThumbsViewer', {img_src: img.src_big});
 			thumb_parent.append(zoom_icon);
 			
@@ -378,6 +378,21 @@ function queryAlbumsList(){
 		}
 	});
 	return d.promise();
+}
+
+function queryGroupsList(){
+    var d = $.Deferred();
+    //get list of albums
+    VK.api("photos.getAlbums",{},function(data) {
+        if(data.response){
+            d.resolve(data.response);
+        }else{
+            displayError("Не удалось получить список альбомов! Попробуйте перезагрузить приложение.", "globalErrorBox");
+            console.log(data.error.error_msg);
+            d.reject();
+        }
+    });
+    return d.promise();
 }
 
 function queryPhotosList(userId, albumId){
