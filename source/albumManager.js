@@ -10,7 +10,8 @@ var Settings = {
     blinkDelay      : 500,
     blinkCount      : 12,
     vkAppLocation   : "http://vk.com/app3231070",
-    redirectDelay   : 3000
+    redirectDelay   : 3000,
+    maxOptionLength : 40
 };
 
 //Album manager global object
@@ -333,11 +334,10 @@ $.fn.spin = function(opts) {
         var $this = $(this),
             data = $this.data();
 
-        if (data.spinner) {
+        if ( (opts === false) && (data.spinner) ) {
             data.spinner.stop();
             delete data.spinner;
-        }
-        if (opts !== false) {
+        } else if ((!data.spinner) && (opts !== false)) {
             data.spinner = new Spinner($.extend({color: $this.css('color')}, opts)).spin(this);
         }
     });
@@ -438,25 +438,6 @@ function blinkDiv(divId, blinks, delay){
     toggleBlink($("#"+divId), blinks, delay);
 }
 
-function fillAlbumsListBox(albums, listBoxId){
-    var albumsListSelect = document.getElementById(listBoxId);
-    for(var i = 0; i < albums.length; i++){
-        var title = $("<div>").html(albums[i].title).text();//to convert escape sequences (&amp;, &quot;...) to chars
-        var opt = new Option(title, albums[i].id, false, false);
-        albumsListSelect.add(opt, null);
-    }
-}
-
-function validateApp(vkSid, appLocation, delay){
-    if( vkSid ){//looks like a valid run
-        return;
-    }
-
-    setTimeout(function (){
-        document.location.href = appLocation;
-    }, delay);
-}
-
 var RateLimit = (function() {
     //by Matteo Agosti
     var RateLimit = function(maxOps, interval, allowBursts) {
@@ -529,7 +510,7 @@ var VkApiWrapper = {
 
         this.rateLimiter.schedule(function(){
             VK.api(vkApiMethod, methodParams, function(data) {
-                if(data.hasOwnProperty("response")){
+                if("response" in data){
                     d.resolve(data.response);
                 }else{
                     console.log(data.error.error_msg);
@@ -561,7 +542,7 @@ var VkApiWrapper = {
 
     queryGroupsList: function(userId){
         var self = this;
-        var p = this.callVkApi("groups.get", {user_id: userId});
+        var p = this.callVkApi("groups.get", {user_id: userId, extended: 1, filter: "moder"});
         p.fail(function(){
             self.displayError("Не удалось получить список групп пользователя! Попробуйте перезагрузить приложение.");
         });
@@ -587,6 +568,7 @@ var VkApiWrapper = {
 };
 
 
+
 /* Album manager */
 var AmApi__ = {
     progressStep: 0,
@@ -596,18 +578,26 @@ var AmApi__ = {
     srcAlbumList: null,
     dstAlbumList: null,
     revThumbSortChk: null,
+    srcAlbumOwnerList: null,
+    dstAlbumOwnerList: null,
+    albumCache: {},
 
     init: function(){
-        this.srcPhotosNumEdit = document.getElementById("Form1_SrcPhotosNum");
-        this.srcAlbumList     = document.getElementById("Form1_SrcAlbumList");
-        this.dstPhotosNumEdit = document.getElementById("Form1_DstPhotosNum");
-        this.dstAlbumList     = document.getElementById("Form1_DstAlbumList");
-        this.revThumbSortChk  = document.getElementById("Form1_RevThumbSort");
+        this.srcPhotosNumEdit  = document.getElementById("Form1_SrcPhotosNum");
+        this.srcAlbumList      = document.getElementById("Form1_SrcAlbumList");
+        this.dstPhotosNumEdit  = document.getElementById("Form1_DstPhotosNum");
+        this.dstAlbumList      = document.getElementById("Form1_DstAlbumList");
+        this.revThumbSortChk   = document.getElementById("Form1_RevThumbSort");
+        this.dstAlbumOwnerList = document.getElementById("Form1_DstAlbumOwner");
+        this.srcAlbumOwnerList = document.getElementById("Form1_SrcAlbumOwner");
     },
 
     srcAlbumChanged: function() {
         var self = this;
         var selIndex = self.srcAlbumList.selectedIndex;
+
+        var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
+        var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
 
         $("#thumbs_container").ThumbsViewer("empty");
 
@@ -615,9 +605,9 @@ var AmApi__ = {
             self.srcPhotosNumEdit.value = "";
             return;
         }
-        showSpinner();
 
-        VkApiWrapper.queryPhotosList(Settings.vkUserId, self.srcAlbumList.item(selIndex).value).done(
+        showSpinner();
+        VkApiWrapper.queryPhotosList(ownerId, self.srcAlbumList.item(selIndex).value).done(
             function(photosList){
                 self.srcPhotosNumEdit.value = photosList.items.length;
 
@@ -636,6 +626,9 @@ var AmApi__ = {
         var self = this;
         var selIndex = self.dstAlbumList.selectedIndex;
 
+        var ownSelIndex = self.dstAlbumOwnerList.selectedIndex;
+        var ownerId = self.dstAlbumOwnerList.item(ownSelIndex).value;
+
         if(selIndex == 1){//save album
             $("#movePhotosBtn").button("option","label", "Сохранить");
             self.dstPhotosNumEdit.value = "";
@@ -649,12 +642,50 @@ var AmApi__ = {
 
         showSpinner();
 
-        VkApiWrapper.queryPhotosList(Settings.vkUserId, self.dstAlbumList.item(selIndex).value).done(
+        VkApiWrapper.queryPhotosList(ownerId, self.dstAlbumList.item(selIndex).value).done(
             function(photosList){
                 self.dstPhotosNumEdit.value = photosList.items.length;
                 hideSpinner();
             }
         );
+    },
+
+    srcOwnerChanged: function(){
+        var self = this;
+        var selIndex = self.srcAlbumOwnerList.selectedIndex;
+        var ownerId = self.srcAlbumOwnerList.item(selIndex).value;
+
+        function doUpdate(){
+            self.fillSrcAlbumsListBox(self.albumCache[ownerId], ownerId == Settings.vkUserId);
+            self.srcAlbumChanged();
+
+            //synchronize with srcAlbumOwner as it is disabled
+            self.dstAlbumOwnerList.selectedIndex = selIndex;
+            self.dstOwnerChanged();
+        }
+
+        if(ownerId in self.albumCache){
+            doUpdate();
+        } else {
+            self.queryAlbumList(ownerId).done(doUpdate);
+        }
+    },
+
+    dstOwnerChanged: function(){
+        var self = this;
+        var selIndex = self.dstAlbumOwnerList.selectedIndex;
+        var ownerId = self.dstAlbumOwnerList.item(selIndex).value;
+
+        function doUpdate(){
+            self.fillDstAlbumsListBox(self.albumCache[ownerId]);
+            self.dstAlbumChanged();
+        }
+
+        if(ownerId in self.albumCache){
+            doUpdate()
+        } else {
+            self.queryAlbumList(ownerId).done(doUpdate);
+        }
     },
 
     disableControls: function(disable){
@@ -672,6 +703,8 @@ var AmApi__ = {
         self.srcAlbumList.disabled = dval;
         self.dstAlbumList.disabled = dval;
         self.revThumbSortChk.disabled = dval;
+        self.srcAlbumOwnerList.disabled = dval;
+        //self.dstAlbumOwnerList.disabled = dval;
     },
 
     movePhotosSingle: function(aid_target, selThumbsAr){
@@ -697,7 +730,10 @@ var AmApi__ = {
 
         var currThumbData = selThumbsAr.shift();
 
-        VkApiWrapper.movePhoto(Settings.vkUserId, aid_target, currThumbData.img.id).done(
+        var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
+        var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+
+        VkApiWrapper.movePhoto(ownerId, aid_target, currThumbData.img.id).done(
             function() {
                 ++self.dstPhotosNumEdit.value;
                 --self.srcPhotosNumEdit.value;
@@ -781,7 +817,7 @@ var AmApi__ = {
             return;
         }
 
-        //save on disk
+        //save to disk
         if(self.dstAlbumList.item(dstSelIndex).value == "save"){
             var popUp = window.open("SaveAlbum.html", "_blank", "location=1, menubar=1, toolbar=1, titlebar=1, scrollbars=1",false);
             var title = "Фотографии из альбома \"" + self.srcAlbumList.item(srcSelIndex).text + "\"";
@@ -808,6 +844,59 @@ var AmApi__ = {
         self.movePhotosSingle(self.dstAlbumList.item(dstSelIndex).value, selThumbsAr);
     },
 
+    fillSrcAlbumsListBox: function(albums, selfOwn){
+        var self = this;
+        self.srcAlbumList.selectedIndex = 0;
+
+        //remove old options, skip "not selected" option
+        for(var i = self.srcAlbumList.length-1; i >= 1; --i){
+            self.srcAlbumList.remove(i);
+        }
+
+        //my albums, add service albums
+        if(selfOwn){
+            var opt1 = new Option("Сохраненные фотографии", -15, false, false);
+            $(opt1).addClass("italic_bold");
+            self.srcAlbumList.add(opt1, null);
+
+            var opt2 = new Option("Фото на моей стене", -7, false, false);
+            $(opt2).addClass("italic_bold");
+            self.srcAlbumList.add(opt2, null);
+        }
+
+        for(var i = 0; i < albums.length; i++){
+            var title = $("<div>").html(albums[i].title).text();//to convert escape sequences (&amp;, &quot;...) to chars
+            var opt = new Option(title, albums[i].id, false, false);
+            self.srcAlbumList.add(opt, null);
+        }
+    },
+
+    fillDstAlbumsListBox: function(albums){
+        var self = this;
+        self.dstAlbumList.selectedIndex = 0;
+
+        //remove old options
+        //i >= 2 to skip "not selected" and "save locally" options
+        for(var i = self.dstAlbumList.length-1; i >= 2; --i){
+            self.dstAlbumList.remove(i);
+        }
+
+        //add new options
+        for(var i = 0; i < albums.length; i++){
+            var title = $("<div>").html(albums[i].title).text();//to convert escape sequences (&amp;, &quot;...) to chars
+            var opt = new Option(title, albums[i].id, false, false);
+            self.dstAlbumList.add(opt, null);
+        }
+    },
+
+    fillGroupsListBox: function(groups, groupsListSelect){
+        for(var i = 0; i < groups.length; i++){
+            var title = $("<div>").html(groups[i].name).text();//to convert escape sequences (&amp;, &quot;...) to chars
+            var opt = new Option(title, -groups[i].id, false, false);//NOTE: using minus for group ID
+            groupsListSelect.add(opt, null);
+        }
+    },
+
     updSelectedNum: function(){
         $("#selectedPhotosNum").text($("#thumbs_container").ThumbsViewer("getSelThumbsNum")+"");
     },
@@ -823,6 +912,40 @@ var AmApi__ = {
         var self = this;
         $("#thumbs_container").ThumbsViewer("selectToggleVisible");
         self.updSelectedNum();
+    },
+
+    queryAlbumList: function(ownerId) {
+        var d = $.Deferred();
+        var self = this;
+        showSpinner();
+
+        VkApiWrapper.queryAlbumsList(ownerId).done(function(albums){
+            //sort albums by name
+            albums.items = albums.items.sort(function(a, b){
+                if(a.title < b.title){
+                    return -1;
+                }else if(a.title > b.title){
+                    return 1;
+                }
+                return 0;
+            });
+
+            for(var i = 0; i < albums.items.length; ++i){
+                if(albums.items[i].title.length > Settings.maxOptionLength){
+                    albums.items[i].title = albums.items[i].title.substring(0, Settings.maxOptionLength) + "...";
+                }
+            }
+
+            //save album list to cache
+            self.albumCache[ownerId] = albums.items;
+            hideSpinner();
+            d.resolve();
+        }).fail(function(){
+            hideSpinner();
+            d.reject();
+        });
+
+        return d.promise();
     },
 
     welcomeCheck: function () {
@@ -857,6 +980,14 @@ var AmApi__ = {
 
 //make exports for AmApi methods
 $.extend(AmApiExport, {
+    srcOwnerChanged: function(){
+        AmApi__.srcOwnerChanged();
+    },
+
+    dstOwnerChanged: function(){
+        //AmApi__.dstOwnerChanged();
+    },
+
     srcAlbumChanged: function() {
         AmApi__.srcAlbumChanged();
     },
@@ -881,6 +1012,17 @@ $.extend(AmApiExport, {
         AmApi__.revThumbSortChkClick();
     }
 });
+
+
+function validateApp(vkSid, appLocation, delay){
+    if( vkSid ){//looks like a valid run
+        return;
+    }
+
+    setTimeout(function (){
+        document.location.href = appLocation;
+    }, delay);
+}
 
 //Initialize application
 var d = $.Deferred();
@@ -910,6 +1052,7 @@ $(function(){
         function() {
             // API initialization succeeded
             VkApiWrapper.init();
+            VK.Widgets.Like("vk_like", {type: "button", height: 24}, 500);
             d.resolve();
         },
         function(){
@@ -923,23 +1066,45 @@ $(function(){
 
 //VK API init finished: query user data
 d.done(function(){
-    VK.Widgets.Like("vk_like", {type: "button", height: 24}, 500);
-
-    VkApiWrapper.queryAlbumsList(Settings.vkUserId).done(function(albums){
-        //sort albums by name
-        albums.items = albums.items.sort(function(a, b){
-            if(a.title < b.title){
+    //query user groups
+    VkApiWrapper.queryGroupsList(Settings.vkUserId).done(function(groups){
+        //sort groups by name
+        groups.items = groups.items.sort(function(a, b){
+            if(a.name < b.name){
                 return -1;
-            }else if(a.title > b.title){
+            }else if(a.name > b.name){
                 return 1;
             }
             return 0;
         });
 
-        fillAlbumsListBox(albums.items,"Form1_SrcAlbumList");
-        fillAlbumsListBox(albums.items,"Form1_DstAlbumList");
-        hideSpinner();
-        AmApi__.welcomeCheck();
+        //trim group names
+        //maxGroupNameLen
+        for(var i = 0; i < groups.items.length; ++i){
+            if(groups.items[i].name.length > Settings.maxOptionLength){
+                groups.items[i].name = groups.items[i].name.substring(0, Settings.maxOptionLength) + "...";
+            }
+        }
+
+        //set correct value for "My Albums" option
+        AmApi__.srcAlbumOwnerList.item(0).value = Settings.vkUserId;
+        AmApi__.dstAlbumOwnerList.item(0).value = Settings.vkUserId;
+
+        //fill list boxes with user groups
+        AmApi__.fillGroupsListBox(groups.items, AmApi__.srcAlbumOwnerList);
+        AmApi__.fillGroupsListBox(groups.items, AmApi__.dstAlbumOwnerList);
+
+        //query my albums
+        AmApi__.queryAlbumList(Settings.vkUserId).done(function(){
+            //update album lists
+            AmApi__.srcOwnerChanged();
+            AmApi__.dstOwnerChanged();
+
+
+            //initialization finished at this point
+            hideSpinner();
+            AmApi__.welcomeCheck();
+        });
     });
 });
 })( jQuery, AmApi );

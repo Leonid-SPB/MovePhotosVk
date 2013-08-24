@@ -39,13 +39,11 @@
 		<div style="width: 100%" class="clear_fix">
 			<div style="width: 50%; text-align: center; float: left">
 				<label for="Form1_SrcAlbumOwner"><strong>Откуда</strong></label><br />
-				<select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" name="SrcAlbumOwner" size="1" id="Form1_SrcAlbumOwner"  onchange="">
+				<select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" name="SrcAlbumOwner" size="1" id="Form1_SrcAlbumOwner"  onchange="AmApi.srcOwnerChanged()">
 					<option value="my albums">Мои альбомы</option>
 				</select><br />
                 <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" name="SrcAlbumList" size="1" id="Form1_SrcAlbumList"  onchange="AmApi.srcAlbumChanged()">
                     <option value="not selected">Альбом не выбран</option>
-                    <option value="-15" class="italic_bold">Сохраненные фотографии</option>
-                    <option value="-7" class="italic_bold">Фото на моей стене</option>
                 </select>
 				<br /><br />
 				<label for="Form1_SrcPhotosNum"><strong>Изображений в альбоме:</strong></label>
@@ -54,7 +52,7 @@
 
 			<div style="width: 50%; text-align: center; float: left">
 				<label for="Form1_DstAlbumOwner"><strong>Куда</strong></label><br />
-                <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" name="DstAlbumOwner" size="1" id="Form1_DstAlbumOwner"  onchange="">
+                <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" name="DstAlbumOwner" size="1" id="Form1_DstAlbumOwner"  onchange="AmApi.dstOwnerChanged()" disabled="true">
                     <option value="my albums">Мои альбомы</option>
                 </select><br />
 				<select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" name="DstAlbumList" size="1" id="Form1_DstAlbumList"  onchange="AmApi.dstAlbumChanged()">

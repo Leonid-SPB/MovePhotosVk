@@ -4,9 +4,9 @@
     <list default="true" id="2c1e4f54-d27e-4dd9-852a-174e3f493872" name="Default" comment="" />
     <ignored path="source.iws" />
     <ignored path=".idea/workspace.xml" />
-    <file path="/albumManager.js" changelist="2c1e4f54-d27e-4dd9-852a-174e3f493872" time="1377364139825" ignored="false" />
+    <file path="/albumManager.js" changelist="2c1e4f54-d27e-4dd9-852a-174e3f493872" time="1377379860459" ignored="false" />
     <file path="/albumManager.css" changelist="2c1e4f54-d27e-4dd9-852a-174e3f493872" time="1377340049401" ignored="false" />
-    <file path="/albumManager2.html" changelist="2c1e4f54-d27e-4dd9-852a-174e3f493872" time="1377340855029" ignored="false" />
+    <file path="/albumManager2.html" changelist="2c1e4f54-d27e-4dd9-852a-174e3f493872" time="1377379413806" ignored="false" />
     <file path="/jquery-ui-1.9.1.custom.css" changelist="2c1e4f54-d27e-4dd9-852a-174e3f493872" time="1377365845176" ignored="false" />
     <file path="/vkApiWrapper.js" changelist="2c1e4f54-d27e-4dd9-852a-174e3f493872" time="1377341955770" ignored="false" />
     <file path="/VkApiWrapper.js" changelist="2c1e4f54-d27e-4dd9-852a-174e3f493872" time="1377354730192" ignored="false" />
@@ -33,13 +33,13 @@
       <file leaf-file-name="albumManager.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/albumManager.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="837" column="12" selection-start="26978" selection-end="26978" vertical-scroll-proportion="0.36225086">
+            <state line="916" column="74" selection-start="30057" selection-end="30057" vertical-scroll-proportion="0.66119576">
               <folding>
-                <marker date="1377366272594" expanded="true" signature="11089:11108" placeholder="..." />
-                <marker date="1377366272594" expanded="true" signature="11199:11235" placeholder="..." />
-                <marker date="1377366272594" expanded="true" signature="11478:11510" placeholder="..." />
-                <marker date="1377366272594" expanded="true" signature="12127:12143" placeholder="..." />
-                <marker date="1377366272594" expanded="true" signature="12195:12227" placeholder="..." />
+                <marker date="1377379863578" expanded="true" signature="11157:11176" placeholder="..." />
+                <marker date="1377379863578" expanded="true" signature="11267:11303" placeholder="..." />
+                <marker date="1377379863578" expanded="true" signature="11546:11578" placeholder="..." />
+                <marker date="1377379863578" expanded="true" signature="12195:12211" placeholder="..." />
+                <marker date="1377379863578" expanded="true" signature="12263:12295" placeholder="..." />
               </folding>
             </state>
           </provider>
@@ -48,7 +48,7 @@
       <file leaf-file-name="albumManager2.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/albumManager2.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="13" column="26" selection-start="653" selection-end="662" vertical-scroll-proportion="-3.810345">
+            <state line="54" column="16" selection-start="3159" selection-end="3159" vertical-scroll-proportion="-7.913793">
               <folding>
                 <element signature="n#style#0;n#div#1;n#body#0;n#html#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#span#0;n#p#0;n#div#0;n#div#1;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -103,8 +103,8 @@
         <option value="$PROJECT_DIR$/vkApiWrapper.js" />
         <option value="$PROJECT_DIR$/VkApiWrapper.js" />
         <option value="$PROJECT_DIR$/test.js" />
-        <option value="$PROJECT_DIR$/albumManager2.html" />
         <option value="$PROJECT_DIR$/jquery-ui-1.9.1.custom.css" />
+        <option value="$PROJECT_DIR$/albumManager2.html" />
         <option value="$PROJECT_DIR$/albumManager.js" />
       </list>
     </option>
@@ -185,6 +185,7 @@
     <property name="WebServerToolWindowFactoryState" value="true" />
     <property name="recentsLimit" value="5" />
     <property name="options.lastSelected" value="File.Encoding" />
+    <property name="FullScreen" value="false" />
     <property name="options.searchVisible" value="true" />
     <property name="options.splitter.details.proportions" value="0.2" />
   </component>
@@ -255,14 +256,14 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="10" y="3" width="1900" height="1160" extended-state="0" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.057985757" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.057985757" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -359,20 +360,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/spin.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="114" column="24" selection-start="3074" selection-end="3074" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/SaveAlbum.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="5" selection-start="120" selection-end="120" vertical-scroll-proportion="-3.9230769">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/albumManager.css">
       <provider selected="true" editor-type-id="text-editor">
         <state line="102" column="33" selection-start="1486" selection-end="1517" vertical-scroll-proportion="0.0">
@@ -387,9 +374,23 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/spin.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="114" column="24" selection-start="3074" selection-end="3074" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/SaveAlbum.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="6" column="5" selection-start="120" selection-end="120" vertical-scroll-proportion="-3.9230769">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/albumManager2.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="26" selection-start="653" selection-end="662" vertical-scroll-proportion="-3.810345">
+        <state line="54" column="16" selection-start="3159" selection-end="3159" vertical-scroll-proportion="-7.913793">
           <folding>
             <element signature="n#style#0;n#div#1;n#body#0;n#html#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#span#0;n#p#0;n#div#0;n#div#1;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -404,13 +405,13 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/albumManager.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="837" column="12" selection-start="26978" selection-end="26978" vertical-scroll-proportion="0.36225086">
+        <state line="916" column="74" selection-start="30057" selection-end="30057" vertical-scroll-proportion="0.66119576">
           <folding>
-            <marker date="1377366272594" expanded="true" signature="11089:11108" placeholder="..." />
-            <marker date="1377366272594" expanded="true" signature="11199:11235" placeholder="..." />
-            <marker date="1377366272594" expanded="true" signature="11478:11510" placeholder="..." />
-            <marker date="1377366272594" expanded="true" signature="12127:12143" placeholder="..." />
-            <marker date="1377366272594" expanded="true" signature="12195:12227" placeholder="..." />
+            <marker date="1377379863578" expanded="true" signature="11157:11176" placeholder="..." />
+            <marker date="1377379863578" expanded="true" signature="11267:11303" placeholder="..." />
+            <marker date="1377379863578" expanded="true" signature="11546:11578" placeholder="..." />
+            <marker date="1377379863578" expanded="true" signature="12195:12211" placeholder="..." />
+            <marker date="1377379863578" expanded="true" signature="12263:12295" placeholder="..." />
           </folding>
         </state>
       </provider>
