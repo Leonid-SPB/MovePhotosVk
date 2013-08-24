@@ -568,7 +568,7 @@ var VkApiWrapper = {
         return p;
     },
 
-    movePhotos: function(ownerId, targetAlbumId, photoId){
+    movePhoto: function(ownerId, targetAlbumId, photoId){
         var self = this;
         var p = this.callVkApi("photos.move", {owner_id: ownerId, target_album_id: targetAlbumId, photo_id: photoId});
         p.fail(function(){
@@ -675,7 +675,7 @@ var AmApi__ = {
     },
 
     movePhotosSingle: function(aid_target, selThumbsAr){
-        /*var self = this;
+        var self = this;
 
         if(!selThumbsAr.length){
             //MOVE DONE
@@ -697,9 +697,8 @@ var AmApi__ = {
 
         var currThumbData = selThumbsAr.shift();
 
-        VkApiWrapper.movePhotos(Settings.vkUserId, aid_target, currThumbData.img.pid);
-        VK.api("photos.move",{"pid":currThumbData.img.pid,"target_aid":aid_target},function(data) {
-            if(data.response){
+        VkApiWrapper.movePhoto(Settings.vkUserId, aid_target, currThumbData.img.id).done(
+            function() {
                 ++self.dstPhotosNumEdit.value;
                 --self.srcPhotosNumEdit.value;
                 $("#thumbs_container").ThumbsViewer("removeThumb", currThumbData.$thumb);
@@ -710,11 +709,8 @@ var AmApi__ = {
                 setTimeout(function(){
                     self.movePhotosSingle(aid_target, selThumbsAr);
                 }, Settings.movePhotosDelay);
-            }else{
-                displayError("Не удалось переместить фотографию! Попробуйте перезагрузить приложение.", "globalErrorBox");
-                console.log(data.error.error_msg);
             }
-        });  */
+        );
     },
 
     revThumbSortChkClick: function(){
@@ -723,30 +719,30 @@ var AmApi__ = {
     },
 
     savePhotos: function(divPhotos, selThumbsAr, num){
-        /*var self = this;
+        var self = this;
 
         if(!selThumbsAr.length){
             return;
         }
 
         var currThumbData = selThumbsAr.shift();
-        var src;
+        var src = currThumbData.img.photo_130;
 
-        if(currThumbData.img.src_xxbig){
-            src = currThumbData.img.src_xxbig;
-        }else if(currThumbData.img.src_xbig){
-            src = currThumbData.img.src_xbig;
-        }else if(currThumbData.img.src_big){
-            src = currThumbData.img.src_big;
-        }else if(currThumbData.img.src){
-            src = currThumbData.img.src;
+        if(currThumbData.img.photo_2560){
+            src = currThumbData.img.photo_2560;
+        }else if(currThumbData.img.photo_1280){
+            src = currThumbData.img.photo_1280;
+        }else if(currThumbData.img.photo_807){
+            src = currThumbData.img.photo_807;
+        }else if(currThumbData.img.photo_604){
+            src = currThumbData.img.photo_604;
         }
 
         function lzn(num){
             return (num < 10)? "0" + num: "" + num;
         }
 
-        var cD = new Date(currThumbData.img.created*1000);
+        var cD = new Date(currThumbData.img.date*1000);
         var createdStr = lzn(cD.getDay()) + "." + lzn(cD.getMonth()) + "." + cD.getFullYear() + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
         var text = currThumbData.img.text ? $("<div>").text(currThumbData.img.text).html() : "";
 
@@ -762,7 +758,7 @@ var AmApi__ = {
         //divPhotos.innerHTML = divPhotos.innerHTML + htmlStr;
         $(divPhotos).append(htmlStr);
         $(currThumbData.$thumb).removeClass("selected");
-        setTimeout(function(){self.savePhotos(divPhotos, selThumbsAr, num+1)}, Settings.savePhotosDelay); */
+        setTimeout(function(){self.savePhotos(divPhotos, selThumbsAr, num+1)}, Settings.savePhotosDelay);
     },
 
     movePhotosClick: function() {
