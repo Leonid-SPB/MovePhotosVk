@@ -529,7 +529,7 @@ var VkApiWrapper = {
 
         this.rateLimiter.schedule(function(){
             VK.api(vkApiMethod, methodParams, function(data) {
-                if(data.response){
+                if(data.hasOwnProperty("response")){
                     d.resolve(data.response);
                 }else{
                     console.log(data.error.error_msg);
@@ -827,37 +827,31 @@ var AmApi__ = {
 
     welcomeCheck: function () {
         //request isWelcomed var
-        /*VK.api("storage.get", {key: "isWelcomed"}, function(data) {
-            if(data.response !== undefined){
-                if( data.response == "1"){//already welcomed
-                    return;
-                }
-
-                //if not welcomed yet -> show welcome dialog
-                $( "#welcome_dialog" ).dialog( "open" );
-                VK.api("storage.set", {key: "isWelcomed", value: "1"});
-            }else{
-                console.log(data.error.error_msg);
+        var isWelcomedKey = "isWelcomed3";
+        VkApiWrapper.storageGet(isWelcomedKey).done( function(data) {
+            if( data == "1"){//already welcomed
+                return;
             }
-        }); */
+
+            //if not welcomed yet -> show welcome dialog
+            $( "#welcome_dialog" ).dialog( "open" );
+            VkApiWrapper.storageSet(isWelcomedKey, "1");
+        });
     },
 
     rateRequest: function () {
-        /*VK.api("storage.get", {key: "isRated"}, function(data) {
-            if(data.response !== undefined){
-                if( data.response == "1"){//already rated
-                    return;
-                }
-
-                //if not rated yet -> show rate us dialog
-                $( "#rateus_dialog" ).dialog( "open" );
-                VK.api("storage.set", {key: "isRated", value: "1"});
-
-                setTimeout(function(){blinkDiv("vk_like", Settings.blinkCount, Settings.blinkDelay);}, 1500);
-            }else{
-                console.log(data.error.error_msg);
+        var isRatedKey = "isRated3";
+        VkApiWrapper.storageGet(isRatedKey).done( function(data) {
+            if( data == "1"){//already rated
+                return;
             }
-        });    */
+
+            //if not rated yet -> show rate us dialog
+            $( "#rateus_dialog" ).dialog( "open" );
+            VkApiWrapper.storageSet(isRatedKey, "1");
+
+            setTimeout(function(){blinkDiv("vk_like", Settings.blinkCount, Settings.blinkDelay);}, 1500);
+        });
     }
 };
 
@@ -945,7 +939,7 @@ d.done(function(){
         fillAlbumsListBox(albums.items,"Form1_SrcAlbumList");
         fillAlbumsListBox(albums.items,"Form1_DstAlbumList");
         hideSpinner();
-        //AmApi__.welcomeCheck();
+        AmApi__.welcomeCheck();
     });
 });
 })( jQuery, AmApi );
