@@ -34,7 +34,8 @@
 	border-color: white;
 }
 .highslide-wrapper, .highslide-outline {
-	background: white;
+	background: #2779AA;
+    box-shadow: 0px 0px 20px 10px #2779AA
 }
 .glossy-dark {
 	background: #111;
@@ -915,31 +916,9 @@ html>/**/body .highslide-gallery ul img {
 	background-color: white;
 	background-image: url(graphics/loader.white.gif);
 }
-
-.highslide-controls {
-	position: static !important;
-	margin-bottom: 0;
-	width: 75px !important;
-}
-.highslide-controls .highslide-previous {
-	display: none;
-}
-.highslide-controls .highslide-play {
-	display: none;
-}
-.highslide-controls .highslide-pause {
-	display: none;
-}
-.highslide-controls .highslide-next {
-	display: none;
-}
-.highslide-controls .highslide-move {
-	display: none;
-}
-.highslide-gallery ul li {
-	width: 106px;
-	height: 106px;
-	border: 1px solid #D0D0D0;
-	background: #EDEDED;
-	margin: 2px;
+.close-simple-white {
+	width: 16px;
+	height: 16px;
+	background: white url(graphics/controlbar-text-buttons.png) 0 -221px;
+	cursor: pointer;
 }

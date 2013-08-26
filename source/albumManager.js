@@ -514,7 +514,7 @@ var VkApiWrapper = {
                     d.resolve(data.response);
                 }else{
                     console.log(data.error.error_msg);
-                    d.reject();
+                    d.reject(data.error);
                 }
             });
         });

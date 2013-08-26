@@ -25,6 +25,10 @@ a:hover {
 	text-decoration: underline;
 }
 
+.blue_shadow {
+    box-shadow: 0px 0px 20px 10px #2779AA
+}
+
 .no_glow_on_focus, .no_glow_on_focus:hover {
 	outline: none
 }
