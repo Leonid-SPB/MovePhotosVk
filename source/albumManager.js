@@ -60,7 +60,7 @@ var AmApi = {};
             thumb_li.append(thumb_parent, $("<a class=\"bg\">&nbsp;</a>"));
 
             var zoom_icon = $("<div class=\"ThumbsViewer_zoom-ico\"><img src=\"graphics/Zoom-In-icon.png\" /></div>");
-            zoom_icon.data('ThumbsViewer', {img_src: img.photo_604});
+            zoom_icon.data('ThumbsViewer', {img_src: img.photo_604, img_title: img.text});
             thumb_parent.append(zoom_icon);
 
             var thumb_img = $("<img />");
@@ -283,7 +283,7 @@ var AmApi = {};
             $this = $(this);
             var data   = $this.data('ThumbsViewer');
             event.stopPropagation();
-            return hs.expand( $("<a></a>", {href: data.img_src}).get(0) );
+            return hs.expand( $("<a></a>", {href: data.img_src, title: data.img_title}).get(0) );
         }
     };
 
