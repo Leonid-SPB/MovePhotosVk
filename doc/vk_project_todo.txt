@@ -1,0 +1,15 @@
+1) New repo:
+feature branches
+master branch for development: only merges of feature branches + minor updates and conflicts resolving
+release branch for releases: only merges from master branch after testing
+
+2) New working tree:
+prod - production build (compacted js/css, html, images)
+test - test buid (not compacted js/css, html, images), actually it is the same as src, used for make to detect changed files that script should upload to the server
+doc - some docs/notes/todos
+src - sources
+scripts - ...
+
+script for generating production build
+script for generating test build
+script for uploading test build to the server (only changed files). MAKEFILE?

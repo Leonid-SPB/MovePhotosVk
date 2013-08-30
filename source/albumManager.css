@@ -11,6 +11,7 @@ body {
 .TopHead {
 	text-align: center;
 	color: #252054;
+    font-size: 1.1em;
 }
 
 a {
@@ -22,6 +23,10 @@ a {
 
 a:hover {
 	text-decoration: underline;
+}
+
+.blue_shadow {
+    box-shadow: 0px 0px 20px 10px #2779AA
 }
 
 .no_glow_on_focus, .no_glow_on_focus:hover {
@@ -133,7 +138,7 @@ a:hover {
   cursor: url("graphics/zoomin.cur"), pointer;
 }
 
-.weclome_p {
+.welcome_p {
 	color: #252054;
 	direction: ltr;
 	font-family: tahoma, arial, verdana, sans-serif, Lucida Sans;

@@ -8,10 +8,11 @@
 	<link href="albumManager.css" rel="stylesheet" type="text/css" />
 	<link href="highslide.css" rel="stylesheet" type="text/css" />
 	
-	<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js" type="text/javascript"></script>
-	<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.min.js" type="text/javascript"></script>
+	<script src="http://yandex.st/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>
+	<script src="http://yandex.st/jquery-ui/1.9.2/jquery-ui.min.js" type="text/javascript"></script>
 	<script src="spin.js" type="text/javascript" charset="utf-8"></script>
 	<script src="highslide.js" type="text/javascript" charset="utf-8"></script>
+    <script src="highslide.config.js" type="text/javascript" charset="utf-8"></script>
 	<script src="http://vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
 	<script src="albumManager.js" type="text/javascript" charset="utf-8"></script>
 </head>
@@ -20,44 +21,47 @@
 	<img src="icon75.jpg" height="30px" width="30px" class="adbox-logo"><div class="adbox-text">Рекомендуем<br /><strong>Рейтинг Фото</strong></div>
 	</a>
 	</div>
-	<div style="width: 95%; text-align: center; margin-left: auto; margin-right: auto;">
-		<h2 class="TopHead">Перенос фотографий между альбомами</h2>
+	<div style="width: 100%; text-align: center; margin-left: auto; margin-right: auto;">
+		<h2 class="TopHead">Перенос фотографий между альбомами 3.0<!--<span style="color: red">beta</span>--></h2>
 		<hr width="100%" />
-		<br />
-		
+
 		<div id="welcome_dialog" title="Добро Пожаловать!" style="display: none;">
-			<p class="weclome_p">Спасибо, что установили приложение &quot;<span style="font-weight: bold">Перенос фото 2.0</span>&quot;!</p>
-			<p class="weclome_p">Ознакомиться с возможностями приложения можно в разделе <span class="italic_bold">Помощь</span> (ссылка сверху).</p>
-			<p class="weclome_p">Приятной работы!</p>
+			<p class="welcome_p">Спасибо, что установили приложение &quot;<span style="font-weight: bold">Перенос фото 3.0</span>&quot;!</p>
+			<p class="welcome_p">Ознакомиться с возможностями приложения можно в разделе <span class="italic_bold">Помощь</span> (ссылка сверху).</p>
+			<p class="welcome_p">Приятной работы!</p>
 		</div>
 		
 		<div id="rateus_dialog" title="Перемещение завершено!" style="display: none;">
-			<p class="weclome_p">Оцените приложение, если оно Вам понравилось, и рекомендуйте друзьям!</p>
+			<p class="welcome_p">Оцените приложение, если оно Вам понравилось, и рекомендуйте друзьям!</p>
 		</div>
 		
 		<form name="Form1" action="">
 
 		<div style="width: 100%" class="clear_fix">
 			<div style="width: 50%; text-align: center; float: left">
-				<label for="SrcAlbumList"><strong>Откуда:</strong></label>
-				<select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" name="SrcAlbumList" size="1" id="Form1_SrcAlbumList"  onchange="AmApi.srcAlbumChanged()">
-					<option value="not selected">Альбом не выбран</option>
-					<option value="-15" class="italic_bold">Сохраненные фотографии</option>
-					<option value="-7" class="italic_bold">Фото на моей стене</option>
-				</select>
+				<label for="Form1_SrcAlbumOwner"><strong>Откуда</strong></label><br />
+				<select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" name="SrcAlbumOwner" size="1" id="Form1_SrcAlbumOwner"  onchange="AmApi.srcOwnerChanged()">
+					<option value="my albums">Мои альбомы</option>
+				</select><br />
+                <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" name="SrcAlbumList" size="1" id="Form1_SrcAlbumList"  onchange="AmApi.srcAlbumChanged()">
+                    <option value="not selected">Альбом не выбран</option>
+                </select>
 				<br /><br />
-				<label for="SrcPhotosNum"><strong>Изображений в альбоме:</strong></label>
+				<label for="Form1_SrcPhotosNum"><strong>Изображений в альбоме:</strong></label>
 				<input class="ui-widget ui-widget-content ui-corner-all" style="padding-right: 0.5em; text-align: right;" name="SrcPhotosNum" type="text" id="Form1_SrcPhotosNum" size="4" readonly="readonly" />
 			</div>
 
 			<div style="width: 50%; text-align: center; float: left">
-				<label for="DstAlbumList"><strong>Куда:</strong></label>
+				<label for="Form1_DstAlbumOwner"><strong>Куда</strong></label><br />
+                <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" name="DstAlbumOwner" size="1" id="Form1_DstAlbumOwner"  onchange="AmApi.dstOwnerChanged()" disabled="true">
+                    <option value="my albums">Мои альбомы</option>
+                </select><br />
 				<select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" name="DstAlbumList" size="1" id="Form1_DstAlbumList"  onchange="AmApi.dstAlbumChanged()">
 					<option value="not selected">Альбом не выбран</option>
 					<option value="save" class="italic_bold">Сохранить локально</option>
 				</select>
 				<br /><br />
-				<label for="DstPhotosNum"><strong>Изображений в альбоме:</strong></label>
+				<label for="Form1_DstPhotosNum"><strong>Изображений в альбоме:</strong></label>
 				<input class="ui-widget ui-widget-content ui-corner-all" style="padding-right: 0.5em; text-align: right;" name="DstPhotosNum" type="text" id="Form1_DstPhotosNum" size="4" readonly="readonly" />
 				<br /><br />
 			</div>
@@ -72,7 +76,7 @@
 		<br />
 		<div style="width: 100%" class="clear_fix">
 			<div style="float: left;"><strong>Выбрано фотографий: <span id="selectedPhotosNum">0</span>.</strong> <a onclick="AmApi.selToggleAll();">Снять/выделить все</a>; <a onclick="AmApi.selToggleVisible();">Снять/выделить показанные</a></div>
-			<div style="overflow: hidden; text-align: right;"><label for="RevThumbSort"><strong>Обратная сортировка</strong></label><input type="checkbox" name="RevThumbSort" id="Form1_RevThumbSort" class="no_glow_on_focus" onclick="AmApi.revThumbSortChkClick();"></div>
+			<div style="overflow: hidden; text-align: right;"><label for="Form1_RevThumbSort"><strong>Обратная сортировка</strong></label><input type="checkbox" name="RevThumbSort" id="Form1_RevThumbSort" class="no_glow_on_focus" onclick="AmApi.revThumbSortChkClick();"></div>
 		</div>
 		
 		</form>

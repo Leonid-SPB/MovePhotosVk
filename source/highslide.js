@@ -1,7 +1,7 @@
 /** 
  * Name:    Highslide JS
  * Version: 4.1.13 (2011-10-06)
- * Config:  default -overlays -navigation -dragging -preloading -multiple
+ * Config:  default -navigation -dragging -preloading -multiple
  * Author:  Torstein HÃ¸nsi
  * Support: www.highslide.com/support
  * License: www.highslide.com/#license
@@ -12,6 +12,9 @@ lang : {
 	cssDirection: 'ltr',
 	loadingText : 'Loading...',
 	loadingTitle : 'Click to cancel',
+	fullExpandTitle : 'Expand to actual size (f)',
+	creditsText : 'Powered by <i>Highslide JS</i>',
+	creditsTitle : 'Go to the Highslide JS homepage',
 	restoreTitle : 'Click to close image'
 },
 // See http://highslide.com/ref for examples of settings  
@@ -29,6 +32,11 @@ loadingOpacity : 0.75,
 outlineWhileAnimating : 2, // 0 = never, 1 = always, 2 = HTML only 
 outlineStartOffset : 3, // ends at 10
 padToMinWidth : false, // pad the popup width to make room for wide caption
+fullExpandPosition : 'bottom right',
+fullExpandOpacity : 1,
+showCredits : false, // you can set this to false if you want
+creditsHref : 'http://highslide.com/',
+creditsTarget : '_self',
 
 minWidth: 200,
 minHeight: 200,
@@ -44,6 +52,15 @@ overrides : [
 	'useBox',
 	'outlineType',
 	'outlineWhileAnimating',
+	'captionId',
+	'captionText',
+	'captionEval',
+	'captionOverlay',
+	'headingId',
+	'headingText',
+	'headingEval',
+	'headingOverlay',
+	'creditsPosition',
 	
 	'width',
 	'height',
@@ -60,6 +77,15 @@ overrides : [
 	'fadeInOut',
 	'src'
 ],
+overlays : [],
+idCounter : 0,
+oPos : {
+	x: ['leftpanel', 'left', 'center', 'right', 'rightpanel'],
+	y: ['above', 'top', 'middle', 'bottom', 'below']
+},
+mouse: {},
+headingOverlay: {},
+captionOverlay: {},
 timers : [],
 
 pendingOutlines : {},
@@ -200,11 +226,28 @@ getSrc : function (a) {
 	return a.href;
 },
 
+getNode : function (id) {
+	var node = hs.$(id), clone = hs.clones[id], a = {};
+	if (!node && !clone) return null;
+	if (!clone) {
+		clone = node.cloneNode(true);
+		clone.id = '';
+		hs.clones[id] = clone;
+		return node;
+	} else {
+		return clone.cloneNode(true);
+	}
+},
+
 discardElement : function(d) {
 	if (d) hs.garbageBin.appendChild(d);
 	hs.garbageBin.innerHTML = '';
 },
 
+
+registerOverlay : function (overlay) {
+	hs.push(hs.overlays, hs.extend(overlay, { hsId: 'hsId'+ hs.idCounter++ } ));
+},
 
 
 getWrapperKey : function (element, expOnly) {
@@ -240,6 +283,27 @@ getExpander : function (el, expOnly) {
 
 isHsAnchor : function (a) {
 	return (a.onclick && a.onclick.toString().replace(/\s/g, ' ').match(/hs.(htmlE|e)xpand/));
+},
+
+wrapperMouseHandler : function (e) {
+	try {
+		if (!e) e = window.event;
+		var over = /mouseover/i.test(e.type); 
+		if (!e.target) e.target = e.srcElement; // ie
+		if (!e.relatedTarget) e.relatedTarget = 
+			over ? e.fromElement : e.toElement; // ie
+		var exp = hs.getExpander(e.target);
+		if (!exp.isExpanded) return;
+		if (!exp || !e.relatedTarget || hs.getExpander(e.relatedTarget, true) == exp 
+			|| hs.dragArgs) return;
+		for (var i = 0; i < exp.overlays.length; i++) (function() {
+			var o = hs.$('hsId'+ exp.overlays[i]);
+			if (o && o.hideOnMouseOut) {
+				if (over) hs.setStyles(o, { visibility: 'visible', display: '' });
+				hs.animate(o, { opacity: over ? o.opacity : 0 }, o.dur);
+			}
+		})();	
+	} catch (e) {}
 },
 addEventListener : function (el, event, func) {
 	if (el == document && event == 'ready') {
@@ -559,6 +623,7 @@ hs.Dimension = function(exp, dim) {
 	this.lt = this.uclt.toLowerCase();
 	this.ucrb = dim == 'x' ? 'Right' : 'Bottom';
 	this.rb = this.ucrb.toLowerCase();
+	this.p1 = this.p2 = 0;
 };
 hs.Dimension.prototype = {
 get : function(key) {
@@ -566,11 +631,11 @@ get : function(key) {
 		case 'loadingPos':
 			return this.tpos + this.tb + (this.t - hs.loading['offset'+ this.ucwh]) / 2;
 		case 'wsize':
-			return this.size + 2 * this.cb;
+			return this.size + 2 * this.cb + this.p1 + this.p2;
 		case 'fitsize':
 			return this.clientSize - this.marginMin - this.marginMax;
 		case 'maxsize':
-			return this.get('fitsize') - 2 * this.cb ;
+			return this.get('fitsize') - 2 * this.cb - this.p1 - this.p2 ;
 		case 'opos':
 			return this.pos - (this.exp.outline ? this.exp.outline.offset : 0);
 		case 'osize':
@@ -630,6 +695,7 @@ setSize: function(i) {
 	exp.content.style[this.wh] = i +'px';
 	exp.wrapper.style[this.wh] = this.get('wsize') +'px';
 	if (exp.outline) exp.outline.setPosition();
+	if (this.dim == 'x' && exp.overlayBox) exp.sizeOverlayBox(true);
 },
 setPos: function(i) {
 	this.pos = i;
@@ -651,6 +717,7 @@ hs.Expander = function(a, params, custom, contentType) {
 	this.custom = custom;
 	this.contentType = contentType || 'image';
 	this.isImage = !this.isHtml;
+	this.overlays = [];
 	hs.init();
 	var key = this.key = hs.expanders.length;
 	// override inline parameters
@@ -702,6 +769,8 @@ hs.Expander = function(a, params, custom, contentType) {
 			position: 'absolute',
 			zIndex: hs.zIndexCounter += 2
 		}, null, true );
+	
+	this.wrapper.onmouseover = this.wrapper.onmouseout = hs.wrapperMouseHandler;
 	if (this.contentType == 'image' && this.outlineWhileAnimating == 2)
 		this.outlineWhileAnimating = 0;
 	
@@ -813,6 +882,7 @@ contentLoaded : function() {
 			left: (x.tpos + x.tb - x.cb) +'px',
 			top: (y.tpos + x.tb - y.cb) +'px'
 		});
+		this.getOverlays();
 		
 		var ratio = x.full / y.full;
 		x.calcExpanded();
@@ -820,10 +890,15 @@ contentLoaded : function() {
 		
 		y.calcExpanded();
 		this.justify(y);
+		if (this.overlayBox) this.sizeOverlayBox(0, 1);
 
 		
 		if (this.allowSizeReduction) {
 				this.correctRatio(ratio);
+			if (this.isImage && this.x.full > (this.x.imgSize || this.x.size)) {
+				this.createFullExpand();
+				if (this.overlays.length == 1) this.sizeOverlayBox();
+			}
 		}
 		this.show();
 		
@@ -905,6 +980,7 @@ correctRatio : function(ratio) {
 		x.size = xSize;
 		y.size = ySize;
 	}
+	changed = this.fitOverlayBox(this.useBox ? null : ratio, changed);
 	if (useBox && y.size < y.imgSize) {
 		y.imgSize = y.size;
 		x.imgSize = y.size * ratio;
@@ -921,6 +997,19 @@ correctRatio : function(ratio) {
 	}
 	
 	
+},
+fitOverlayBox : function(ratio, changed) {
+	var x = this.x, y = this.y;
+	if (this.overlayBox) {
+		while (y.size > this.minHeight && x.size > this.minWidth 
+				&&  y.get('wsize') > y.get('fitsize')) {
+			y.size -= 10;
+			if (ratio) x.size = y.size * ratio;
+			this.sizeOverlayBox(0, 1);
+			changed = true;
+		}
+	}
+	return changed;
 },
 
 show : function () {
@@ -953,6 +1042,9 @@ changeSize : function(up, to, dur) {
 		if (up) this.outline.setPosition();
 		else this.outline.destroy();
 	}
+	
+	
+	if (!up) this.destroyOverlays();
 	
 	var exp = this,
 		x = exp.x,
@@ -1009,6 +1101,10 @@ afterExpand : function() {
 	this.isExpanded = true;	
 	this.focus();
 	this.prepareNextOutline();
+	var p = hs.page, mX = hs.mouse.x + p.scrollLeft, mY = hs.mouse.y + p.scrollTop;
+	this.mouseIsOver = this.x.pos < mX && mX < this.x.pos + this.x.get('wsize')
+		&& this.y.pos < mY && mY < this.y.pos + this.y.get('wsize');	
+	if (this.overlayBox) this.showOverlays();
 	
 },
 
@@ -1026,6 +1122,59 @@ cancelLoading : function() {
 	hs.discardElement (this.wrapper);
 	hs.expanders[this.key] = null;
 	if (this.loading) hs.loading.style.left = '-9999px';
+},
+
+writeCredits : function () {
+	this.credits = hs.createElement('a', {
+		href: hs.creditsHref,
+		target: hs.creditsTarget,
+		className: 'highslide-credits',
+		innerHTML: hs.lang.creditsText,
+		title: hs.lang.creditsTitle
+	});
+	this.createOverlay({ 
+		overlayId: this.credits, 
+		position: this.creditsPosition || 'top left' 
+	});
+},
+
+getInline : function(types, addOverlay) {
+	for (var i = 0; i < types.length; i++) {
+		var type = types[i], s = null;
+		if (!this[type +'Id'] && this.thumbsUserSetId)  
+			this[type +'Id'] = type +'-for-'+ this.thumbsUserSetId;
+		if (this[type +'Id']) this[type] = hs.getNode(this[type +'Id']);
+		if (!this[type] && !this[type +'Text'] && this[type +'Eval']) try {
+			s = eval(this[type +'Eval']);
+		} catch (e) {}
+		if (!this[type] && this[type +'Text']) {
+			s = this[type +'Text'];
+		}
+		if (!this[type] && !s) {
+			this[type] = hs.getNode(this.a['_'+ type + 'Id']);
+			if (!this[type]) {
+				var next = this.a.nextSibling;
+				while (next && !hs.isHsAnchor(next)) {
+					if ((new RegExp('highslide-'+ type)).test(next.className || null)) {
+						if (!next.id) this.a['_'+ type + 'Id'] = next.id = 'hsId'+ hs.idCounter++;
+						this[type] = hs.getNode(next.id);
+						break;
+					}
+					next = next.nextSibling;
+				}
+			}
+		}
+		
+		if (!this[type] && s) this[type] = hs.createElement('div', 
+				{ className: 'highslide-'+ type, innerHTML: s } );
+		
+		if (addOverlay && this[type]) {
+			var o = { position: (type == 'heading') ? 'above' : 'below' };
+			for (var x in this[type+'Overlay']) o[x] = this[type+'Overlay'][x];
+			o.overlayId = this[type];
+			this.createOverlay(o);
+		}
+	}
 },
 
 
@@ -1092,6 +1241,26 @@ focus : function() {
 		
 	hs.focusKey = this.key;	
 },
+moveTo: function(x, y) {
+	this.x.setPos(x);
+	this.y.setPos(y);
+},
+resize : function (e) {
+	var w, h, r = e.width / e.height;
+	w = Math.max(e.width + e.dX, Math.min(this.minWidth, this.x.full));
+	if (this.isImage && Math.abs(w - this.x.full) < 12) w = this.x.full;
+	h = w / r;
+	if (h < Math.min(this.minHeight, this.y.full)) {
+		h = Math.min(this.minHeight, this.y.full);
+		if (this.isImage) w = h * r;
+	}
+	this.resizeTo(w, h);
+},
+resizeTo: function(w, h) {
+	this.y.setSize(h);
+	this.x.setSize(w);
+	this.wrapper.style.height = this.y.get('wsize') +'px';
+},
 
 close : function() {
 	if (this.isClosing || !this.isExpanded) return;
@@ -1118,6 +1287,248 @@ close : function() {
 	} catch (e) { this.afterClose(); }
 },
 
+createOverlay : function (o) {
+	var el = o.overlayId;
+	if (typeof el == 'string') el = hs.getNode(el);
+	if (o.html) el = hs.createElement('div', { innerHTML: o.html });
+	if (!el || typeof el == 'string') return;
+	el.style.display = 'block';
+	this.genOverlayBox();
+	var width = o.width && /^[0-9]+(px|%)$/.test(o.width) ? o.width : 'auto';
+	if (/^(left|right)panel$/.test(o.position) && !/^[0-9]+px$/.test(o.width)) width = '200px';
+	var overlay = hs.createElement(
+		'div', {
+			id: 'hsId'+ hs.idCounter++,
+			hsId: o.hsId
+		}, {
+			position: 'absolute',
+			visibility: 'hidden',
+			width: width,
+			direction: hs.lang.cssDirection || '',
+			opacity: 0
+		},this.overlayBox,
+		true
+	);
+	
+	overlay.appendChild(el);
+	hs.extend(overlay, {
+		opacity: 1,
+		offsetX: 0,
+		offsetY: 0,
+		dur: (o.fade === 0 || o.fade === false || (o.fade == 2 && hs.ie)) ? 0 : 250
+	});
+	hs.extend(overlay, o);
+	
+		
+	if (this.gotOverlays) {
+		this.positionOverlay(overlay);
+		if (!overlay.hideOnMouseOut || this.mouseIsOver) 
+			hs.animate(overlay, { opacity: overlay.opacity }, overlay.dur);
+	}
+	hs.push(this.overlays, hs.idCounter - 1);
+},
+positionOverlay : function(overlay) {
+	var p = overlay.position || 'middle center',
+		offX = overlay.offsetX,
+		offY = overlay.offsetY;
+	if (overlay.parentNode != this.overlayBox) this.overlayBox.appendChild(overlay);
+	if (/left$/.test(p)) overlay.style.left = offX +'px'; 
+	
+	if (/center$/.test(p))	hs.setStyles (overlay, { 
+		left: '50%',
+		marginLeft: (offX - Math.round(overlay.offsetWidth / 2)) +'px'
+	});	
+	
+	if (/right$/.test(p)) overlay.style.right = - offX +'px';
+		
+	if (/^leftpanel$/.test(p)) { 
+		hs.setStyles(overlay, {
+			right: '100%',
+			marginRight: this.x.cb +'px',
+			top: - this.y.cb +'px',
+			bottom: - this.y.cb +'px',
+			overflow: 'auto'
+		});		 
+		this.x.p1 = overlay.offsetWidth;
+	
+	} else if (/^rightpanel$/.test(p)) {
+		hs.setStyles(overlay, {
+			left: '100%',
+			marginLeft: this.x.cb +'px',
+			top: - this.y.cb +'px',
+			bottom: - this.y.cb +'px',
+			overflow: 'auto'
+		});
+		this.x.p2 = overlay.offsetWidth;
+	}
+
+	if (/^top/.test(p)) overlay.style.top = offY +'px'; 
+	if (/^middle/.test(p))	hs.setStyles (overlay, { 
+		top: '50%', 
+		marginTop: (offY - Math.round(overlay.offsetHeight / 2)) +'px'
+	});	
+	if (/^bottom/.test(p)) overlay.style.bottom = - offY +'px';
+	if (/^above$/.test(p)) {
+		hs.setStyles(overlay, {
+			left: (- this.x.p1 - this.x.cb) +'px',
+			right: (- this.x.p2 - this.x.cb) +'px',
+			bottom: '100%',
+			marginBottom: this.y.cb +'px',
+			width: 'auto'
+		});
+		this.y.p1 = overlay.offsetHeight;
+	
+	} else if (/^below$/.test(p)) {
+		hs.setStyles(overlay, {
+			position: 'relative',
+			left: (- this.x.p1 - this.x.cb) +'px',
+			right: (- this.x.p2 - this.x.cb) +'px',
+			top: '100%',
+			marginTop: this.y.cb +'px',
+			width: 'auto'
+		});
+		this.y.p2 = overlay.offsetHeight;
+		overlay.style.position = 'absolute';
+	}
+},
+
+getOverlays : function() {	
+	this.getInline(['heading', 'caption'], true);
+	if (hs.showCredits) this.writeCredits();
+	for (var i = 0; i < hs.overlays.length; i++) {
+		var o = hs.overlays[i], tId = o.thumbnailId, sg = o.slideshowGroup;
+		if ((!tId && !sg) || (tId && tId == this.thumbsUserSetId)
+				|| (sg && sg === this.slideshowGroup)) {
+			this.createOverlay(o);
+		}
+	}
+	var os = [];
+	for (var i = 0; i < this.overlays.length; i++) {
+		var o = hs.$('hsId'+ this.overlays[i]);
+		if (/panel$/.test(o.position)) this.positionOverlay(o);
+		else hs.push(os, o);
+	}
+	for (var i = 0; i < os.length; i++) this.positionOverlay(os[i]);
+	this.gotOverlays = true;
+},
+genOverlayBox : function() {
+	if (!this.overlayBox) this.overlayBox = hs.createElement (
+		'div', {
+			className: this.wrapperClassName
+		}, {
+			position : 'absolute',
+			width: (this.x.size || (this.useBox ? this.width : null) 
+				|| this.x.full) +'px',
+			height: (this.y.size || this.y.full) +'px',
+			visibility : 'hidden',
+			overflow : 'hidden',
+			zIndex : hs.ie ? 4 : 'auto'
+		},
+		hs.container,
+		true
+	);
+},
+sizeOverlayBox : function(doWrapper, doPanels) {
+	var overlayBox = this.overlayBox, 
+		x = this.x,
+		y = this.y;
+	hs.setStyles( overlayBox, {
+		width: x.size +'px', 
+		height: y.size +'px'
+	});
+	if (doWrapper || doPanels) {
+		for (var i = 0; i < this.overlays.length; i++) {
+			var o = hs.$('hsId'+ this.overlays[i]);
+			var ie6 = (hs.ieLt7 || document.compatMode == 'BackCompat');
+			if (o && /^(above|below)$/.test(o.position)) {
+				if (ie6) {
+					o.style.width = (overlayBox.offsetWidth + 2 * x.cb
+						+ x.p1 + x.p2) +'px';
+				}
+				y[o.position == 'above' ? 'p1' : 'p2'] = o.offsetHeight;
+			}
+			if (o && ie6 && /^(left|right)panel$/.test(o.position)) {
+				o.style.height = (overlayBox.offsetHeight + 2* y.cb) +'px';
+			}
+		}
+	}
+	if (doWrapper) {
+		hs.setStyles(this.content, {
+			top: y.p1 +'px'
+		});
+		hs.setStyles(overlayBox, {
+			top: (y.p1 + y.cb) +'px'
+		});
+	}
+},
+
+showOverlays : function() {
+	var b = this.overlayBox;
+	b.className = '';
+	hs.setStyles(b, {
+		top: (this.y.p1 + this.y.cb) +'px',
+		left: (this.x.p1 + this.x.cb) +'px',
+		overflow : 'visible'
+	});
+	if (hs.safari) b.style.visibility = 'visible';
+	this.wrapper.appendChild (b);
+	for (var i = 0; i < this.overlays.length; i++) {
+		var o = hs.$('hsId'+ this.overlays[i]);
+		o.style.zIndex = o.zIndex || 4;
+		if (!o.hideOnMouseOut || this.mouseIsOver) {
+			o.style.visibility = 'visible';
+			hs.setStyles(o, { visibility: 'visible', display: '' });
+			hs.animate(o, { opacity: o.opacity }, o.dur);
+		}
+	}
+},
+
+destroyOverlays : function() {
+	if (!this.overlays.length) return;
+	hs.discardElement(this.overlayBox);
+},
+
+
+
+createFullExpand : function () {
+	this.fullExpandLabel = hs.createElement(
+		'a', {
+			href: 'javascript:hs.expanders['+ this.key +'].doFullExpand();',
+			title: hs.lang.fullExpandTitle,
+			className: 'highslide-full-expand'
+		}
+	);
+	
+	this.createOverlay({ 
+		overlayId: this.fullExpandLabel, 
+		position: hs.fullExpandPosition, 
+		hideOnMouseOut: true, 
+		opacity: hs.fullExpandOpacity
+	});
+},
+
+doFullExpand : function () {
+	try {
+		if (this.fullExpandLabel) hs.discardElement(this.fullExpandLabel);
+		
+		this.focus();
+		var xSize = this.x.size,
+        	ySize = this.y.size;
+        this.resizeTo(this.x.full, this.y.full);
+       
+        var xpos = this.x.pos - (this.x.size - xSize) / 2;
+        if (xpos < hs.marginLeft) xpos = hs.marginLeft;
+       
+        var ypos = this.y.pos - (this.y.size - ySize) / 2;
+        if (ypos < hs.marginTop) ypos = hs.marginTop;
+       
+        this.moveTo(xpos, ypos);
+		this.doShowHide('hidden');
+	
+	} catch (e) {
+		this.error(e);
+	}
+},
 
 
 afterClose : function () {
@@ -1175,5 +1586,8 @@ hs.addEventListener(document, 'ready', function() {
 });
 hs.addEventListener(window, 'resize', function() {
 	hs.getPageSize();
+});
+hs.addEventListener(document, 'mousemove', function(e) {
+	hs.mouse = { x: e.clientX, y: e.clientY	};
 });
 }
