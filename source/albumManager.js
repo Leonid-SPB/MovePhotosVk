@@ -853,15 +853,15 @@ var AmApi__ = {
             self.srcAlbumList.remove(i);
         }
 
+        var opt2 = new Option("Фото на стене", -7, false, false);
+        $(opt2).addClass("italic_bold");
+        self.srcAlbumList.add(opt2, null);
+
         //my albums, add service albums
         if(selfOwn){
             var opt1 = new Option("Сохраненные фотографии", -15, false, false);
             $(opt1).addClass("italic_bold");
             self.srcAlbumList.add(opt1, null);
-
-            var opt2 = new Option("Фото на моей стене", -7, false, false);
-            $(opt2).addClass("italic_bold");
-            self.srcAlbumList.add(opt2, null);
         }
 
         for(var i = 0; i < albums.length; i++){
