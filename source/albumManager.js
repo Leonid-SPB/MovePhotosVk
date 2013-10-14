@@ -9,7 +9,7 @@ var Settings = {
     errorHideAfter  : 3000,
     blinkDelay      : 500,
     blinkCount      : 12,
-    vkAppLocation   : "http://vk.com/app3231070",
+    vkAppLocation   : "//vk.com/app3231070",
     redirectDelay   : 3000,
     maxOptionLength : 40
 };
@@ -347,7 +347,7 @@ $.fn.spin = function(opts) {
 $.fn.addme = function(name) {
     this.each(function() {
         var $this = $(this);
-        var htmlstr = "<div style=\"text-align: center;\"><a href=\"http://vk.com/l.azarenkov\" target=\"addme\"><div class=\"clear_fix\" style=\"display: inline-block; height: 30px;\"><img width=\"30px\" height=\"30px\" class=\"adbox-logo\" src=\"http://cs319724.userapi.com/v319724876/53cf/H1pNnL_LDrw.jpg\" />";
+        var htmlstr = "<div style=\"text-align: center;\"><a href=\"//vk.com/l.azarenkov\" target=\"addme\"><div class=\"clear_fix\" style=\"display: inline-block; height: 30px;\"><img width=\"30px\" height=\"30px\" class=\"adbox-logo\" src=\"//cs319724.userapi.com/v319724876/53cf/H1pNnL_LDrw.jpg\" />";
         var text = name + ", добавь меня в друзья! =)";
         htmlstr += "<div class=\"adbox-text\" style=\"margin-top:8px; font-size: 14px;\">" + text + "</div></div></a></div>";
 
