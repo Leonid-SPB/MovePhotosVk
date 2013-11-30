@@ -531,9 +531,9 @@ var VkApiWrapper = {
         return p;
     },
 
-    queryPhotosList: function(ownerId, albumId) {
+    queryPhotosList: function(ownerId, albumId, offset) {
         var self = this;
-        var p = this.callVkApi("photos.get", {owner_id: ownerId, album_id: albumId});
+        var p = this.callVkApi("photos.get", {owner_id: ownerId, album_id: albumId, offset: offset});
         p.fail(function(){
             self.displayError("Не удалось получить список фотографий из выбранного альбома! Попробуйте перезагрузить приложение.");
         });
@@ -592,6 +592,42 @@ var AmApi__ = {
         this.srcAlbumOwnerList = document.getElementById("Form1_SrcAlbumOwner");
     },
 
+    queryAllPhotos: function(ownerId, albumId){
+        var self = this;
+        var d = $.Deferred();
+        var allPhotos = [];
+
+        showSpinner();
+
+        function queryPhotosChunk(offset){
+            VkApiWrapper.queryPhotosList(ownerId, albumId, offset).done(
+                function(photosList){
+                    if(!photosList.items){
+                        photosList.items = [];
+                    }
+
+                    allPhotos = allPhotos.concat(photosList.items);
+
+                    if( photosList.items.length && (offset < photosList.count) ){
+                        queryPhotosChunk(offset + photosList.items.length);
+                    } else {
+                        hideSpinner();
+                        d.resolve(allPhotos);
+                    }
+                }
+            ).fail(
+                function(){
+                    hideSpinner();
+                    d.reject(allPhotos);
+                }
+            );
+        }
+
+        queryPhotosChunk(0);
+
+        return d.promise();
+    },
+
     srcAlbumChanged: function() {
         var self = this;
         var selIndex = self.srcAlbumList.selectedIndex;
@@ -606,18 +642,16 @@ var AmApi__ = {
             return;
         }
 
-        showSpinner();
-        VkApiWrapper.queryPhotosList(ownerId, self.srcAlbumList.item(selIndex).value).done(
+        self.queryAllPhotos(ownerId, self.srcAlbumList.item(selIndex).value).done(
             function(photosList){
-                self.srcPhotosNumEdit.value = photosList.items.length;
+                self.srcPhotosNumEdit.value = photosList.length;
 
                 self.revThumbSortChk.disabled = true;
-                $("#thumbs_container").ThumbsViewer("addThumbList", photosList.items, self.revThumbSortChk.checked).done(
+                $("#thumbs_container").ThumbsViewer("addThumbList", photosList, self.revThumbSortChk.checked).done(
                     function(){self.revThumbSortChk.disabled = false;}
                 );
 
                 self.updSelectedNum();
-                hideSpinner();
             }
         );
     },
@@ -640,12 +674,9 @@ var AmApi__ = {
             return;
         }
 
-        showSpinner();
-
-        VkApiWrapper.queryPhotosList(ownerId, self.dstAlbumList.item(selIndex).value).done(
+        self.queryAllPhotos(ownerId, self.dstAlbumList.item(selIndex).value).done(
             function(photosList){
-                self.dstPhotosNumEdit.value = photosList.items.length;
-                hideSpinner();
+                self.dstPhotosNumEdit.value = photosList.length;
             }
         );
     },
