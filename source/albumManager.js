@@ -1,3 +1,7 @@
+/** Copyright (c) 2012-2014 Leonid Azarenkov
+    Licensed under the MIT license
+*/
+
 //requires VkApiWrapper, jQuery, highslide, spin.js
 
 var Settings = {
