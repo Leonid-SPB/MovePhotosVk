@@ -15,6 +15,8 @@ var Settings = {
     blinkCount      : 12,
     vkAppLocation   : "//vk.com/app3231070",
     redirectDelay   : 3000,
+    photosInTab     : 1000,
+    photosGetChunkSz: 1000,
     maxOptionLength : 40
 };
 
@@ -535,9 +537,9 @@ var VkApiWrapper = {
         return p;
     },
 
-    queryPhotosList: function(ownerId, albumId, offset) {
+    queryPhotosList: function(ownerId, albumId, offset, count) {
         var self = this;
-        var p = this.callVkApi("photos.get", {owner_id: ownerId, album_id: albumId, offset: offset});
+        var p = this.callVkApi("photos.get", {owner_id: ownerId, album_id: albumId, offset: offset, count: count});
         p.fail(function(){
             self.displayError("Не удалось получить список фотографий из выбранного альбома! Попробуйте перезагрузить приложение.");
         });
@@ -596,42 +598,43 @@ var AmApi__ = {
         this.srcAlbumOwnerList = document.getElementById("Form1_SrcAlbumOwner");
     },
 
-    queryAllPhotos: function(ownerId, albumId){
+    queryPhotos: function(ownerId, albumId, offset, count){
         var self = this;
         var d = $.Deferred();
-        var allPhotos = [];
+        var photos = [];
 
         showSpinner();
 
-        function queryPhotosChunk(offset){
-            VkApiWrapper.queryPhotosList(ownerId, albumId, offset).done(
+        function queryPhotosChunk(offset, countLeft){
+            var count_ = Math.min(countLeft, Settings.photosGetChunkSz);
+            VkApiWrapper.queryPhotosList(ownerId, albumId, offset, count_).done(
                 function(photosList){
                     if(!photosList.items){
                         photosList.items = [];
                     }
 
-                    allPhotos = allPhotos.concat(photosList.items);
+                    photos = photos.concat(photosList.items);
 
-                    if( photosList.items.length && (offset < photosList.count) ){
-                        queryPhotosChunk(offset + photosList.items.length);
+                    if( photosList.items.length && (offset < photosList.count) && (countLeft > 0)){
+                        queryPhotosChunk(offset + photosList.items.length, countLeft - photosList.items.length);
                     } else {
                         hideSpinner();
-                        d.resolve(allPhotos);
+                        d.resolve(photos, photosList.count);
                     }
                 }
             ).fail(
                 function(){
                     hideSpinner();
-                    d.reject(allPhotos);
+                    d.reject(photos, 0);
                 }
             );
         }
 
-        queryPhotosChunk(0);
+        queryPhotosChunk(offset, count);
 
         return d.promise();
     },
-
+    
     srcAlbumChanged: function() {
         var self = this;
         var selIndex = self.srcAlbumList.selectedIndex;
@@ -645,8 +648,23 @@ var AmApi__ = {
             self.srcPhotosNumEdit.value = "";
             return;
         }
+        
+        //get album size
+        self.queryPhotos(ownerId, self.srcAlbumList.item(selIndex).value, 0, 0).done(
+            function(photosList, albumSize){
+                self.srcPhotosNumEdit.value = albumSize;
+            }
+        );
+        
+        //set tabs
+        //$("#tabs").tabs("destroy");
+        //var numTabs = Math.ceil(self.srcPhotosNumEdit.value/Settings.photosInTab);
+        //for (var i = 0; i < numTabs; ++i) {
+        //    $("#tabs").tabs("add", "#tabs-" + i, "!!!");
+        //}
 
-        self.queryAllPhotos(ownerId, self.srcAlbumList.item(selIndex).value).done(
+        //query photos for active tab
+        self.queryPhotos(ownerId, self.srcAlbumList.item(selIndex).value, 0, Settings.albumMaxCapacity).done(
             function(photosList){
                 self.srcPhotosNumEdit.value = photosList.length;
 
@@ -658,6 +676,10 @@ var AmApi__ = {
                 self.updSelectedNum();
             }
         );
+    },
+    
+    tabShow: function() {
+        alert("Tab show");
     },
 
     dstAlbumChanged: function() {
@@ -678,9 +700,9 @@ var AmApi__ = {
             return;
         }
 
-        self.queryAllPhotos(ownerId, self.dstAlbumList.item(selIndex).value).done(
-            function(photosList){
-                self.dstPhotosNumEdit.value = photosList.length;
+        self.queryPhotos(ownerId, self.dstAlbumList.item(selIndex).value, 0, 0).done(
+            function(photosList, albumSize){
+                self.dstPhotosNumEdit.value = albumSize;
             }
         );
     },
