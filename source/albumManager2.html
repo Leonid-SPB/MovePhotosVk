@@ -89,10 +89,15 @@
 				<br /><br />
 				<label for="Form1_DstPhotosNum"><strong>Изображений в альбоме:</strong></label>
 				<input class="ui-widget ui-widget-content ui-corner-all" style="padding-right: 0.5em; text-align: right;" name="DstPhotosNum" type="text" id="Form1_DstPhotosNum" size="4" readonly="readonly" />
-				<br /><br />
 			</div>
 		</div>
-		
+		<div style="height: 5px"></div>
+        <div style="width: 100%; text-align: left">
+            <label for="Form1_ShownFotos"><strong>Показаны фотографии: </strong></label>
+            <input type="text" id="Form1_ShownFotos" class="ui-widget ui-widget-content" readonly style="border:0; color:#f6931f; font-weight:bold;" value="0-0">
+        </div>
+        <div id="Form1_ShownFotosSlider"></div>
+        <div style="height: 5px"></div>
 		<div style="width: 100%;" class="clear_fix">
 			<div style="float: left;"><button id="movePhotosBtn" disabled=1 type="button" onclick="AmApi.movePhotosClick();">Переместить</button></div>
 			<div style="overflow: hidden;"><div id="Progressbar"></div></div>

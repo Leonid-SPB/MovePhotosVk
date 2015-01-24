@@ -15,7 +15,7 @@ var Settings = {
     blinkCount      : 12,
     vkAppLocation   : "//vk.com/app3231070",
     redirectDelay   : 3000,
-    photosInTab     : 1000,
+    photosInTab     : 500,
     photosGetChunkSz: 1000,
     maxOptionLength : 40
 };
@@ -587,6 +587,12 @@ var AmApi__ = {
     srcAlbumOwnerList: null,
     dstAlbumOwnerList: null,
     albumCache: {},
+    shownPhotosEdit: null,
+    shownFotosSlider: null,
+    thumbsContainer: null,
+    progressBar: null,
+    movePhotosBtn: null,
+    selectedPhotosNumSpan: null,
 
     init: function(){
         this.srcPhotosNumEdit  = document.getElementById("Form1_SrcPhotosNum");
@@ -596,6 +602,12 @@ var AmApi__ = {
         this.revThumbSortChk   = document.getElementById("Form1_RevThumbSort");
         this.dstAlbumOwnerList = document.getElementById("Form1_DstAlbumOwner");
         this.srcAlbumOwnerList = document.getElementById("Form1_SrcAlbumOwner");
+        this.shownPhotosEdit   = document.getElementById("Form1_ShownFotos");
+        this.shownFotosSlider  = $("#Form1_ShownFotosSlider");
+        this.thumbsContainer   = $("#thumbs_container");
+        this.progressBar       = $("#Progressbar");
+        this.movePhotosBtn     = $("#movePhotosBtn");
+        this.selectedPhotosNumSpan = $("#selectedPhotosNum");
     },
 
     queryPhotos: function(ownerId, albumId, offset, count){
@@ -642,7 +654,7 @@ var AmApi__ = {
         var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
         var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
 
-        $("#thumbs_container").ThumbsViewer("empty");
+        self.thumbsContainer.ThumbsViewer("empty");
 
         if(!selIndex){//not selected
             self.srcPhotosNumEdit.value = "";
@@ -653,23 +665,20 @@ var AmApi__ = {
         self.queryPhotos(ownerId, self.srcAlbumList.item(selIndex).value, 0, 0).done(
             function(photosList, albumSize){
                 self.srcPhotosNumEdit.value = albumSize;
+                
+                //update slider
+                var numTabs = Math.max(Math.ceil(albumSize/Settings.photosInTab) - 1, 0);
+                self.shownFotosSlider.slider("option", "value", 0);
+                self.shownFotosSlider.slider("option", "max", numTabs);
+                self.shownPhotosEdit.value = 0 + "-" + Settings.photosInTab;
             }
         );
-        
-        //set tabs
-        //$("#tabs").tabs("destroy");
-        //var numTabs = Math.ceil(self.srcPhotosNumEdit.value/Settings.photosInTab);
-        //for (var i = 0; i < numTabs; ++i) {
-        //    $("#tabs").tabs("add", "#tabs-" + i, "!!!");
-        //}
 
         //query photos for active tab
-        self.queryPhotos(ownerId, self.srcAlbumList.item(selIndex).value, 0, Settings.albumMaxCapacity).done(
+        self.queryPhotos(ownerId, self.srcAlbumList.item(selIndex).value, 0, Settings.photosInTab).done(
             function(photosList){
-                self.srcPhotosNumEdit.value = photosList.length;
-
                 self.revThumbSortChk.disabled = true;
-                $("#thumbs_container").ThumbsViewer("addThumbList", photosList, self.revThumbSortChk.checked).done(
+                self.thumbsContainer.ThumbsViewer("addThumbList", photosList, self.revThumbSortChk.checked).done(
                     function(){self.revThumbSortChk.disabled = false;}
                 );
 
@@ -678,8 +687,26 @@ var AmApi__ = {
         );
     },
     
-    tabShow: function() {
-        alert("Tab show");
+    silde: function(event, ui) {
+        var self = this;
+        var selIndex = self.srcAlbumList.selectedIndex;
+        var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
+        var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+
+        self.thumbsContainer.ThumbsViewer("empty");
+        self.shownPhotosEdit.value = ui.value * Settings.photosInTab + "-" + (ui.value + 1) * Settings.photosInTab;
+        
+        //query photos for active tab
+        self.queryPhotos(ownerId, self.srcAlbumList.item(selIndex).value, ui.value * Settings.photosInTab, Settings.photosInTab).done(
+            function(photosList){
+                self.revThumbSortChk.disabled = true;
+                self.thumbsContainer.ThumbsViewer("addThumbList", photosList, self.revThumbSortChk.checked).done(
+                    function(){self.revThumbSortChk.disabled = false;}
+                );
+
+                self.updSelectedNum();
+            }
+        );
     },
 
     dstAlbumChanged: function() {
@@ -690,11 +717,11 @@ var AmApi__ = {
         var ownerId = self.dstAlbumOwnerList.item(ownSelIndex).value;
 
         if(selIndex == 1){//save album
-            $("#movePhotosBtn").button("option","label", "Сохранить");
+            self.movePhotosBtn.button("option","label", "Сохранить");
             self.dstPhotosNumEdit.value = "";
             return;
         }
-        $("#movePhotosBtn").button("option","label","Переместить");
+        self.movePhotosBtn.button("option","label","Переместить");
         if(selIndex == 0){//not selected
             self.dstPhotosNumEdit.value = "";
             return;
@@ -755,13 +782,14 @@ var AmApi__ = {
             dstr = "disable";
         }
 
-        $("#thumbs_container").ThumbsViewer("selectionDisable", dval);
-        $("#movePhotosBtn").button(dstr);
+        self.thumbsContainer.ThumbsViewer("selectionDisable", dval);
+        self.movePhotosBtn.button(dstr);
         self.srcAlbumList.disabled = dval;
         self.dstAlbumList.disabled = dval;
         self.revThumbSortChk.disabled = dval;
         self.srcAlbumOwnerList.disabled = dval;
         //self.dstAlbumOwnerList.disabled = dval;
+        self.shownFotosSlider.slider(dstr);
     },
 
     movePhotosSingle: function(aid_target, selThumbsAr){
@@ -769,7 +797,7 @@ var AmApi__ = {
 
         if(!selThumbsAr.length){
             //MOVE DONE
-            $("#Progressbar").progressbar("value", 100);
+            self.progressBar.progressbar("value", 100);
             self.disableControls(false);
 
             //self.srcAlbumChanged();
@@ -794,11 +822,11 @@ var AmApi__ = {
             function() {
                 ++self.dstPhotosNumEdit.value;
                 --self.srcPhotosNumEdit.value;
-                $("#thumbs_container").ThumbsViewer("removeThumb", currThumbData.$thumb);
+                self.thumbsContainer.ThumbsViewer("removeThumb", currThumbData.$thumb);
                 self.updSelectedNum();
 
                 self.progressPerc = self.progressPerc + self.progressStep;
-                $("#Progressbar").progressbar("value", self.progressPerc);
+                self.progressBar.progressbar("value", self.progressPerc);
                 setTimeout(function(){
                     self.movePhotosSingle(aid_target, selThumbsAr);
                 }, Settings.movePhotosDelay);
@@ -808,7 +836,7 @@ var AmApi__ = {
 
     revThumbSortChkClick: function(){
         var self = this;
-        $("#thumbs_container").ThumbsViewer("sort", self.revThumbSortChk.checked);
+        self.thumbsContainer.ThumbsViewer("sort", self.revThumbSortChk.checked);
     },
 
     savePhotos: function(divPhotos, selThumbsAr, num){
@@ -868,7 +896,7 @@ var AmApi__ = {
             return;
         }
 
-        var selThumbsAr = $("#thumbs_container").ThumbsViewer("getSelThumbsData");
+        var selThumbsAr = self.thumbsContainer.ThumbsViewer("getSelThumbsData");
         if(!selThumbsAr.length){//no images selected
             displayWarn("Не выбраны фотографии для перемещения/сохранения", "NoteField", Settings.errorHideAfter);
             return;
@@ -955,19 +983,20 @@ var AmApi__ = {
     },
 
     updSelectedNum: function(){
-        $("#selectedPhotosNum").text($("#thumbs_container").ThumbsViewer("getSelThumbsNum")+"");
+        var self = this;
+        this.selectedPhotosNumSpan.text(self.thumbsContainer.ThumbsViewer("getSelThumbsNum")+"");
     },
 
 
     selToggleAll: function() {
         var self = this;
-        $("#thumbs_container").ThumbsViewer("selectToggleAll");
+        self.thumbsContainer.ThumbsViewer("selectToggleAll");
         self.updSelectedNum();
     },
 
     selToggleVisible: function() {
         var self = this;
-        $("#thumbs_container").ThumbsViewer("selectToggleVisible");
+        self.thumbsContainer.ThumbsViewer("selectToggleVisible");
         self.updSelectedNum();
     },
 
@@ -1098,6 +1127,15 @@ $(function(){
     $("#movePhotosBtn").button();
     $("#movePhotosBtn").button("enable");
     $("#thumbs_container").ThumbsViewer();
+    $("#Form1_ShownFotosSlider").slider({
+        value: 0,
+        min:   0,
+        max:   0,
+        step:  1,
+        slide: function( event, ui ) {
+            AmApi__.silde(event, ui);
+        }
+    });
     $("#thumbs_container").on("click.AmApi__", ".ThumbsViewer-thumb_block", function(){AmApi__.updSelectedNum();});
 
     $("#welcome_dialog").dialog({autoOpen: false, modal: true, width: 550, position: { my: "center center-150", at: "center center", of: window }});
