@@ -1149,10 +1149,12 @@ $(function(){
             VkApiWrapper.init();
             
             //preloader AD
-            var app_id = 3231070;
-            var a = new VKAdman();
-            a.setupPreroll(app_id);
-            admanStat(app_id, Settings.vkUserId);
+            if (typeof VKAdman !== 'undefined') {
+                var app_id = 3231070;
+                var a = new VKAdman();
+                a.setupPreroll(app_id);
+                admanStat(app_id, Settings.vkUserId);
+            }
             
             VK.Widgets.Like("vk_like", {type: "button", height: 24}, 500);
             d.resolve();
