@@ -1145,14 +1145,15 @@ $(function(){
 
     VK.init(
         function() {
+            // API initialization succeeded
+            VkApiWrapper.init();
+            
             //preloader AD
             var app_id = 3294304;
             var a = new VKAdman();
             a.setupPreroll(app_id);
             admanStat(app_id, Settings.vkUserId);
             
-            // API initialization succeeded
-            VkApiWrapper.init();
             VK.Widgets.Like("vk_like", {type: "button", height: 24}, 500);
             d.resolve();
         },
