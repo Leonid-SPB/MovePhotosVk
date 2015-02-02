@@ -1149,7 +1149,7 @@ $(function(){
             VkApiWrapper.init();
             
             //preloader AD
-            var app_id = 3294304;
+            var app_id = 3231070;
             var a = new VKAdman();
             a.setupPreroll(app_id);
             admanStat(app_id, Settings.vkUserId);
