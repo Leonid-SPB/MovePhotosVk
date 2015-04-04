@@ -1008,9 +1008,11 @@ var AmApi__ = {
         VkApiWrapper.queryAlbumsList(ownerId).done(function(albums){
             //sort albums by name
             albums.items = albums.items.sort(function(a, b){
-                if(a.title < b.title){
+                var ta = a.title.toLowerCase();
+                var tb = b.title.toLowerCase();
+                if(ta < tb){
                     return -1;
-                }else if(a.title > b.title){
+                }else if(ta > tb){
                     return 1;
                 }
                 return 0;
@@ -1174,9 +1176,11 @@ d.done(function(){
     VkApiWrapper.queryGroupsList(Settings.vkUserId).done(function(groups){
         //sort groups by name
         groups.items = groups.items.sort(function(a, b){
-            if(a.name < b.name){
+            var ta = a.name.toLowerCase();
+            var tb = b.name.toLowerCase();
+            if(ta < tb){
                 return -1;
-            }else if(a.name > b.name){
+            }else if(ta > tb){
                 return 1;
             }
             return 0;
