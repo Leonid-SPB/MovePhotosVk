@@ -1,4 +1,4 @@
-/** Copyright (c) 2012-2014 Leonid Azarenkov
+/** Copyright (c) 2012-2015 Leonid Azarenkov
     Licensed under the MIT license
 */
 
@@ -1152,7 +1152,7 @@ $(function(){
             
             //preloader AD
             if (typeof VKAdman !== 'undefined') {
-                var app_id = 3231070;
+                var app_id = 3231070; //release: 3231070, beta: 3294304
                 var a = new VKAdman();
                 a.setupPreroll(app_id);
                 admanStat(app_id, Settings.vkUserId);
