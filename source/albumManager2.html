@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<!--Copyright (c) 2012-2014 Leonid Azarenkov
+<!--Copyright (c) 2012-2015 Leonid Azarenkov
 	Licensed under the MIT license
 -->
 <html>
@@ -7,14 +7,13 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>Перенос фотографий между альбомами</title>
 	
-	<link href="jquery-ui-1.9.1.custom.css" rel="stylesheet" type="text/css" />
+	<link href="jquery-ui.css" rel="stylesheet" type="text/css" />
 	<link href="albumManager.css" rel="stylesheet" type="text/css" />
 	<link href="highslide.css" rel="stylesheet" type="text/css" />
-
 	<script src="//ad.mail.ru/static/vkadman.min.js"></script>
 	<script src="//js.appscentrum.com/scr/preroll.js"></script>
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 	<script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
 	<script src="spin.js" type="text/javascript" charset="utf-8"></script>
 	<script src="highslide.js" type="text/javascript" charset="utf-8"></script>
@@ -23,6 +22,8 @@
 </head>
 <body>
 	<div id="vk_ads_5443"></div>
+	<!-- Release ADs -->
+	<!--
 	<script type="text/javascript">
 	  setTimeout(function() {
 		var adsParams = {"ad_unit_id":5443,"ad_unit_hash":"d7dff97200aa41db12e81fccd90159d1"};
@@ -39,9 +40,32 @@
 		  var scriptElem = document.createElement('script');
 		  scriptElem.type = 'text/javascript';
 		  scriptElem.async = true;
-		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?116';
+		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?117';
 		  adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
 		}
+	  }, 0);
+	</script>
+    -->
+	<!-- Beta ADs -->
+	<script type="text/javascript">
+	  setTimeout(function() {
+	    var adsParams = {"ad_unit_id":63212,"ad_unit_hash":"96907895a1331a36a52fe3f8c3a2bf38"};
+	    function vkAdsInit() {
+	      VK.Widgets.Ads('vk_ads_5443', {}, adsParams);
+	    }
+	    if (window.VK && VK.Widgets) {
+	      vkAdsInit();
+	    } else {
+	      if (!window.vkAsyncInitCallbacks) window.vkAsyncInitCallbacks = [];
+	      vkAsyncInitCallbacks.push(vkAdsInit);
+	      var protocol = ((location.protocol === 'https:') ? 'https:' : 'http:');
+	      var adsElem = document.getElementById('vk_ads_5443');
+	      var scriptElem = document.createElement('script');
+	      scriptElem.type = 'text/javascript';
+	      scriptElem.async = true;
+	      scriptElem.src = protocol + '//vk.com/js/api/openapi.js?117';
+	      adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
+	    }
 	  }, 0);
 	</script>
 	<div style="width: 100%; text-align: center; margin-left: auto; margin-right: auto; position: relative">
