@@ -1,4 +1,4 @@
-/** Copyright (c) 2012-2015 Leonid Azarenkov
+/** Copyright (c) 2012-2016 Leonid Azarenkov
     Licensed under the MIT license
 */
 

@@ -1,0 +1,1 @@
+{"connect":"SFTP","host":"azarenkov.biz","port":"22","user":"root","remoteRoot":"/var/www/html/testApp","privateKeyFile":"C:/DATA_STORE/USERDATA/ServerStuff/keys/digocean.id_rsa"}
