@@ -46,6 +46,14 @@ $(function () {
     }
   });
 
+  $("#Form1_SelToggleAll").button();
+  $("#Form1_SelToggleVisible").button();
+  $("#Form1_ShownFotosSpinner").spinner({
+    min: 1,
+    step: 1,
+    max: Settings.MaxLikeThresh
+  });
+
   $("#movePhotosBtn").button();
   $("#movePhotosBtn").button("enable");
 

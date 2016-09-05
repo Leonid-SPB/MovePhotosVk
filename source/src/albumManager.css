@@ -30,16 +30,6 @@ a:hover {
   text-decoration: underline;
 }
 
-.italic_bold {
-  font-style: italic;
-  font-weight: bolder;
-}
-
-.no_glow_on_focus,
-.no_glow_on_focus:hover {
-  outline: none
-}
-
 hr {
   display: block;
   margin-top: 0.5em;
@@ -50,6 +40,16 @@ hr {
   border-width: 1px;
   opacity: 0.4;
   width: 100%;
+}
+
+.italic_bold {
+  font-style: italic;
+  font-weight: bolder;
+}
+
+.no_glow_on_focus,
+.no_glow_on_focus:hover {
+  outline: none
 }
 
 
@@ -214,4 +214,8 @@ hr {
 
 .blink_1 {
   box-shadow: 0px 0px 3px 2px red;
+}
+
+.MainForm label {
+  font-weight: bolder;
 }
