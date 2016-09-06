@@ -36,24 +36,19 @@ $(function () {
   $("#Progressbar").progressbar({
     value: 0
   });
-  $("#Form1_ShownFotosSlider").slider({
-    value: 0,
-    min: 0,
-    max: 0,
-    step: 1,
-    slide: function (event, ui) {
-      //AmApi__.silde(event, ui);
-    }
-  });
 
   $("#Form1_SelToggleAll").button();
   $("#Form1_SelToggleVisible").button();
-  $("#Form1_ShownFotosSpinner").spinner({
-    min: 1,
-    step: 1,
-    max: Settings.MaxLikeThresh
+  $("#Form1_ShownPrev").button({
+    icons: {
+      primary: "ui-icon ui-icon-triangle-1-w"
+    }
   });
-
+  $("#Form1_ShownNext").button({
+    icons: {
+      primary: "ui-icon ui-icon-triangle-1-e"
+    }
+  });
   $("#movePhotosBtn").button();
   $("#movePhotosBtn").button("enable");
 

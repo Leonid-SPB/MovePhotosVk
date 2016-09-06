@@ -164,40 +164,47 @@
       </div>
 
       <div style="display: table; margin-top: 10px; margin-bottom: 10px; width: 100%">
-        <div style="display: table-cell; text-align: left; vertical-align: middle; width: 40%">
-          <label>Показаны фотографии:
-            <input id="Form1_ShownFotosEdit" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" value="1-500/1452">
-          </label>
-        </div>
-        <div style="display: table-cell; text-align: left; vertical-align: middle; width: 60%">
-          <div style="display: table; width: 100%">
-            <div style="display: table-cell; text-align: center; vertical-align: middle; width: 30%">
-              <label>Страница:
-                <input id="Form1_ShownFotosSpinner" class="no_glow_on_focus" value="1" size="3">
-              </label>
+        <div style="display: table-cell; vertical-align: middle; text-align: left">
+          <div style="display: table">
+            <div style="display: table-cell; vertical-align: middle">
+              <label>Показаны фотографии:&nbsp;</label>
             </div>
-            <div style="display: table-cell; text-align: center; vertical-align: middle; width: 70%; padding-left: 10px">
-              <div id="Form1_ShownFotosSlider"></div>
+            <div style="display: table-cell; vertical-align: middle">
+              <a role="button" tabindex="-1" class="ui-corner-tl ui-corner-bl ui-button ui-widget ui-state-default ui-button-text-only" style="margin: 0; height: 19px">
+                <div class="ui-button-text" style="padding: 0px">
+                  <span class="ui-icon ui-icon-triangle-1-w">&lt;</span>
+                </div>
+              </a>
+            </div>
+            <div style="display: table-cell; vertical-align: middle">
+              <input id="Form1_ShownFotosEdit" class="ui-widget ui-widget-content no_glow_on_focus" readonly="readonly" type="text" value="1-500/1452">
+            </div>
+            <div style="display: table-cell; vertical-align: middle">
+              <a role="button" tabindex="-1" class="ui-corner-tr ui-corner-br ui-button ui-widget ui-state-default ui-button-text-only" style="margin: 0; height: 19px">
+                <div class="ui-button-text" style="padding: 0px">
+                  <span class="ui-icon ui-icon-triangle-1-e">&gt;</span>
+                </div>
+              </a>
             </div>
           </div>
         </div>
+
+        <div style="display: table-cell; vertical-align: middle;  text-align: right">
+          <label for="Form1_RevThumbSort">Обратная сортировка</label>
+          <input id="Form1_RevThubSort" type="checkbox" class="no_glow_on_focus" onclick="AmApi.revThumbSortChkClick();">
+        </div>
       </div>
 
-      <div style="display: table; margin-top: 10px; margin-bottom: 10px; width: 100%">
-        <div style="display: table-cell; text-align: left">
-          <label for="Form1_SelectedFotos">Выбрано:</label>
+      <div style="display: table; margin-top: 10px; margin-bottom: 10px">
+        <div style="display: table-cell; text-align: left; vertical-align: middle; padding-right: 1em">
+          <label for="Form1_SelectedFotos">Выбрано:&nbsp;</label>
           <input id="Form1_SelectedFotos" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="9" value="234/500">
         </div>
-
-        <div style="display: table-cell; text-align: left">
-          <label>Выделить/убрать:
+        <div style="display: table-cell; text-align: left; vertical-align: middle">
+          <label>Выделить/убрать:&nbsp;
             <button id="Form1_SelToggleAll" style="font-size: 0.9em" type="button" onclick="AmApi.selToggleAll();">все</button>
             <button id="Form1_SelToggleVisible" style="font-size: 0.9em" type="button" onclick="AmApi.selToggleVisible();">текущие</button>
           </label>
-        </div>
-        <div style="display: table-cell; text-align: right; width: 50%">
-          <label for="Form1_RevThumbSort">Обратная сортировка</label>
-          <input id="Form1_RevThubSort" type="checkbox" class="no_glow_on_focus" onclick="AmApi.revThumbSortChkClick();">
         </div>
       </div>
     </form>
