@@ -170,7 +170,7 @@
               <label>Показаны фотографии:&nbsp;</label>
             </div>
             <div style="display: table-cell; vertical-align: middle">
-              <a role="button" tabindex="-1" class="ui-corner-tl ui-corner-bl ui-button ui-widget ui-state-default ui-button-text-only" style="margin: 0; height: 19px">
+              <a role="button" tabindex="-1" class="ui-corner-tl ui-corner-bl ui-button ui-widget ui-state-default ui-button-text-only" style="margin: 0; height: 19px; position: relative; right: -1px">
                 <div class="ui-button-text" style="padding: 0px">
                   <span class="ui-icon ui-icon-triangle-1-w">&lt;</span>
                 </div>
@@ -180,7 +180,7 @@
               <input id="Form1_ShownFotosEdit" class="ui-widget ui-widget-content no_glow_on_focus" readonly="readonly" type="text" value="1-500/1452">
             </div>
             <div style="display: table-cell; vertical-align: middle">
-              <a role="button" tabindex="-1" class="ui-corner-tr ui-corner-br ui-button ui-widget ui-state-default ui-button-text-only" style="margin: 0; height: 19px">
+              <a role="button" tabindex="-1" class="ui-corner-tr ui-corner-br ui-button ui-widget ui-state-default ui-button-text-only" style="margin: 0; height: 19px; position: relative; left: -1px">
                 <div class="ui-button-text" style="padding: 0px">
                   <span class="ui-icon ui-icon-triangle-1-e">&gt;</span>
                 </div>
@@ -188,14 +188,6 @@
             </div>
           </div>
         </div>
-
-        <div style="display: table-cell; vertical-align: middle;  text-align: right">
-          <label for="Form1_RevThumbSort">Обратная сортировка</label>
-          <input id="Form1_RevThubSort" type="checkbox" class="no_glow_on_focus" onclick="AmApi.revThumbSortChkClick();">
-        </div>
-      </div>
-
-      <div style="display: table; margin-top: 10px; margin-bottom: 10px">
         <div style="display: table-cell; text-align: left; vertical-align: middle; padding-right: 1em">
           <label for="Form1_SelectedFotos">Выбрано:&nbsp;</label>
           <input id="Form1_SelectedFotos" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="9" value="234/500">
@@ -218,6 +210,10 @@
     <ul id="thumbs_container">&nbsp;</ul>
   </div>
   <hr />
+  <div style="text-align: right">
+    <label for="Form1_RevThumbSort">Обратная сортировка</label>
+    <input id="Form1_RevThubSort" type="checkbox" class="no_glow_on_focus" onclick="AmApi.revThumbSortChkClick();">
+  </div>
 
   <div class="footer">
     <div class="footer-table">
