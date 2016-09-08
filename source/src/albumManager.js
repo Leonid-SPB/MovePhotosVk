@@ -23,6 +23,90 @@ var Settings = {
   vkSid: null
 };
 
+/* Album manager */
+var AMApi = {
+  srcAlbumOwnerList: null,
+  srcAlbumList: null,
+  dstAlbumOwnerList: null,
+  dstAlbumList: null,
+
+  $progressBar: null,
+  $movePhotosBtn: null,
+
+  $showPrevBtn: null,
+  $showNextBtn: null,
+  shownPhotosEdit: null,
+
+  selectedPhotosEdit: null,
+  $selToggleAllBtn: null,
+  $selToggleVisibleBtn: null,
+
+  revThumbSortChk: null,
+  $thumbsContainer: null,
+
+  busyFlag: true,
+  progressStep: 0,
+  progressPerc: 0,
+
+  init: function () {
+    var self = this;
+
+    //assign variables for controls
+    self.srcAlbumOwnerList = document.getElementById("Form1_SrcAlbumOwner");
+    self.srcAlbumList = document.getElementById("Form1_SrcAlbumList");
+    self.dstAlbumOwnerList = document.getElementById("Form1_DstAlbumOwner");
+    self.dstAlbumList = document.getElementById("Form1_DstAlbumList");
+
+    self.$progressBar = $("#Progressbar");
+    self.$movePhotosBtn = $("#movePhotosBtn");
+
+    self.$showPrevBtn = $("#Form1_ShowPrev");
+    self.$showNextBtn = $("#Form1_ShowNext");
+    self.shownPhotosEdit = document.getElementById("Form1_ShownFotos");
+
+    self.selectedPhotosEdit = document.getElementById("Form1_SelectedPhotos");
+    self.$selToggleAllBtn = $("#Form1_SelToggleAll");
+    self.$selToggleVisibleBtn = $("#Form1_SelToggleVisible");
+
+    self.revThumbSortChk = document.getElementById("Form1_RevThumbSort");
+    self.$thumbsContainer = $("#thumbs_container");
+
+    //assign event handlers
+
+    self.disableControls(1);
+    self.busyFlag = true;
+
+    VkAppUtils.welcomeCheck().done(function () {
+      //show spinner if still busy when dialog is closed
+      if (self.busyFlag) {
+        Utils.showSpinner();
+      }
+    });
+
+    //Query data
+  },
+
+  disableControls: function (disable) {
+    var self = this;
+    var dval = 0;
+    var dstr = "enable";
+    if (disable) {
+      dval = 1;
+      dstr = "disable";
+    }
+
+    self.$movePhotosBtn.button(dstr);
+    self.$selToggleAllBtn.button(dstr);
+    self.$selToggleVisibleBtn.button(dstr);
+    self.$showPrevBtn.button(dstr);
+    self.$showNextBtn.button(dstr);
+    self.revThumbSortChk.disabled = dval;
+    self.srcAlbumOwnerList.disabled = dval;
+    self.srcAlbumList.disabled = dval;
+    self.dstAlbumList.disabled = dval;
+  },
+};
+
 //Initialize application
 $(function () {
   Settings.vkUserId = Utils.sanitizeParameter(Utils.getParameterByName("viewer_id"));
@@ -39,18 +123,19 @@ $(function () {
 
   $("#Form1_SelToggleAll").button();
   $("#Form1_SelToggleVisible").button();
-  $("#Form1_ShownPrev").button({
+  $("#Form1_ShowPrev").button({
+    text: false,
     icons: {
-      primary: "ui-icon ui-icon-triangle-1-w"
+      primary: "ui-icon ui-icon-triangle-1-w" // Custom icon
     }
-  });
-  $("#Form1_ShownNext").button({
+  }).removeClass('ui-corner-all');
+  $("#Form1_ShowNext").button({
+    text: false,
     icons: {
-      primary: "ui-icon ui-icon-triangle-1-e"
+      primary: "ui-icon ui-icon-triangle-1-e" // Custom icon
     }
-  });
+  }).removeClass('ui-corner-all');
   $("#movePhotosBtn").button();
-  $("#movePhotosBtn").button("enable");
 
   $("#welcome_dialog").dialog({
     autoOpen: false,
@@ -91,7 +176,7 @@ $(function () {
     function () {
       // API initialization succeeded
       VkApiWrapper.init({
-        //errorHandler: RPApi.displayError
+        errorHandler: AMApi.displayError
       });
 
       //preloader AD
@@ -118,7 +203,7 @@ $(function () {
 
   //VK API init finished: query user data
   d.done(function () {
-    //Utils.hideSpinner();
-    //RPApi.init();
+    Utils.hideSpinner();
+    AMApi.init();
   });
 });

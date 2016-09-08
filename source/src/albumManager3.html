@@ -14,6 +14,7 @@
   <meta http-equiv="pragma" content="no-cache" />
   <title>Перенос фотографий между альбомами</title>
 
+  <link href="normalize.css" rel="stylesheet" type="text/css" />
   <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/cupertino/jquery-ui.min.css">
   <link href="jquery-ui.theme.css" rel="stylesheet" type="text/css" />
   <link href="albumManager.css" rel="stylesheet" type="text/css" />
@@ -117,20 +118,21 @@
   </div>
 
   <hr />
-  <div style="width: 98%; text-align: center; margin-left: auto; margin-right: auto; margin-top: 10px; margin-bottom: 20px">
-    <form name="Form1" action="" class="MainForm">
+  <form name="Form1" action="" class="MainForm">
+    <div style="width: 98%; text-align: center; margin-left: auto; margin-right: auto; margin-top: 10px; margin-bottom: 20px">
+
       <div style="display: table; margin-top: 10px; margin-bottom: 10px; width: 100%">
         <div style="display: table-cell; text-align: center; vertical-align: middle; width: 50%">
           <div>
             <label for="Form1_SrcAlbumOwner">Откуда</label>
           </div>
           <div>
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" size="1" id="Form1_SrcAlbumOwner" onchange="AmApi.srcOwnerChanged()">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" size="1" id="Form1_SrcAlbumOwner">
               <option value="my albums">Мои альбомы</option>
             </select>
           </div>
           <div>
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" size="1" id="Form1_SrcAlbumList" onchange="AmApi.srcAlbumChanged()">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" size="1" id="Form1_SrcAlbumList">
               <option value="not selected">Альбом не выбран</option>
             </select>
           </div>
@@ -141,12 +143,12 @@
             <label for="Form1_DstAlbumOwner">Куда</label>
           </div>
           <div>
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em; opacity: 0.5;" size="1" id="Form1_DstAlbumOwner" onchange="AmApi.dstOwnerChanged()" disabled="true">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em; opacity: 0.5;" size="1" id="Form1_DstAlbumOwner" disabled="true">
               <option value="my albums">Мои альбомы</option>
             </select>
           </div>
           <div>
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" size="1" id="Form1_DstAlbumList" onchange="AmApi.dstAlbumChanged()">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" size="1" id="Form1_DstAlbumList">
               <option value="not selected">Альбом не выбран</option>
               <option value="save" class="italic_bold">Сохранить локально</option>
             </select>
@@ -156,7 +158,7 @@
 
       <div style="display: table; margin-top: 10px; margin-bottom: 10px; width: 100%">
         <div style="display: table-cell; text-align: left; vertical-align: middle">
-          <button id="movePhotosBtn" disabled=1 type="button" onclick="AmApi.movePhotosClick();">Переместить</button>
+          <button id="movePhotosBtn" disabled=1 type="button">Переместить</button>
         </div>
         <div style="display: table-cell; text-align: left; width: 90%; vertical-align: middle">
           <div id="Progressbar"></div>
@@ -170,50 +172,43 @@
               <label>Показаны фотографии:&nbsp;</label>
             </div>
             <div style="display: table-cell; vertical-align: middle">
-              <a role="button" tabindex="-1" class="ui-corner-tl ui-corner-bl ui-button ui-widget ui-state-default ui-button-text-only" style="margin: 0; height: 19px; position: relative; right: -1px">
-                <div class="ui-button-text" style="padding: 0px">
-                  <span class="ui-icon ui-icon-triangle-1-w">&lt;</span>
-                </div>
-              </a>
+              <button id="Form1_ShowPrev" class="ui-corner-tl ui-corner-bl" style="margin: 0; position: relative; right: -1px; padding-top: 0; padding-bottom: 0; height: 20px" type="button"></button>
             </div>
             <div style="display: table-cell; vertical-align: middle">
-              <input id="Form1_ShownFotosEdit" class="ui-widget ui-widget-content no_glow_on_focus" readonly="readonly" type="text" value="1-500/1452">
+              <input id="Form1_ShownPhotosEdit" class="ui-widget ui-widget-content no_glow_on_focus" readonly="readonly" type="text" value="0/0">
             </div>
             <div style="display: table-cell; vertical-align: middle">
-              <a role="button" tabindex="-1" class="ui-corner-tr ui-corner-br ui-button ui-widget ui-state-default ui-button-text-only" style="margin: 0; height: 19px; position: relative; left: -1px">
-                <div class="ui-button-text" style="padding: 0px">
-                  <span class="ui-icon ui-icon-triangle-1-e">&gt;</span>
-                </div>
-              </a>
+              <button id="Form1_ShowNext" class="ui-corner-tr ui-corner-br" style="margin: 0; position: relative; left: -1px; padding-top: 0; padding-bottom: 0; height: 20px" type="button"></button>
             </div>
           </div>
         </div>
         <div style="display: table-cell; text-align: left; vertical-align: middle; padding-right: 1em">
-          <label for="Form1_SelectedFotos">Выбрано:&nbsp;</label>
-          <input id="Form1_SelectedFotos" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="9" value="234/500">
+          <label for="Form1_SelectedPhotos">Выбрано:&nbsp;</label>
+          <input id="Form1_SelectedPhotos" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="9" value="0/0">
         </div>
         <div style="display: table-cell; text-align: left; vertical-align: middle">
           <label>Выделить/убрать:&nbsp;
-            <button id="Form1_SelToggleAll" style="font-size: 0.9em" type="button" onclick="AmApi.selToggleAll();">все</button>
-            <button id="Form1_SelToggleVisible" style="font-size: 0.9em" type="button" onclick="AmApi.selToggleVisible();">текущие</button>
+            <button id="Form1_SelToggleAll" style="font-size: 0.9em" type="button">все</button>
+            <button id="Form1_SelToggleVisible" style="font-size: 0.9em" type="button">текущие</button>
           </label>
         </div>
       </div>
-    </form>
-  </div>
 
-  <div id="NoteField"></div>
-  <div id="globalErrorBox"></div>
+    </div>
 
-  <hr />
-  <div style="width: 100%; height: 550px; overflow : auto;">
-    <ul id="thumbs_container">&nbsp;</ul>
-  </div>
-  <hr />
-  <div style="text-align: right">
-    <label for="Form1_RevThumbSort">Обратная сортировка</label>
-    <input id="Form1_RevThubSort" type="checkbox" class="no_glow_on_focus" onclick="AmApi.revThumbSortChkClick();">
-  </div>
+    <div id="NoteField"></div>
+    <div id="globalErrorBox"></div>
+
+    <hr />
+    <div style="width: 100%; height: 550px; overflow : auto;">
+      <ul id="thumbs_container">&nbsp;</ul>
+    </div>
+    <hr />
+    <div style="text-align: right">
+      <label for="Form1_RevThumbSort">Обратная сортировка</label>
+      <input id="Form1_RevThumbSort" type="checkbox" class="no_glow_on_focus">
+    </div>
+  </form>
 
   <div class="footer">
     <div class="footer-table">

@@ -51,12 +51,15 @@ var VkApiWrapper = {
           //check if api call is still in progress
           if (d.state() === "pending") {
             if (retries-- > 0) {
-              console.log("VkApiWrapper: VK.api call timeout, rescheduling request");
+              console.log("VkApiWrapper: VK.API call timeout, rescheduling request");
               timeout *= self.settings_.apiTmoutMultiplier;
               scheduleVkApiMethod();
             } else {
-              console.log("VkApiWrapper: VK.api call timeout, all retries failed");
-              d.reject();
+              var e = {
+                error_msg: "VK.API call timeout, all retries failed"
+              };
+              console.log(e.error_msg);
+              d.reject(e);
             }
           }
 
@@ -75,8 +78,11 @@ var VkApiWrapper = {
             console.log("VkApiWrapper: " + data.error.error_msg);
             d.reject(data.error);
           } else {
-            console.log("VkApiWrapper: Unknow error!");
-            d.reject(null);
+            var e = {
+              error_msg: "VK.API call failed, unknow error!"
+            };
+            console.log(e.error_msg);
+            d.reject(e);
           }
         });
       });
@@ -91,8 +97,8 @@ var VkApiWrapper = {
     var self = this;
     var p = self.callVkApi("wall.post", options);
     if (!silent) {
-      p.fail(function () {
-        self.settings_.errorHandler("Не удалось создать запись на стене!");
+      p.fail(function (error) {
+        self.settings_.errorHandler("Не удалось создать запись на стене!<br />ERROR: " + error.error_msg);
       });
     }
     return p;
@@ -102,8 +108,8 @@ var VkApiWrapper = {
     var self = this;
     var p = self.callVkApi("photos.getAlbums", options);
     if (!silent) {
-      p.fail(function () {
-        self.settings_.errorHandler("Не удалось получить список альбомов!");
+      p.fail(function (error) {
+        self.settings_.errorHandler("Не удалось получить список альбомов!<br />ERROR: " + error.error_msg);
       });
     }
     return p;
@@ -125,7 +131,7 @@ var VkApiWrapper = {
         d.resolve(resp);
       } else {
         if (!silent) {
-          self.settings_.errorHandler("Не удалось получить список фотографий из выбранного альбома!");
+          self.settings_.errorHandler("Не удалось получить список фотографий из выбранного альбома!<br />ERROR: " + error.error_msg);
         }
         d.reject();
       }
@@ -138,8 +144,8 @@ var VkApiWrapper = {
     var self = this;
     var p = self.callVkApi("photos.getAll", options);
     if (!silent) {
-      p.fail(function () {
-        self.settings_.errorHandler("Не удалось получить список фотографий пользователя или группы!");
+      p.fail(function (error) {
+        self.settings_.errorHandler("Не удалось получить список фотографий пользователя или группы!<br />ERROR: " + error.error_msg);
       });
     }
     return p;
@@ -149,8 +155,8 @@ var VkApiWrapper = {
     var self = this;
     var p = self.callVkApi("friends.get", options);
     if (!silent) {
-      p.fail(function () {
-        self.settings_.errorHandler("Не удалось получить список друзей!");
+      p.fail(function error() {
+        self.settings_.errorHandler("Не удалось получить список друзей!<br />ERROR: " + error.error_msg);
       });
     }
     return p;
@@ -160,8 +166,8 @@ var VkApiWrapper = {
     var self = this;
     var p = self.callVkApi("users.get", options);
     if (!silent) {
-      p.fail(function () {
-        self.settings_.errorHandler("Не удалось получить информацию о пользователе!");
+      p.fail(function (error) {
+        self.settings_.errorHandler("Не удалось получить информацию о пользователе!<br />ERROR: " + error.error_msg);
       });
     }
     return p;
@@ -171,8 +177,8 @@ var VkApiWrapper = {
     var self = this;
     var p = self.callVkApi("groups.get", options);
     if (!silent) {
-      p.fail(function () {
-        self.settings_.errorHandler("Не удалось получить список групп пользователя!");
+      p.fail(function error() {
+        self.settings_.errorHandler("Не удалось получить список групп пользователя!<br />ERROR: " + error.error_msg);
       });
     }
     return p;
@@ -182,8 +188,8 @@ var VkApiWrapper = {
     var self = this;
     var p = self.callVkApi("groups.getById", options);
     if (!silent) {
-      p.fail(function () {
-        self.settings_.errorHandler("Не удалось получить информацию о группе/странице!");
+      p.fail(function (error) {
+        self.settings_.errorHandler("Не удалось получить информацию о группе/странице!<br />ERROR: " + error.error_msg);
       });
     }
     return p;
@@ -193,8 +199,8 @@ var VkApiWrapper = {
   	var self = this;
   	var p = self.callVkApi("photos.move", {owner_id: ownerId, target_album_id: targetAlbumId, photo_id: photoId});
   	if (!silent) {
-  		p.fail(function(){
-  			self.settings_.errorHandler("Не удалось переместить фотографию!");
+  		p.fail(function(error){
+  			self.settings_.errorHandler("Не удалось переместить фотографию!<br />ERROR: " + error.error_msg);
   		});
   	}
   	return p;
@@ -204,9 +210,8 @@ var VkApiWrapper = {
     var self = this;
     var p = self.callVkApi("utils.resolveScreenName", options);
     if (!silent) {
-      p.fail(function () {
-        var str = ("screen_name" in options) ? options.screen_name : 'undefined';
-        self.settings_.errorHandler("Не удалось получить информацию о пользователе/группе: '" + str + "'");
+      p.fail(function (error) {
+        self.settings_.errorHandler("Не удалось получить информацию о пользователе/группе:<br />ERROR: " + error.error_msg);
       });
     }
     return p;
