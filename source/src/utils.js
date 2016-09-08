@@ -2,7 +2,6 @@
 	Licensed under the MIT license
 */
 
-//requires jQuery, spin.js
 /* globals $, Spinner, html_sanitize */
 
 var Utils = {

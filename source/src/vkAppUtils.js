@@ -2,7 +2,6 @@
 	Licensed under the MIT license
 */
 
-//requires jQuery, utils(RateLimit, displayError), Vk API
 /* globals $, Utils, Settings, VK, VkApiWrapper */
 
 var VkAppUtils = {
@@ -12,7 +11,7 @@ var VkAppUtils = {
 
     if (hideAfter) {
       setTimeout(function () {
-        $("#" + noteDivId).empty();
+        $("#" + noteDivId).hide("slow");
       }, hideAfter);
     }
   },
@@ -238,6 +237,40 @@ var VkAppUtils = {
     getNextChunk__(offset, maxCount);
 
     return ddd.promise();
+  },
+
+  queryAlbumList: function (options) {
+    var d = $.Deferred();
+
+    VkApiWrapper.queryAlbums(options).done(function (albums) {
+      albums = albums.items;
+      
+      for (var i = 0; i < albums.length; ++i) {
+        var title = $("<div>").html(albums[i].title).text();
+        if (title.length > Settings.MaxOptionLength) {
+          title = title.substring(0, Settings.MaxOptionLength) + "...";
+        }
+        albums[i].title = title;
+      }
+
+      //sort albums by name
+      albums = albums.sort(function (a, b) {
+        var ta = a.title.toLowerCase();
+        var tb = b.title.toLowerCase();
+        if (ta < tb) {
+          return -1;
+        } else if (ta > tb) {
+          return 1;
+        }
+        return 0;
+      });
+
+      d.resolve(albums);
+    }).fail(function () {
+      d.reject();
+    });
+
+    return d.promise();
   },
 
   //creates map: album id -> album.title

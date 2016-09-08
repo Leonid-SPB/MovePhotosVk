@@ -2,7 +2,6 @@
 	Licensed under the MIT license
 */
 
-//requires jQuery, utils(RateLimit, displayError), Vk API
 /* globals $, RateLimit, VK*/
 
 var VkApiWrapper = {
@@ -133,7 +132,7 @@ var VkApiWrapper = {
         if (!silent) {
           self.settings_.errorHandler("Не удалось получить список фотографий из выбранного альбома!<br />ERROR: " + error.error_msg);
         }
-        d.reject();
+        d.reject(error);
       }
     });
 
@@ -223,7 +222,7 @@ var VkApiWrapper = {
     this.callVkApi("storage.get", {
       keys: keys
     }).fail(function (error) {
-      d.reject();
+      d.reject(error);
     }).done(function (resp) {
       var myresp = {};
 

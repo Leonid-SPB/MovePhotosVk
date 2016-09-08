@@ -2,9 +2,7 @@
     Licensed under the MIT license
 */
 
-/* Thumbs Container
-requires: jQuery, highslide
- */
+/* Thumbs Container */
 /* globals $, hs*/
 
 (function ($, hs) {
