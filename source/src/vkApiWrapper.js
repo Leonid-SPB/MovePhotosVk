@@ -97,7 +97,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     self.callVkApi("wall.post", options).fail(function (error) {
-      error.error_msg = "Не удалось создать запись на стене!<br />ERROR: " + error.error_msg;
+      error.error_msg = "Не удалось создать запись на стене! ERROR: " + error.error_msg;
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }
@@ -114,7 +114,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     self.callVkApi("photos.getAlbums", options).fail(function (error) {
-      error.error_msg = "Не удалось получить список альбомов!<br />ERROR: " + error.error_msg;
+      error.error_msg = "Не удалось получить список альбомов! ERROR: " + error.error_msg;
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }
@@ -141,7 +141,7 @@ var VkApiWrapper = {
         };
         d.resolve(resp);
       } else {
-        error.error_msg = "Не удалось получить список фотографий из выбранного альбома!<br />ERROR: " + error.error_msg;
+        error.error_msg = "Не удалось получить список фотографий из выбранного альбома! ERROR: " + error.error_msg;
         if (!silent) {
           self.settings_.errorHandler(error.error_msg);
         }
@@ -157,7 +157,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     self.callVkApi("photos.getAll", options).fail(function (error) {
-      error.error_msg = "Не удалось получить список фотографий пользователя или группы!<br />ERROR: " + error.error_msg;
+      error.error_msg = "Не удалось получить список фотографий пользователя или группы! ERROR: " + error.error_msg;
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }
@@ -174,7 +174,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     self.callVkApi("friends.get", options).fail(function (error) {
-      error.error_msg = "Не удалось получить список друзей!<br />ERROR: " + error.error_msg;
+      error.error_msg = "Не удалось получить список друзей! ERROR: " + error.error_msg;
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }
@@ -191,7 +191,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     self.callVkApi("users.get", options).fail(function (error) {
-      error.error_msg = "Не удалось получить информацию о пользователе!<br />ERROR: " + error.error_msg;
+      error.error_msg = "Не удалось получить информацию о пользователе! ERROR: " + error.error_msg;
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }
@@ -208,7 +208,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     self.callVkApi("groups.get", options).fail(function (error) {
-      error.error_msg = "Не удалось получить список групп пользователя!<br />ERROR: " + error.error_msg;
+      error.error_msg = "Не удалось получить список групп пользователя! ERROR: " + error.error_msg;
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }
@@ -225,7 +225,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     self.callVkApi("groups.getById", options).fail(function (error) {
-      error.error_msg = "Не удалось получить информацию о группе/странице!<br />ERROR: " + error.error_msg;
+      error.error_msg = "Не удалось получить информацию о группе/странице! ERROR: " + error.error_msg;
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }
@@ -242,7 +242,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     self.callVkApi("photos.move", options).fail(function (error) {
-      error.error_msg = "Не удалось переместить фотографию!<br />ERROR: " + error.error_msg;
+      error.error_msg = "Не удалось переместить фотографию! ERROR: " + error.error_msg;
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }
@@ -259,7 +259,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     self.callVkApi("utils.resolveScreenName", options).fail(function (error) {
-      error.error_msg = "Не удалось получить информацию о пользователе/группе:<br />ERROR: " + error.error_msg;
+      error.error_msg = "Не удалось получить информацию о пользователе/группе: ERROR: " + error.error_msg;
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }

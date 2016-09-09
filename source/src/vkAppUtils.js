@@ -118,15 +118,17 @@ var VkAppUtils = {
       photosCount += response.count;
     }
 
-    d1.done(updCnt);
-    d2.done(updCnt);
-    d3.done(updCnt);
-    d4.done(updCnt);
+    function onFail(error) {
+      ddd.reject(error);
+    }
+
+    d1.done(updCnt).fail(onFail);
+    d2.done(updCnt).fail(onFail);
+    d3.done(updCnt).fail(onFail);
+    d4.done(updCnt).fail(onFail);
 
     $.when(d1, d2, d3, d4).done(function () {
       ddd.resolve(photosCount);
-    }).fail(function () {
-      ddd.reject();
     });
 
     return ddd.promise();
@@ -175,8 +177,8 @@ var VkAppUtils = {
             ddd.resolve(photos);
           }
         }
-      ).fail(function () {
-        ddd.reject();
+      ).fail(function (error) {
+        ddd.reject(error);
       });
     }
 
@@ -229,8 +231,8 @@ var VkAppUtils = {
             ddd.resolve(photos);
           }
         }
-      ).fail(function () {
-        ddd.reject();
+      ).fail(function (error) {
+        ddd.reject(error);
       });
     }
 
@@ -244,7 +246,7 @@ var VkAppUtils = {
 
     VkApiWrapper.queryAlbums(options).done(function (albums) {
       albums = albums.items;
-      
+
       for (var i = 0; i < albums.length; ++i) {
         var title = $("<div>").html(albums[i].title).text();
         if (title.length > Settings.MaxOptionLength) {
@@ -266,8 +268,8 @@ var VkAppUtils = {
       });
 
       d.resolve(albums);
-    }).fail(function () {
-      d.reject();
+    }).fail(function (error) {
+      d.reject(error);
     });
 
     return d.promise();
@@ -296,8 +298,8 @@ var VkAppUtils = {
       }
 
       ddd.resolve(albumMap);
-    }).fail(function () {
-      ddd.reject();
+    }).fail(function (error) {
+      ddd.reject(error);
     });
 
     return ddd.promise();
@@ -307,9 +309,13 @@ var VkAppUtils = {
   resolveUidGid: function (str) {
     var ddd = $.Deferred();
 
-    function onFail() {
+    function onFail(error) {
+      if (!("error_msg" in error)) {
+        error.error_msg = "Не удалось получить информацию о пользователе/группе: '" + str + "'";
+      }
+
       VkAppUtils.displayError("Не удалось получить информацию о пользователе/группе: '" + str + "'", "globalErrorBox", Settings.ErrorHideAfter);
-      ddd.reject();
+      ddd.reject(error);
     }
 
     VkApiWrapper.resolveScreenName({
@@ -325,7 +331,7 @@ var VkAppUtils = {
             ddd.resolve(friends[0], true);
           } else {
             //resolved, but inactive user was filtered out
-            onFail();
+            onFail({});
           }
         }).fail(onFail);
       } else if ((resp.type == "group") || (resp.type == "page")) {
@@ -337,12 +343,12 @@ var VkAppUtils = {
             ddd.resolve(groups[0], false);
           } else {
             //resolved, but inactive group was filtered out
-            onFail();
+            onFail({});
           }
         }).fail(onFail);
       } else {
         //unknown type
-        onFail();
+        onFail({});
         return;
       }
     }).fail(onFail);

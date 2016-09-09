@@ -105,7 +105,8 @@ var AMApi = {
     var d1 = VkApiWrapper.queryUserGroups({
       user_id: Settings.vkUserId,
       count: Settings.MaxFriendsList,
-      extended: 1
+      extended: 1,
+      filter: "moder"
     }).done(function (groups) {
       //filter banned/inactive groups
       groups = VkAppUtils.filterGroupList(groups.items);
@@ -114,6 +115,7 @@ var AMApi = {
       for (var i = 0; i < groups.length; i++) {
         var opt = new Option(groups[i].title, -groups[i].id, false, false);
         self.srcAlbumOwnerList.add(opt, null);
+        opt = new Option(groups[i].title, -groups[i].id, false, false);
         self.dstAlbumOwnerList.add(opt, null);
       }
     }).fail(self.onFatalError);
@@ -125,10 +127,21 @@ var AMApi = {
     }).done(function (albums) {
       self.albumCache[Settings.vkUserId] = albums;
       self.onSrcOwnerChanged();
-      self.onDstOwnerChanged();
     }).fail(self.onFatalError);
 
-    //onFail handler!!!
+    //when all info collected
+    $.when(d1, d2).done(function () {
+      //init done, enable controls, hide spinner
+      self.busyFlag = false;
+      Utils.hideSpinner();
+      self.disableControls(0);
+      return;
+    }).fail(function () {
+      //initialization failed, disable controls, hide spinner
+      self.busyFlag = false;
+      Utils.hideSpinner();
+      self.disableControls(1);
+    });
   },
 
   displayError: function (errMsg) {
@@ -145,48 +158,6 @@ var AMApi = {
       VkAppUtils.displayError("Неизвестная ошибка, попробуйте перезагрузить приложение.", "globalErrorBox");
     }
     self.disableControls(1);
-  },
-
-  updateSrcAlbumsListBox: function (albums) {
-    var self = AMApi;
-    self.srcAlbumList.selectedIndex = 0;
-
-    //remove old options, skip "not selected" option
-    for (var i = self.srcAlbumList.length - 1; i >= 1; --i) {
-      self.srcAlbumList.remove(i);
-    }
-
-    /*//my albums, add service albums
-    if (selfOwn) {
-      var opt1 = new Option("Сохраненные фотографии", -15, false, false);
-      $(opt1).addClass("italic_bold");
-      self.srcAlbumList.add(opt1, null);
-    }*/
-
-    for (var i = 0; i < albums.length; i++) {
-      if (!albums[i].size) {
-        continue;
-      }
-      var opt = new Option(albums[i].title, albums[i].id, false, false);
-      self.srcAlbumList.add(opt, null);
-    }
-  },
-
-  updateDstAlbumsListBox: function (albums) {
-    var self = AMApi;
-    self.dstAlbumList.selectedIndex = 0;
-
-    //remove old options
-    //i >= 2 to skip "not selected" and "save locally" options
-    for (var i = self.dstAlbumList.length - 1; i >= 2; --i) {
-      self.dstAlbumList.remove(i);
-    }
-
-    //add new options
-    for (var i = 0; i < albums.length; i++) {
-      var opt = new Option(albums[i].title, albums[i].id, false, false);
-      self.dstAlbumList.add(opt, null);
-    }
   },
 
   disableControls: function (disable) {
@@ -207,6 +178,48 @@ var AMApi = {
     self.srcAlbumOwnerList.disabled = dval;
     self.srcAlbumList.disabled = dval;
     self.dstAlbumList.disabled = dval;
+  },
+
+  updateSrcAlbumsListBox: function (albums) {
+    var self = AMApi;
+    self.srcAlbumList.selectedIndex = 0;
+
+    //remove old options, skip "not selected" option
+    for (var i = self.srcAlbumList.length - 1; i >= 1; --i) {
+      self.srcAlbumList.remove(i);
+    }
+
+    /*//my albums, add service albums
+    if (selfOwn) {
+      var opt1 = new Option("Сохраненные фотографии", -15, false, false);
+      $(opt1).addClass("italic_bold");
+      self.srcAlbumList.add(opt1, null);
+    }*/
+
+    for (i = 0; i < albums.length; i++) {
+      if (!albums[i].size) {
+        continue;
+      }
+      var opt = new Option(albums[i].title, albums[i].id, false, false);
+      self.srcAlbumList.add(opt, null);
+    }
+  },
+
+  updateDstAlbumsListBox: function (albums) {
+    var self = AMApi;
+    self.dstAlbumList.selectedIndex = 0;
+
+    //remove old options
+    //i >= 2 to skip "not selected" and "save locally" options
+    for (var i = self.dstAlbumList.length - 1; i >= 2; --i) {
+      self.dstAlbumList.remove(i);
+    }
+
+    //add new options
+    for (i = 0; i < albums.length; i++) {
+      var opt = new Option(albums[i].title, albums[i].id, false, false);
+      self.dstAlbumList.add(opt, null);
+    }
   },
 
   onSrcOwnerChanged: function () {
