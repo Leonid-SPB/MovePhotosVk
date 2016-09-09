@@ -116,7 +116,7 @@ var AMApi = {
         self.srcAlbumOwnerList.add(opt, null);
         self.dstAlbumOwnerList.add(opt, null);
       }
-    });
+    }).fail(self.onFatalError);
 
     //query albums
     var d2 = VkAppUtils.queryAlbumList({
@@ -126,7 +126,7 @@ var AMApi = {
       self.albumCache[Settings.vkUserId] = albums;
       self.onSrcOwnerChanged();
       self.onDstOwnerChanged();
-    });
+    }).fail(self.onFatalError);
 
     //onFail handler!!!
   },
@@ -139,8 +139,8 @@ var AMApi = {
   onFatalError: function (error) {
     var self = AMApi;
 
-    if (error_msg in error) {
-      VkAppUtils.displayError(error.error_msg + ". Попробуйте перезагрузить приложение.", "globalErrorBox");
+    if ("error_msg" in error) {
+      VkAppUtils.displayError(error.error_msg + "<br />Попробуйте перезагрузить приложение.", "globalErrorBox");
     } else {
       VkAppUtils.displayError("Неизвестная ошибка, попробуйте перезагрузить приложение.", "globalErrorBox");
     }
@@ -359,7 +359,7 @@ $(function () {
         type: "button",
         height: 24
       }, 500);
-      
+
       d.resolve();
     },
     function () {
