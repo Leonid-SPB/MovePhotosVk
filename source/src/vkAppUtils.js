@@ -7,23 +7,39 @@
 var VkAppUtils = {
   displayError: function (eMsg, noteDivId, hideAfter) {
     var errEntity = "<div class=\"ui-widget\"><div class=\"ui-state-error ui-corner-all\" style=\"padding: 0 .7em;\"><p><span class=\"ui-icon ui-icon-alert\" style=\"float: left; margin-right: .3em;\"></span><strong>ОШИБКА: </strong>" + eMsg + "</p></div></div>";
-    $("#" + noteDivId).empty().html(errEntity);
+    var dataKey = "displayError";
+    $("#" + noteDivId).empty().hide(0).html(errEntity).show("highlight");
+    
+    var $data = $("#" + noteDivId).data(dataKey);
+    if($data && $data.tm) {
+      clearTimeout($data.tm);
+      $data.tm = null;
+    }
 
     if (hideAfter) {
-      setTimeout(function () {
-        $("#" + noteDivId).hide("slow");
+      var tm_ = setTimeout(function () {
+        $("#" + noteDivId).hide("fade");
       }, hideAfter);
+      $("#" + noteDivId).data(dataKey, {tm: tm_});
     }
   },
 
   displayWarn: function (eMsg, noteDivId, hideAfter) {
     var errEntity = "<div class=\"ui-widget\"><div class=\"ui-state-error ui-corner-all\">" + eMsg + "</div></div>";
-    $("#" + noteDivId).empty().html(errEntity);
+    $("#" + noteDivId).empty().hide(0).html(errEntity).show("highlight");
+    var dataKey = "displayWarn";
+
+    var $data = $("#" + noteDivId).data(dataKey);
+    if($data && $data.tm) {
+      clearTimeout($data.tm);
+      $data.tm = null;
+    }
 
     if (hideAfter) {
-      setTimeout(function () {
-        $("#" + noteDivId).empty();
+      var tm_ = setTimeout(function () {
+        $("#" + noteDivId).hide("fade");
       }, hideAfter);
+      $("#" + noteDivId).data(dataKey, {tm: tm_});
     }
   },
 

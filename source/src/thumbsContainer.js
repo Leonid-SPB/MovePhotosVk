@@ -212,12 +212,12 @@
       //calculate which thumbs are currently visible based on 
       //scroll position and container/image geometry
       var $parentDiv = $this.parent().first();
-      var divHeight = $parentDiv.innerHeight();
-      var divWidth = $parentDiv.innerWidth();
-      var liHeight = $thumbs.first().outerHeight();
-      var liWidth = $thumbs.first().outerWidth();
+      var divHeight = $parentDiv.height();
+      var divWidth = $parentDiv.width();
+      var liHeight = $thumbs.first().outerHeight(true);
+      var liWidth = $thumbs.first().outerWidth(true);
       var rowsScrolled = Math.round($parentDiv.scrollTop() / liHeight);
-      var rowsOnScreen = Math.ceil(divHeight / liHeight);
+      var rowsOnScreen = Math.round(divHeight / liHeight);
       var thumbsInRow = Math.floor(divWidth / liWidth);
 
       var selFirstIndex = rowsScrolled * thumbsInRow;
