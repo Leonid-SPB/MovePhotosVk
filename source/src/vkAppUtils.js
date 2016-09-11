@@ -228,7 +228,7 @@ var VkAppUtils = {
             getNextChunk__(offset + response.items.length, countLeft - response.items.length);
           } else {
             //finally resolve with the list of retreived photos
-            ddd.resolve(photos);
+            ddd.resolve(photos, response.count);
           }
         }
       ).fail(function (error) {

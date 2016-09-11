@@ -35,7 +35,8 @@
         //private
         busy_dfrd__: $.Deferred(),
         abortTask__: false,
-        thumbsSelCnt__: 0
+        thumbsSelCnt__: 0,
+        thumbsCnt__: 0
       };
       data.busy_dfrd__.resolve();
       $.extend(data, defaults, opts);
@@ -52,10 +53,11 @@
 
     ///removes $thumb div from container
     removeThumb: function ($thumb) {
+      var $data = $(this).data(PluginName);
       if ($thumb.hasClass("selected")) {
-        var $data = $(this).data(PluginName);
         --$data.thumbsSelCnt__;
       }
+      --$data.thumbsSelCnt__;
       $thumb.remove();
     },
 
@@ -75,6 +77,7 @@
             return;
           }
           thC.createThumb_.call(self, queue.shift());
+          ++$data.thumbsCnt__;
         }
         setTimeout(function () {
           addThumb__(queue);
@@ -107,6 +110,13 @@
       $.extend($data.albumMap, albumMap);
     },
 
+    ///disable/enable selection
+    selectionDisable: function (disable) {
+      var $this = $(this);
+      var $data = $this.data(PluginName);
+      $data.disableSel = disable;
+    },
+
     ///select all thumbnails in container
     selectAll: function () {
       var $this = $(this);
@@ -136,12 +146,23 @@
       $data.thumbsSelCnt__ = 0;
       $this.find(ThumbClass).removeClass("selected");
     },
-
-    ///disable/enable selection
-    selectionDisable: function (disable) {
+    
+    ///toggle selection of $thumb
+    selectToggle: function ($thumb) {
       var $this = $(this);
       var $data = $this.data(PluginName);
-      $data.disableSel = disable;
+      
+      if ($data.disableSel) {
+        return;
+      }
+      
+      $thumb.toggleClass("selected");
+      
+      if ($thumb.hasClass("selected")) {
+        ++$data.thumbsSelCnt__;
+      } else {
+        --$data.thumbsSelCnt__;
+      }
     },
 
     ///select all if any one is selected, deselect all if all are selected
@@ -156,12 +177,14 @@
       var thumbsSelCnt__ = 0;
       var thumbsTotal = 0;
 
-      $this.find(ThumbClass).each(function () {
+      /*$this.find(ThumbClass).each(function () {
         ++thumbsTotal;
         if ($(this).hasClass("selected")) {
           ++thumbsSelCnt__;
         }
-      });
+      });*/
+      thumbsSelCnt__ = $data.thumbsSelCnt__;
+      thumbsTotal = $data.thumbsCnt__;
 
       if (thumbsSelCnt__ == thumbsTotal) {
         $this.find(ThumbClass).removeClass("selected");
@@ -234,11 +257,15 @@
       return thumbData;
     },
 
-    ///returns number of thumbnails selected
-    getThumbsCount: function (onlySelected) {
+    ///returns number of thumbnails total/selected
+    getThumbsCount: function () {
       var $data = $(this).data(PluginName);
-      var len = onlySelected ? $data.thumbsSelCnt__ : this.find(ThumbClass).length;
-      return len;
+      var total_ = $data.thumbsCnt__;
+      var selected_ = $data.thumbsSelCnt__;
+      return {
+        total: total_,
+        selected: selected_
+      };
     },
 
     ///remove all thumbnails from the container
@@ -255,6 +282,7 @@
       $.when($data.busy_dfrd__).done(function () {
         $this.empty();
         $data.thumbsSelCnt__ = 0;
+        $data.thumbsCnt__ = 0;
         $data.albumMap = {};
         d.resolve();
       });
@@ -416,13 +444,8 @@
 
     ///handle click on thumbnail area
     onThumbClick: function (event, parent) {
-      var $this = $(this);
-      var $data = $this.data(PluginName);
-
-      //open original VK image in a pop-up window
-      var url = "//vk.com/photo" + $data.vk_img.owner_id + "_" + $data.vk_img.id;
-      var myWindow = window.open(url, 'vk_photo', parent.data(PluginName).VkPhotoPopupSettings, false);
-      myWindow.focus();
+      event.stopPropagation();
+      return false;
     },
 
     ///handle click on zoom icon
@@ -436,10 +459,10 @@
   $.fn.ThumbsViewer = function (method) {
     var args = arguments;
 
-    if (method == "getSelThumbsData") {
-      return thC.getSelThumbsData.apply(this);
-    } else if (method == "getSelThumbsNum") {
-      return thC.getSelThumbsCount.apply(this);
+    if (method == "getThumbsData") {
+      return thC.getThumbsData.apply(this, Array.prototype.slice.call(args, 1));
+    } else if (method == "getThumbsCount") {
+      return thC.getThumbsCount.apply(this, Array.prototype.slice.call(args, 1));
     } else if (method == "addThumbList") {
       return thC.addThumbList.apply(this, Array.prototype.slice.call(args, 1));
     }
