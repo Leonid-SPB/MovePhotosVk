@@ -6,7 +6,7 @@
 
 var VkAppUtils = {
   displayError: function (eMsg, noteDivId, hideAfter) {
-    var errEntity = "<div class=\"ui-widget\"><div class=\"ui-state-error ui-corner-all\" style=\"padding: 0 .7em;\"><p><span class=\"ui-icon ui-icon-alert\" style=\"float: left; margin-right: .3em;\"></span><strong>ОШИБКА: </strong>" + eMsg + "</p></div></div>";
+    var errEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0 .7em;'><p><span class='ui-icon ui-icon-alert' style='float: left; margin-right: .3em;'></span><strong>ОШИБКА: </strong>" + eMsg + "</p></div></div>";
     var dataKey = "displayError";
     $("#" + noteDivId).empty().hide(0).html(errEntity).show("highlight");
     
@@ -25,7 +25,7 @@ var VkAppUtils = {
   },
 
   displayWarn: function (eMsg, noteDivId, hideAfter) {
-    var errEntity = "<div class=\"ui-widget\"><div class=\"ui-state-error ui-corner-all\">" + eMsg + "</div></div>";
+    var errEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0.7em; text-align: center'>" + eMsg + "</div></div>";
     $("#" + noteDivId).empty().hide(0).html(errEntity).show("highlight");
     var dataKey = "displayWarn";
 

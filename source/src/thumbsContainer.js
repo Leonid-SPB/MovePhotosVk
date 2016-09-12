@@ -146,18 +146,18 @@
       $data.thumbsSelCnt__ = 0;
       $this.find(ThumbClass).removeClass("selected");
     },
-    
+
     ///toggle selection of $thumb
     selectToggle: function ($thumb) {
       var $this = $(this);
       var $data = $this.data(PluginName);
-      
+
       if ($data.disableSel) {
         return;
       }
-      
+
       $thumb.toggleClass("selected");
-      
+
       if ($thumb.hasClass("selected")) {
         ++$data.thumbsSelCnt__;
       } else {
@@ -249,9 +249,11 @@
 
       this.find(selector).each(function () {
         var $this = $(this);
-        var $data = $this.data(PluginName);
-        $data.$thumb = $this;
-        thumbData.push($data);
+        var item = {
+          data: $this.data(PluginName),
+          $thumb: $this
+        };
+        thumbData.push(item);
       });
 
       return thumbData;

@@ -21,6 +21,7 @@ var Settings = {
   PhotosPageRefreshDelay: 700,
   PageSlideDelay: 1400,
   PageSlideRepeatDelay: 350,
+  MovePhotoDelay: 335,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -36,7 +37,7 @@ var AMApi = {
   dstAlbumList: null,
 
   $progressBar: null,
-  $movePhotosBtn: null,
+  $goBtn: null,
 
   $showPrevBtn: null,
   $showNextBtn: null,
@@ -50,8 +51,9 @@ var AMApi = {
   $thumbsContainer: null,
 
   busyFlag: true,
-  progressStep: 0,
-  progressPerc: 0,
+  goBtnLabelMove: "Переместить",
+  goBtnLabelSave: "Сохранить",
+  goBtnLabelCancel: "Отмена",
 
   albumCache: {},
   albumData: {
@@ -65,6 +67,11 @@ var AMApi = {
   pageRefreshTimer: null,
   pageSlideTimer: null,
 
+  taskInfo: {
+    abort: false,
+    promise: $.Deferred().resolve()
+  },
+
   init: function () {
     var self = AMApi;
 
@@ -75,7 +82,7 @@ var AMApi = {
     self.dstAlbumList = document.getElementById("Form1_DstAlbumList");
 
     self.$progressBar = $("#Progressbar");
-    self.$movePhotosBtn = $("#movePhotosBtn");
+    self.$goBtn = $("#goBtn");
 
     self.$showPrevBtn = $("#Form1_ShowPrev");
     self.$showNextBtn = $("#Form1_ShowNext");
@@ -95,7 +102,8 @@ var AMApi = {
     $(self.srcAlbumOwnerList).change(self.onSrcOwnerChanged);
     $(self.srcAlbumList).change(self.onSrcAlbumChanged);
     $(self.dstAlbumList).change(self.onDstAlbumChanged);
-    self.$movePhotosBtn.click(self.onMovePhotosBtnClick);
+    self.$goBtn.click(self.onGoBtnClick);
+    self.$goBtn.button("option", "label", self.goBtnLabelMove);
     self.$showNextBtn.mouseup(self.onSlideBtnUp).mousedown(function (event) {
       self.onSlideBtnDown(true);
     });
@@ -172,6 +180,10 @@ var AMApi = {
     VkAppUtils.displayError(errMsg, "globalErrorBox", Settings.ErrorHideAfter);
   },
 
+  displayWarn: function (warnMsg) {
+    VkAppUtils.displayWarn(warnMsg, "NoteField", Settings.ErrorHideAfter);
+  },
+
   onFatalError: function (error) {
     var self = AMApi;
 
@@ -192,7 +204,7 @@ var AMApi = {
       dstr = "disable";
     }
 
-    self.$movePhotosBtn.button(dstr);
+    self.$goBtn.button(dstr);
     self.$selToggleAllBtn.button(dstr);
     self.$selToggleVisibleBtn.button(dstr);
     self.$showPrevBtn.button(dstr);
@@ -220,12 +232,20 @@ var AMApi = {
     }*/
 
     for (i = 0; i < albums.length; i++) {
+      //skip empty
       if (!albums[i].size) {
         continue;
       }
+
       var opt = new Option(albums[i].title, albums[i].id, false, false);
       $(opt).data("AMApi", albums[i]);
-      self.srcAlbumList.add(opt, null);
+
+      //put service albums to the beginning
+      var index = null;
+      if (albums[i].id < 0) {
+        index = 1;
+      }
+      self.srcAlbumList.add(opt, index);
     }
   },
 
@@ -242,7 +262,13 @@ var AMApi = {
     //add new options
     for (i = 0; i < albums.length; i++) {
       var opt = new Option(albums[i].title, albums[i].id, false, false);
-      self.dstAlbumList.add(opt, null);
+
+      //put service albums to the beginning
+      var index = null;
+      if (albums[i].id < 0) {
+        index = 2;
+      }
+      self.dstAlbumList.add(opt, index);
     }
   },
 
@@ -354,13 +380,10 @@ var AMApi = {
 
     var selIndex = self.dstAlbumList.selectedIndex;
 
-    var ownSelIndex = self.dstAlbumOwnerList.selectedIndex;
-    var ownerId = self.dstAlbumOwnerList.item(ownSelIndex).value;
-
     if (selIndex == 1) { //save album
-      self.$movePhotosBtn.button("option", "label", "Сохранить");
+      self.$goBtn.button("option", "label", self.goBtnLabelSave);
     } else {
-      self.$movePhotosBtn.button("option", "label", "Переместить");
+      self.$goBtn.button("option", "label", self.goBtnLabelMove);
     }
   },
 
@@ -432,10 +455,6 @@ var AMApi = {
     }
   },
 
-  rebuildAlbumPageCache: function () {
-
-  },
-
   onSlideBtnDown: function (slideNext) {
     var self = AMApi;
 
@@ -497,21 +516,174 @@ var AMApi = {
     }
     return false;
   },
+  
+  invalidateAlbumPageCache: function() {
+    var self = AMApi;
+    
+    var prevPagePhotos = self.albumData.pages[self.albumData.page];
+    var newPagePhotos$ = self.$thumbsContainer.ThumbsViewer("getThumbsData");
+        
+    self.albumData.photosCount -= (prevPagePhotos - newPagePhotos$);
+    self.albumData.pagesCount = Math.ceil(self.albumData.photosCount / Settings.PhotosPerPage);
+    
+    var photos = [];
+    for(var i = 0; i < newPagePhotos$.length; ++i) {
+      photos.push(newPagePhotos$[i].data.vk_img);
+    }
+    
+    self.albumData.pages[self.albumData.page] = photos;
+  },
 
-  onMovePhotosBtnClick: function () {
+  onGoBtnClick: function () {
     var self = AMApi;
 
-    //invalidate/rebuild album pages
-    //query new photo count, if it matches with records -> rebuild
-    //if not - invalidate
+    var dstSelIndex = self.dstAlbumList.selectedIndex;
+    if (!dstSelIndex) { //dst album not selected
+      self.displayWarn("Не выбран альбом, куда перемещать фотографии");
+      return;
+    }
+
+    var srcSelIndex = self.srcAlbumList.selectedIndex;
+    if (self.dstAlbumList.item(dstSelIndex).value == self.srcAlbumList.item(srcSelIndex).value) {
+      self.displayWarn("Нельзя переместить фотографии в тот же самый альбом!");
+      return;
+    }
+
+    var selThumbsAr = self.$thumbsContainer.ThumbsViewer("getThumbsCount").selected;
+    if (!selThumbsAr.length) { //no images selected
+      self.displayWarn("Не выбраны фотографии для перемещения/сохранения");
+      return;
+    }
+
+    function onDone() {
+      //rate request
+    }
+
+    function onAlways() {
+      Utils.hideSpinner();
+      self.disableControls(0);
+
+      self.invalidateAlbumPageCache();
+
+      //update button label
+      self.onDstAlbumChanged();
+      self.updSelectedNum();
+    }
+
+    var progress = 0;
+
+    function onProgressMove($thumb) {
+      self.$progressBar.progressbar("value", ++progress);
+      self.thumbsContainer.ThumbsViewer("removeThumb", $thumb);
+      self.updSelectedNum();
+    }
+
+    function onProgressSave($thumb) {
+      self.$progressBar.progressbar("value", ++progress);
+      $thumb.removeClass("selected");
+      self.updSelectedNum();
+    }
+
+    Utils.showSpinner();
+    self.disableControls(1);
+
+    //do action
+    if (self.$goBtn.button("option", "label") == self.goBtnLabelSave) {
+      //save
+
+      //collect list of selected photos
+      var $thumbLists = self.$thumbsContainer.ThumbsViewer("getThumbsData", true);
+
+      //set new progress bar range
+      self.$progressBar.progressbar("option", "max", $thumbLists.length);
+      self.$progressBar.progressbar("value", 0);
+
+    } else if (self.$goBtn.button("option", "label") == self.goBtnLabelMove) {
+      //move
+
+      //collect list of selected photos
+      var $thumbListm = self.$thumbsContainer.ThumbsViewer("getThumbsData", true);
+
+      //set new progress bar range
+      self.$progressBar.progressbar("option", "max", $thumbListm.length);
+      self.$progressBar.progressbar("value", 0);
+
+      var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
+      var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+      var aidSelIndex = self.dstAlbumList.selectedIndex;
+      var albumID = self.dstAlbumList.item(aidSelIndex).value;
+      self.taskInfo.abort = false;
+
+      self.doMovePhotos(ownerId, albumID, $thumbListm, self.taskInfo.abort).done(onDone).always(onAlways).progress(onProgressMove);
+    } else {
+      //abort task
+      self.taskInfo.abort = true;
+      return;
+    }
+
+    //enable "Cancel" button
+    self.$goBtn.button("option", "label", self.goBtnLabelCancel);
+    self.$goBtn.button("enable");
 
     //todo: hint for service albums, that move is irreversible
-
     //todo: turbo move using VK API exec
   },
 
-  saveAlbum: function () {
+  doSaveAlbum: function () {
+    var self = AMApi;
     //todo: hint that there are alternative methods of for saving albums
+  },
+
+  doMovePhotos: function (ownerId, targetAid, $thumbList, abortFlag) {
+    var self = AMApi;
+    var d = $.Deferred();
+
+    var trInProgress = 0;
+    var errInfo = null;
+
+    function movePhotoSingle() {
+      //stop if no more images left or the task was aborted
+      if (abortFlag || !$thumbList.length) {
+        if (trInProgress) {
+          //some transactions have not finished yet, waiting...
+          setTimeout(movePhotoSingle, Settings.MovePhotoDelay);
+        } else {
+          if (!errInfo) { //no errors
+            d.resolve();
+          } else { //error info is not empty, something happened
+            d.reject(errInfo.error, errInfo.thumbInfo);
+          }
+        }
+
+        return;
+      }
+
+      ++trInProgress;
+      var thumbInfo = $thumbList.shift();
+      VkApiWrapper.movePhoto({
+        owner_id: ownerId,
+        target_album_id: targetAid,
+        photo_id: thumbInfo.data.id
+      }).done(function () {
+        --trInProgress;
+        //report progress (caller will remove photo from container and update progress bar)
+        d.notify(thumbInfo.$thumb);
+      }).fail(function (error) {
+        --trInProgress;
+        //cancell any further tasks and set error information
+        abortFlag = true;
+        errInfo = {
+          error: error,
+          thumbInfo: thumbInfo
+        };
+      });
+
+      setTimeout(movePhotoSingle, Settings.MovePhotoDelay);
+    }
+
+    movePhotoSingle();
+
+    return d.promise();
   },
 
   onRevThumbSortChkClick: function () {
@@ -566,7 +738,7 @@ $(function () {
       primary: "ui-icon ui-icon-triangle-1-e" // Custom icon
     }
   }).removeClass('ui-corner-all');
-  $("#movePhotosBtn").button();
+  $("#goBtn").button();
 
   $("#welcome_dialog").dialog({
     autoOpen: false,
