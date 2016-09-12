@@ -17,7 +17,10 @@ var Settings = {
   MaxGroupNameLen: 40,
   MaxOptionLength: 40,
   MaxFriendsList: 500,
-  PhotosPerPage: 500,
+  PhotosPerPage: 100,
+  PhotosPageRefreshDelay: 700,
+  PageSlideDelay: 1400,
+  PageSlideRepeatDelay: 350,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -59,6 +62,9 @@ var AMApi = {
     page: 0
   },
 
+  pageRefreshTimer: null,
+  pageSlideTimer: null,
+
   init: function () {
     var self = AMApi;
 
@@ -90,8 +96,12 @@ var AMApi = {
     $(self.srcAlbumList).change(self.onSrcAlbumChanged);
     $(self.dstAlbumList).change(self.onDstAlbumChanged);
     self.$movePhotosBtn.click(self.onMovePhotosBtnClick);
-    self.$showNextBtn.click(self.onShowNextBtnClick);
-    self.$showPrevBtn.click(self.onShowPrevBtnClick);
+    self.$showNextBtn.mouseup(self.onSlideBtnUp).mousedown(function (event) {
+      self.onSlideBtnDown(true);
+    });
+    self.$showPrevBtn.mouseup(self.onSlideBtnUp).mousedown(function (event) {
+      self.onSlideBtnDown(false);
+    });
     self.$selToggleAllBtn.click(self.onSelToggleAll);
     self.$selToggleVisibleBtn.click(self.onSelToggleVisible);
     $(self.revThumbSortChk).click(self.onRevThumbSortChkClick);
@@ -356,10 +366,33 @@ var AMApi = {
 
   updateShownPhotosEdit: function () {
     var self = AMApi;
-    var shownFrom = self.albumData.page * Settings.PhotosPerPage;
+    /*var shownFrom = self.albumData.page * Settings.PhotosPerPage;
     var shownTo = Math.min((self.albumData.page + 1) * Settings.PhotosPerPage, self.albumData.photosCount);
-    var shownStr = shownFrom + " - " + shownTo + "/" + self.albumData.photosCount;
+    var shownStr = shownFrom + " - " + shownTo + "/" + self.albumData.photosCount;*/
+    var shownStr;
+    if (self.albumData.pagesCount) {
+      shownStr = (self.albumData.page + 1) + "/" + self.albumData.pagesCount;
+    } else {
+      shownStr = "-/-";
+    }
+
     self.shownPhotosEdit.value = shownStr;
+  },
+
+  refreshPhotosPage: function () {
+    var self = AMApi;
+
+    //cancell previously schedulled refresh
+    if (self.pageRefreshTimer) {
+      clearTimeout(self.pageRefreshTimer);
+      self.pageRefreshTimer = null;
+    }
+
+    //schedule/reschedule refreshRating()
+    self.pageRefreshTimer = setTimeout(function () {
+      self.pageRefreshTimer = null;
+      self.showPhotosPage();
+    }, Settings.PhotosPageRefreshDelay);
   },
 
   showPhotosPage: function () {
@@ -399,26 +432,70 @@ var AMApi = {
     }
   },
 
-  onShowPrevBtnClick: function () {
+  rebuildAlbumPageCache: function () {
+
+  },
+
+  onSlideBtnDown: function (slideNext) {
     var self = AMApi;
 
-    //todo: don't update imemdiately, schedule update
-    if (self.albumData.page > 0) {
-      --self.albumData.page;
-      self.updateShownPhotosEdit();
-      self.showPhotosPage();
+    if (self.pageSlideTimer) {
+      clearTimeout(self.pageSlideTimer);
+      self.pageSlideTimer = null;
+    }
+
+    var slideFn = slideNext ? self.slideNextPage : self.slidePrevPage;
+
+    function slide() {
+      if (slideFn.call(self)) {
+        self.pageSlideTimer = setTimeout(function () {
+          slide();
+        }, Settings.PageSlideRepeatDelay);
+      } else {
+        self.pageSlideTimer = null;
+      }
+    }
+
+    if (slideFn.call(self)) {
+      self.pageSlideTimer = setTimeout(function () {
+        slide();
+      }, Settings.PageSlideDelay);
     }
   },
 
-  onShowNextBtnClick: function () {
+  onSlideBtnUp: function () {
+    var self = AMApi;
+
+    if (self.pageSlideTimer) {
+      clearTimeout(self.pageSlideTimer);
+      self.pageSlideTimer = null;
+    }
+
+    self.refreshPhotosPage();
+  },
+
+  slideNextPage: function () {
     var self = AMApi;
 
     //todo: don't update imemdiately, schedule update
     if (self.albumData.page < self.albumData.pagesCount - 1) {
       ++self.albumData.page;
       self.updateShownPhotosEdit();
-      self.showPhotosPage();
+      return true;
     }
+    return false;
+  },
+
+  slidePrevPage: function () {
+    var self = AMApi;
+
+    //todo: don't update imemdiately, schedule update
+    if (self.albumData.page > 0) {
+      --self.albumData.page;
+      self.updateShownPhotosEdit();
+      return true;
+    }
+    return false;
   },
 
   onMovePhotosBtnClick: function () {
@@ -427,6 +504,14 @@ var AMApi = {
     //invalidate/rebuild album pages
     //query new photo count, if it matches with records -> rebuild
     //if not - invalidate
+
+    //todo: hint for service albums, that move is irreversible
+
+    //todo: turbo move using VK API exec
+  },
+
+  saveAlbum: function () {
+    //todo: hint that there are alternative methods of for saving albums
   },
 
   onRevThumbSortChkClick: function () {
