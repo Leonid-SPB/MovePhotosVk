@@ -23,6 +23,7 @@ var Settings = {
   PageSlideRepeatDelay: 350,
   MovePhotoDelay: 335,
   WallAlbumId: -7,
+  ProfileAlbumId: -6,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -237,14 +238,15 @@ var AMApi = {
     }*/
 
     for (i = 0; i < albums.length; i++) {
-      var opt = new Option(albums[i].title, albums[i].id, false, false);
-      $(opt).data("AMApi", albums[i]);
-
       //put service albums to the beginning
       var index = null;
-      if (albums[i].id < 0) {
+      if (albums[i].id == Settings.ProfileAlbumId) {
+        continue;
+      } else if (albums[i].id < 0) {
         index = 1;
       }
+      var opt = new Option(albums[i].title, albums[i].id, false, false);
+      $(opt).data("AMApi", albums[i]);
       self.srcAlbumList.add(opt, index);
     }
   },
@@ -404,8 +406,8 @@ var AMApi = {
 
   showPhotosPage: function () {
     var self = AMApi;
-    
-    if (!self.albumData.albumInfo){
+
+    if (!self.albumData.albumInfo) {
       return;
     }
 
