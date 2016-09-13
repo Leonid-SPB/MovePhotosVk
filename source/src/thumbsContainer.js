@@ -57,7 +57,7 @@
       if ($thumb.hasClass("selected")) {
         --$data.thumbsSelCnt__;
       }
-      --$data.thumbsSelCnt__;
+      --$data.thumbsCnt__;
       $thumb.remove();
     },
 

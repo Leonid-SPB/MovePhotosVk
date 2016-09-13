@@ -22,6 +22,7 @@ var Settings = {
   PageSlideDelay: 1400,
   PageSlideRepeatDelay: 350,
   MovePhotoDelay: 335,
+  WallAlbumId: -7,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -42,6 +43,7 @@ var AMApi = {
   $showPrevBtn: null,
   $showNextBtn: null,
   shownPhotosEdit: null,
+  $refreshPageBtn: null,
 
   selectedPhotosEdit: null,
   $selToggleAllBtn: null,
@@ -87,6 +89,7 @@ var AMApi = {
     self.$showPrevBtn = $("#Form1_ShowPrev");
     self.$showNextBtn = $("#Form1_ShowNext");
     self.shownPhotosEdit = document.getElementById("Form1_ShownPhotosEdit");
+    self.$refreshPageBtn = $("#Form1_RefreshAlbumPage");
 
     self.selectedPhotosEdit = document.getElementById("Form1_SelectedPhotos");
     self.$selToggleAllBtn = $("#Form1_SelToggleAll");
@@ -110,6 +113,7 @@ var AMApi = {
     self.$showPrevBtn.mouseup(self.onSlideBtnUp).mousedown(function (event) {
       self.onSlideBtnDown(false);
     });
+    self.$refreshPageBtn.click(self.onRefreshPageClick);
     self.$selToggleAllBtn.click(self.onSelToggleAll);
     self.$selToggleVisibleBtn.click(self.onSelToggleVisible);
     $(self.revThumbSortChk).click(self.onRevThumbSortChkClick);
@@ -207,6 +211,7 @@ var AMApi = {
     self.$goBtn.button(dstr);
     self.$selToggleAllBtn.button(dstr);
     self.$selToggleVisibleBtn.button(dstr);
+    self.$refreshPageBtn.button(dstr);
     self.$showPrevBtn.button(dstr);
     self.$showNextBtn.button(dstr);
     self.revThumbSortChk.disabled = dval;
@@ -232,11 +237,6 @@ var AMApi = {
     }*/
 
     for (i = 0; i < albums.length; i++) {
-      //skip empty
-      if (!albums[i].size) {
-        continue;
-      }
-
       var opt = new Option(albums[i].title, albums[i].id, false, false);
       $(opt).data("AMApi", albums[i]);
 
@@ -261,13 +261,13 @@ var AMApi = {
 
     //add new options
     for (i = 0; i < albums.length; i++) {
-      var opt = new Option(albums[i].title, albums[i].id, false, false);
-
-      //put service albums to the beginning
       var index = null;
-      if (albums[i].id < 0) {
+      if (albums[i].id == Settings.WallAlbumId) {
         index = 2;
+      } else if (albums[i].id < 0) {
+        continue;
       }
+      var opt = new Option(albums[i].title, albums[i].id, false, false);
       self.dstAlbumList.add(opt, index);
     }
   },
@@ -402,24 +402,12 @@ var AMApi = {
     self.shownPhotosEdit.value = shownStr;
   },
 
-  refreshPhotosPage: function () {
-    var self = AMApi;
-
-    //cancell previously schedulled refresh
-    if (self.pageRefreshTimer) {
-      clearTimeout(self.pageRefreshTimer);
-      self.pageRefreshTimer = null;
-    }
-
-    //schedule/reschedule refreshRating()
-    self.pageRefreshTimer = setTimeout(function () {
-      self.pageRefreshTimer = null;
-      self.showPhotosPage();
-    }, Settings.PhotosPageRefreshDelay);
-  },
-
   showPhotosPage: function () {
     var self = AMApi;
+    
+    if (!self.albumData.albumInfo){
+      return;
+    }
 
     function showThumbs() {
       self.$thumbsContainer.ThumbsViewer("empty");
@@ -516,21 +504,37 @@ var AMApi = {
     }
     return false;
   },
-  
-  invalidateAlbumPageCache: function() {
+
+  refreshPhotosPage: function () {
     var self = AMApi;
-    
+
+    //cancell previously schedulled refresh
+    if (self.pageRefreshTimer) {
+      clearTimeout(self.pageRefreshTimer);
+      self.pageRefreshTimer = null;
+    }
+
+    //schedule/reschedule refreshRating()
+    self.pageRefreshTimer = setTimeout(function () {
+      self.pageRefreshTimer = null;
+      self.showPhotosPage();
+    }, Settings.PhotosPageRefreshDelay);
+  },
+
+  invalidateAlbumPageCache: function () {
+    var self = AMApi;
+
     var prevPagePhotos = self.albumData.pages[self.albumData.page];
     var newPagePhotos$ = self.$thumbsContainer.ThumbsViewer("getThumbsData");
-        
+
     self.albumData.photosCount -= (prevPagePhotos - newPagePhotos$);
     self.albumData.pagesCount = Math.ceil(self.albumData.photosCount / Settings.PhotosPerPage);
-    
+
     var photos = [];
-    for(var i = 0; i < newPagePhotos$.length; ++i) {
+    for (var i = 0; i < newPagePhotos$.length; ++i) {
       photos.push(newPagePhotos$[i].data.vk_img);
     }
-    
+
     self.albumData.pages[self.albumData.page] = photos;
   },
 
@@ -549,8 +553,8 @@ var AMApi = {
       return;
     }
 
-    var selThumbsAr = self.$thumbsContainer.ThumbsViewer("getThumbsCount").selected;
-    if (!selThumbsAr.length) { //no images selected
+    var selThumbsCnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount").selected;
+    if (!selThumbsCnt) { //no images selected
       self.displayWarn("Не выбраны фотографии для перемещения/сохранения");
       return;
     }
@@ -574,7 +578,7 @@ var AMApi = {
 
     function onProgressMove($thumb) {
       self.$progressBar.progressbar("value", ++progress);
-      self.thumbsContainer.ThumbsViewer("removeThumb", $thumb);
+      self.$thumbsContainer.ThumbsViewer("removeThumb", $thumb);
       self.updSelectedNum();
     }
 
@@ -614,7 +618,7 @@ var AMApi = {
       var albumID = self.dstAlbumList.item(aidSelIndex).value;
       self.taskInfo.abort = false;
 
-      self.doMovePhotos(ownerId, albumID, $thumbListm, self.taskInfo.abort).done(onDone).always(onAlways).progress(onProgressMove);
+      self.doMovePhotos(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).always(onAlways).progress(onProgressMove);
     } else {
       //abort task
       self.taskInfo.abort = true;
@@ -634,7 +638,7 @@ var AMApi = {
     //todo: hint that there are alternative methods of for saving albums
   },
 
-  doMovePhotos: function (ownerId, targetAid, $thumbList, abortFlag) {
+  doMovePhotos: function (ownerId, targetAid, $thumbList, abortFlagRef) {
     var self = AMApi;
     var d = $.Deferred();
 
@@ -643,7 +647,7 @@ var AMApi = {
 
     function movePhotoSingle() {
       //stop if no more images left or the task was aborted
-      if (abortFlag || !$thumbList.length) {
+      if (abortFlagRef.abort || !$thumbList.length) {
         if (trInProgress) {
           //some transactions have not finished yet, waiting...
           setTimeout(movePhotoSingle, Settings.MovePhotoDelay);
@@ -663,7 +667,7 @@ var AMApi = {
       VkApiWrapper.movePhoto({
         owner_id: ownerId,
         target_album_id: targetAid,
-        photo_id: thumbInfo.data.id
+        photo_id: thumbInfo.data.vk_img.id
       }).done(function () {
         --trInProgress;
         //report progress (caller will remove photo from container and update progress bar)
@@ -671,7 +675,7 @@ var AMApi = {
       }).fail(function (error) {
         --trInProgress;
         //cancell any further tasks and set error information
-        abortFlag = true;
+        abortFlagRef.abort = true;
         errInfo = {
           error: error,
           thumbInfo: thumbInfo
@@ -684,6 +688,11 @@ var AMApi = {
     movePhotoSingle();
 
     return d.promise();
+  },
+
+  onRefreshPageClick: function () {
+    var self = AMApi;
+    //TODO!
   },
 
   onRevThumbSortChkClick: function () {
@@ -738,6 +747,7 @@ $(function () {
       primary: "ui-icon ui-icon-triangle-1-e" // Custom icon
     }
   }).removeClass('ui-corner-all');
+  $("#Form1_RefreshAlbumPage").button();
   $("#goBtn").button();
 
   $("#welcome_dialog").dialog({
