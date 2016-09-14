@@ -17,7 +17,7 @@ var Settings = {
   MaxGroupNameLen: 40,
   MaxOptionLength: 40,
   MaxFriendsList: 500,
-  PhotosPerPage: 100,
+  PhotosPerPage: 10,
   PhotosPageRefreshDelay: 700,
   PageSlideDelay: 1400,
   PageSlideRepeatDelay: 350,
@@ -43,8 +43,8 @@ var AMApi = {
 
   $showPrevBtn: null,
   $showNextBtn: null,
-  shownPhotosEdit: null,
-  $refreshPageBtn: null,
+  albumPageEdit: null,
+  $reloadPageBtn: null,
 
   selectedPhotosEdit: null,
   $selToggleAllBtn: null,
@@ -58,11 +58,12 @@ var AMApi = {
   goBtnLabelSave: "Сохранить",
   goBtnLabelCancel: "Отмена",
 
-  albumCache: {},
+  albumsCache: {},
   albumData: {
     photosCount: 0,
     pagesCount: 0,
     albumInfo: null,
+    dirty: false,
     pages: {},
     page: 0
   },
@@ -72,7 +73,6 @@ var AMApi = {
 
   taskInfo: {
     abort: false,
-    promise: $.Deferred().resolve()
   },
 
   init: function () {
@@ -85,12 +85,12 @@ var AMApi = {
     self.dstAlbumList = document.getElementById("Form1_DstAlbumList");
 
     self.$progressBar = $("#Progressbar");
-    self.$goBtn = $("#goBtn");
+    self.$goBtn = $("#Form1_goBtn");
 
     self.$showPrevBtn = $("#Form1_ShowPrev");
     self.$showNextBtn = $("#Form1_ShowNext");
-    self.shownPhotosEdit = document.getElementById("Form1_ShownPhotosEdit");
-    self.$refreshPageBtn = $("#Form1_RefreshAlbumPage");
+    self.albumPageEdit = document.getElementById("Form1_albumPageEdit");
+    self.$reloadPageBtn = $("#Form1_ReloadAlbumPage");
 
     self.selectedPhotosEdit = document.getElementById("Form1_SelectedPhotos");
     self.$selToggleAllBtn = $("#Form1_SelToggleAll");
@@ -114,7 +114,7 @@ var AMApi = {
     self.$showPrevBtn.mouseup(self.onSlideBtnUp).mousedown(function (event) {
       self.onSlideBtnDown(false);
     });
-    self.$refreshPageBtn.click(self.onRefreshPageClick);
+    self.$reloadPageBtn.click(self.onReloadPageClick);
     self.$selToggleAllBtn.click(self.onSelToggleAll);
     self.$selToggleVisibleBtn.click(self.onSelToggleVisible);
     $(self.revThumbSortChk).click(self.onRevThumbSortChkClick);
@@ -161,7 +161,7 @@ var AMApi = {
       owner_id: Settings.vkUserId,
       need_system: 1
     }).done(function (albums) {
-      self.albumCache[Settings.vkUserId] = albums;
+      self.albumsCache[Settings.vkUserId] = albums;
       self.onSrcOwnerChanged();
     }).fail(self.onFatalError);
 
@@ -212,7 +212,7 @@ var AMApi = {
     self.$goBtn.button(dstr);
     self.$selToggleAllBtn.button(dstr);
     self.$selToggleVisibleBtn.button(dstr);
-    self.$refreshPageBtn.button(dstr);
+    self.$reloadPageBtn.button(dstr);
     self.$showPrevBtn.button(dstr);
     self.$showNextBtn.button(dstr);
     self.revThumbSortChk.disabled = dval;
@@ -285,11 +285,11 @@ var AMApi = {
       self.dstAlbumOwnerList.selectedIndex = selIndex;
       self.onDstOwnerChanged();
 
-      self.updateSrcAlbumsListBox(self.albumCache[ownerId]);
+      self.updateSrcAlbumsListBox(self.albumsCache[ownerId]);
       self.onSrcAlbumChanged();
     }
 
-    if (ownerId in self.albumCache) {
+    if (ownerId in self.albumsCache) {
       doUpdate();
     } else {
       Utils.showSpinner();
@@ -298,7 +298,7 @@ var AMApi = {
         owner_id: ownerId,
         need_system: 1
       }).done(function (albums) {
-        self.albumCache[ownerId] = albums;
+        self.albumsCache[ownerId] = albums;
         doUpdate();
       }).fail(self.onFatalError);
     }
@@ -311,11 +311,11 @@ var AMApi = {
     var ownerId = self.dstAlbumOwnerList.item(selIndex).value;
 
     function doUpdate() {
-      self.updateDstAlbumsListBox(self.albumCache[ownerId]);
+      self.updateDstAlbumsListBox(self.albumsCache[ownerId]);
       self.onDstAlbumChanged();
     }
 
-    if (ownerId in self.albumCache) {
+    if (ownerId in self.albumsCache) {
       doUpdate();
     }
     /* else {
@@ -325,7 +325,7 @@ var AMApi = {
             owner_id: ownerId,
             need_system: 1
           }).done(function (albums) {
-            self.albumCache[ownerId] = albums;
+            self.albumsCache[ownerId] = albums;
             doUpdate();
           }).fail(self.onFatalError);
         }*/
@@ -343,7 +343,8 @@ var AMApi = {
     self.albumData.albumInfo = null;
     self.albumData.pages = {};
     self.albumData.page = 0;
-    self.updateShownPhotosEdit();
+    self.albumData.dirty = false;
+    self.updateAlbumPageEditBox();
 
     var selIndex = self.srcAlbumList.selectedIndex;
     var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
@@ -372,7 +373,7 @@ var AMApi = {
       self.albumData.pages[0] = photos;
       self.albumData.albumInfo = $(self.srcAlbumList.item(selIndex)).data("AMApi");
 
-      self.updateShownPhotosEdit();
+      self.updateAlbumPageEditBox();
       self.showPhotosPage();
     }).fail(onFail);
   },
@@ -389,7 +390,7 @@ var AMApi = {
     }
   },
 
-  updateShownPhotosEdit: function () {
+  updateAlbumPageEditBox: function () {
     var self = AMApi;
     /*var shownFrom = self.albumData.page * Settings.PhotosPerPage;
     var shownTo = Math.min((self.albumData.page + 1) * Settings.PhotosPerPage, self.albumData.photosCount);
@@ -401,7 +402,7 @@ var AMApi = {
       shownStr = "-/-";
     }
 
-    self.shownPhotosEdit.value = shownStr;
+    self.albumPageEdit.value = shownStr;
   },
 
   showPhotosPage: function () {
@@ -486,10 +487,15 @@ var AMApi = {
   slideNextPage: function () {
     var self = AMApi;
 
-    //todo: don't update imemdiately, schedule update
+    //don't change page, refresh current
+    if (self.albumData.dirty) {
+      self.albumData.dirty = false;
+      return false;
+    }
+
     if (self.albumData.page < self.albumData.pagesCount - 1) {
       ++self.albumData.page;
-      self.updateShownPhotosEdit();
+      self.updateAlbumPageEditBox();
       return true;
     }
     return false;
@@ -498,10 +504,15 @@ var AMApi = {
   slidePrevPage: function () {
     var self = AMApi;
 
-    //todo: don't update imemdiately, schedule update
+    //don't change page, refresh current
+    if (self.albumData.dirty) {
+      self.albumData.dirty = false;
+      return false;
+    }
+
     if (self.albumData.page > 0) {
       --self.albumData.page;
-      self.updateShownPhotosEdit();
+      self.updateAlbumPageEditBox();
       return true;
     }
     return false;
@@ -529,15 +540,19 @@ var AMApi = {
     var prevPagePhotos = self.albumData.pages[self.albumData.page];
     var newPagePhotos$ = self.$thumbsContainer.ThumbsViewer("getThumbsData");
 
-    self.albumData.photosCount -= (prevPagePhotos - newPagePhotos$);
-    self.albumData.pagesCount = Math.ceil(self.albumData.photosCount / Settings.PhotosPerPage);
+    if (prevPagePhotos.length != newPagePhotos$.length) {
+      self.albumData.photosCount -= (prevPagePhotos.length - newPagePhotos$.length);
+      self.albumData.pagesCount = Math.ceil(self.albumData.photosCount / Settings.PhotosPerPage);
 
-    var photos = [];
-    for (var i = 0; i < newPagePhotos$.length; ++i) {
-      photos.push(newPagePhotos$[i].data.vk_img);
+      var photos = [];
+      for (var i = 0; i < newPagePhotos$.length; ++i) {
+        photos.push(newPagePhotos$[i].data.vk_img);
+      }
+
+      self.albumData.pages[self.albumData.page] = photos;
+      self.albumData.page = Math.min(self.albumData.page, self.albumData.pagesCount);
+      self.albumData.dirty = true;
     }
-
-    self.albumData.pages[self.albumData.page] = photos;
   },
 
   onGoBtnClick: function () {
@@ -573,7 +588,9 @@ var AMApi = {
 
       //update button label
       self.onDstAlbumChanged();
+
       self.updSelectedNum();
+      self.updateAlbumPageEditBox();
     }
 
     var progress = 0;
@@ -692,9 +709,14 @@ var AMApi = {
     return d.promise();
   },
 
-  onRefreshPageClick: function () {
+  onReloadPageClick: function () {
     var self = AMApi;
-    //TODO!
+
+    if (self.albumData.page in self.albumData.pages) {
+      delete self.albumData.pages[self.albumData.page];
+    }
+    self.albumData.dirty = false;
+    self.showPhotosPage();
   },
 
   onRevThumbSortChkClick: function () {
@@ -749,8 +771,8 @@ $(function () {
       primary: "ui-icon ui-icon-triangle-1-e" // Custom icon
     }
   }).removeClass('ui-corner-all');
-  $("#Form1_RefreshAlbumPage").button();
-  $("#goBtn").button();
+  $("#Form1_ReloadAlbumPage").button();
+  $("#Form1_goBtn").button();
 
   $("#welcome_dialog").dialog({
     autoOpen: false,

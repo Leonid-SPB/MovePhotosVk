@@ -3,14 +3,11 @@
 ) fix horizontal spinner buttons
 ) select/deselect in gallery mode
 
-) arrow bg image for album select form
 ) update welcome/rate dialogs: recomend rating photo app
 ) update help wiki page
 
 ) test on all modern browsers: chrome, firefox, edge, ie
-
 ) video "how to use"
-) donate button (disable ads)
 ) style tuning: better loadding gif, fonts, etc...
 
 Done:
@@ -19,8 +16,12 @@ x) make slider more convenient
 
 
 New features:
-) shuffle sort
 ) create album
+) warning when moving photos from saved or wall (can't move back)
+) shuffle sort
+
+No go:
+) arrow bg image for album select form
 ) album size in album list select
-) warning when moving photos from profile or wall (can't move back)
 ) usage tips: save album using yandex.disk
+) donate button (disable ads)
