@@ -43,7 +43,7 @@ var AMApi = {
 
   $showPrevBtn: null,
   $showNextBtn: null,
-  albumPageEdit: null,
+  $albumPageField: null,
   $reloadPageBtn: null,
 
   selectedPhotosEdit: null,
@@ -89,7 +89,7 @@ var AMApi = {
 
     self.$showPrevBtn = $("#Form1_ShowPrev");
     self.$showNextBtn = $("#Form1_ShowNext");
-    self.albumPageEdit = document.getElementById("Form1_albumPageEdit");
+    self.$albumPageField = $("#Form1_albumPageField");
     self.$reloadPageBtn = $("#Form1_ReloadAlbumPage");
 
     self.selectedPhotosEdit = document.getElementById("Form1_SelectedPhotos");
@@ -344,7 +344,7 @@ var AMApi = {
     self.albumData.pages = {};
     self.albumData.page = 0;
     self.albumData.dirty = false;
-    self.updateAlbumPageEditBox();
+    self.updateAlbumPageField();
 
     var selIndex = self.srcAlbumList.selectedIndex;
     var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
@@ -373,7 +373,7 @@ var AMApi = {
       self.albumData.pages[0] = photos;
       self.albumData.albumInfo = $(self.srcAlbumList.item(selIndex)).data("AMApi");
 
-      self.updateAlbumPageEditBox();
+      self.updateAlbumPageField();
       self.showPhotosPage();
     }).fail(onFail);
   },
@@ -390,7 +390,7 @@ var AMApi = {
     }
   },
 
-  updateAlbumPageEditBox: function () {
+  updateAlbumPageField: function () {
     var self = AMApi;
     /*var shownFrom = self.albumData.page * Settings.PhotosPerPage;
     var shownTo = Math.min((self.albumData.page + 1) * Settings.PhotosPerPage, self.albumData.photosCount);
@@ -402,7 +402,7 @@ var AMApi = {
       shownStr = "-/-";
     }
 
-    self.albumPageEdit.value = shownStr;
+    self.$albumPageField.text(shownStr);
   },
 
   showPhotosPage: function () {
@@ -495,7 +495,7 @@ var AMApi = {
 
     if (self.albumData.page < self.albumData.pagesCount - 1) {
       ++self.albumData.page;
-      self.updateAlbumPageEditBox();
+      self.updateAlbumPageField();
       return true;
     }
     return false;
@@ -512,7 +512,7 @@ var AMApi = {
 
     if (self.albumData.page > 0) {
       --self.albumData.page;
-      self.updateAlbumPageEditBox();
+      self.updateAlbumPageField();
       return true;
     }
     return false;
@@ -590,7 +590,7 @@ var AMApi = {
       self.onDstAlbumChanged();
 
       self.updSelectedNum();
-      self.updateAlbumPageEditBox();
+      self.updateAlbumPageField();
     }
 
     var progress = 0;
