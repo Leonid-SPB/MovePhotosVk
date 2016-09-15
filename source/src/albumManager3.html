@@ -105,34 +105,21 @@
     </div>
   </div>
 
-  <div id="rateus_dialog" title="Рейтинг готов!" style="display: none;">
-    <div style="display: table">
-      <div style="display: table-cell; padding-right: 10px">
-        <img src="logo150.png">
-      </div>
-      <div style="display: table-cell; vertical-align:middle">
-        <p class="welcome_p">Оцените приложение, если оно Вам понравилось!</p>
-        <!-- todo: recomend rating photo app -->
-      </div>
-    </div>
-  </div>
-
   <hr />
   <form name="Form1" action="" class="MainForm">
-    <div style="width: 98%; text-align: center; margin-left: auto; margin-right: auto; margin-top: 10px; margin-bottom: 20px">
-
-      <div style="display: table; margin-top: 10px; margin-bottom: 10px; width: 100%">
+    <div class="MainForm-body">
+      <div class="MainForm-body-div">
         <div style="display: table-cell; text-align: center; vertical-align: middle; width: 50%">
           <div>
             <label for="Form1_SrcAlbumOwner">Откуда</label>
           </div>
           <div>
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" size="1" id="Form1_SrcAlbumOwner">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" style="margin-top: 0.3em" size="1" id="Form1_SrcAlbumOwner">
               <option value="my albums" class="italic_bold">Мои альбомы</option>
             </select>
           </div>
           <div>
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" size="1" id="Form1_SrcAlbumList">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" style="margin-top: 0.3em" size="1" id="Form1_SrcAlbumList">
               <option value="not selected">Альбом не выбран</option>
             </select>
           </div>
@@ -143,12 +130,12 @@
             <label for="Form1_DstAlbumOwner">Куда</label>
           </div>
           <div>
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em; opacity: 0.5;" size="1" id="Form1_DstAlbumOwner" disabled="true">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" style="margin-top: 0.3em; opacity: 0.5;" size="1" id="Form1_DstAlbumOwner" disabled="true">
               <option value="my albums" class="italic_bold">Мои альбомы</option>
             </select>
           </div>
           <div>
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content no_glow_on_focus" style="margin-top: 0.3em" size="1" id="Form1_DstAlbumList">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" style="margin-top: 0.3em" size="1" id="Form1_DstAlbumList">
               <option value="not selected">Альбом не выбран</option>
               <option value="save" class="italic_bold">Сохранить</option>
             </select>
@@ -156,32 +143,32 @@
         </div>
       </div>
 
-      <div style="display: table; margin-top: 10px; margin-bottom: 10px; width: 100%">
+      <div class="MainForm-body-div">
         <div style="display: table-cell; text-align: left; vertical-align: middle">
-          <button id="Form1_goBtn" disabled=1 type="button" class="no_glow_on_focus">Переместить</button>
+          <button id="Form1_goBtn" disabled=1 type="button">Переместить</button>
         </div>
         <div style="display: table-cell; text-align: left; width: 90%; vertical-align: middle">
           <div id="Progressbar"></div>
         </div>
       </div>
 
-      <div style="display: table; margin-top: 10px; margin-bottom: 10px; width: 100%">
+      <div class="MainForm-body-div">
         <div style="display: table-cell; vertical-align: middle; text-align: left">
           <div style="display: table">
             <div style="display: table-cell; vertical-align: middle">
               <label>Страница:&nbsp;</label>
             </div>
             <div style="display: table-cell; vertical-align: middle">
-              <button id="Form1_ShowPrev" class="ui-corner-tl ui-corner-bl no_glow_on_focus" style="margin: 0; position: relative; right: -1px; padding-top: 0; padding-bottom: 0; height: 20px" type="button"></button>
+              <button id="Form1_ShowPrev" class="ui-corner-tl ui-corner-bl" style="margin: 0; position: relative; right: -1px; padding-top: 0; padding-bottom: 0; height: 20px" type="button"></button>
             </div>
             <div style="display: table-cell; vertical-align: middle">
-              <input id="Form1_albumPageEdit" class="ui-widget ui-widget-content no_glow_on_focus" style="text-align: right; padding-right: 0.2em;" readonly="readonly" type="text" size="9" value="-/-">
+              <input id="Form1_albumPageEdit" class="ui-widget ui-widget-content" style="text-align: right; padding-right: 0.2em;" readonly="readonly" type="text" size="9" value="-/-">
             </div>
             <div style="display: table-cell; vertical-align: middle">
-              <button id="Form1_ShowNext" class="ui-corner-tr ui-corner-br no_glow_on_focus" style="margin: 0; position: relative; left: -1px; padding-top: 0; padding-bottom: 0; height: 20px" type="button"></button>
+              <button id="Form1_ShowNext" class="ui-corner-tr ui-corner-br" style="margin: 0; position: relative; left: -1px; padding-top: 0; padding-bottom: 0; height: 20px" type="button"></button>
             </div>
             <div style="display: table-cell; vertical-align: middle">
-              <button id="Form1_ReloadAlbumPage" class="no_glow_on_focus" style="font-size: 0.9em; margin-left: 0.5em" type="button">обновить</button>
+              <button id="Form1_ReloadAlbumPage" style="font-size: 0.9em; margin-left: 0.5em" type="button">обновить</button>
             </div>
           </div>
         </div>
@@ -191,8 +178,8 @@
         </div>
         <div style="display: table-cell; text-align: left; vertical-align: middle">
           <label>Выделить/убрать:&nbsp;</label>
-          <button id="Form1_SelToggleAll" class="no_glow_on_focus" style="font-size: 0.9em" type="button">все</button>
-          <button id="Form1_SelToggleVisible" class="no_glow_on_focus" style="font-size: 0.9em" type="button">текущие</button>
+          <button id="Form1_SelToggleAll" style="font-size: 0.9em" type="button">все</button>
+          <button id="Form1_SelToggleVisible" style="font-size: 0.9em" type="button">текущие</button>
         </div>
       </div>
 
@@ -206,9 +193,9 @@
       <ul id="thumbs_container">&nbsp;</ul>
     </div>
     <hr />
-    <div style="width: 98%; text-align: right; margin-left: auto; margin-right: auto; margin-top: 10px">
+    <div class="MainForm-body" style="text-align: right">
       <label for="Form1_RevThumbSort">Обратная сортировка</label>
-      <input id="Form1_RevThumbSort" type="checkbox" class="no_glow_on_focus">
+      <input id="Form1_RevThumbSort" type="checkbox">
     </div>
   </form>
 

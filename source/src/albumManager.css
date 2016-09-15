@@ -220,3 +220,25 @@ hr {
 .MainForm label {
   font-weight: bolder;
 }
+
+.MainForm select,
+.MainForm button,
+.MainForm input {
+  outline: none;
+}
+
+.MainForm-body {
+  width: 98%;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
+  margin-bottom: 20px
+}
+
+.MainForm-body-div {
+  display: table;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 100%
+}
