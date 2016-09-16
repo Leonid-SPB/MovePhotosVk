@@ -17,7 +17,7 @@ var Settings = {
   MaxGroupNameLen: 40,
   MaxOptionLength: 40,
   MaxFriendsList: 500,
-  PhotosPerPage: 10,
+  PhotosPerPage: 100,
   PhotosPageRefreshDelay: 700,
   PageSlideDelay: 1400,
   PageSlideRepeatDelay: 350,
@@ -581,6 +581,10 @@ var AMApi = {
       //rate request
     }
 
+    function onFail(errorInfo) {
+      self.displayError(errorInfo.error);
+    }
+
     function onAlwaysSave() {
       Utils.hideSpinner();
       self.disableControls(0);
@@ -650,7 +654,7 @@ var AMApi = {
       var albumID = self.dstAlbumList.item(aidSelIndex).value;
       self.taskInfo.abort = false;
 
-      self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).always(onAlwaysMove).progress(onProgressMove);
+      self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).fail(onFail).always(onAlwaysMove).progress(onProgressMove);
     } else {
       //abort task
       self.taskInfo.abort = true;
@@ -737,7 +741,8 @@ var AMApi = {
     var self = AMApi;
     var d = $.Deferred();
 
-    var GroupSize = 10;
+    var GroupSize = 25;
+    var errInfo = null;
 
     function getIds(obj) {
       return obj.data.vk_img.id;
@@ -746,7 +751,11 @@ var AMApi = {
     function movePhotoGroup() {
       //stop if no more images left or the task was aborted
       if (abortFlagRef.abort || !$thumbList.length) {
-        d.resolve();
+        if (!errInfo) { //no errors
+          d.resolve();
+        } else { //error info is not empty, something happened
+          d.reject(errInfo.error);
+        }
         return;
       }
 
@@ -756,7 +765,13 @@ var AMApi = {
         d.reject(err);
       }).done(function (rsp) {
         for (var i = 0; i < thumbGrp.length; ++i) {
-          d.notify(thumbGrp[i].$thumb);
+          if (rsp[i]) {
+            d.notify(thumbGrp[i].$thumb);
+          } else {
+            errInfo = {
+              error: "Не удалось переместить некоторые фотографии, попробуйте еще раз."
+            };
+          }
         }
         movePhotoGroup();
       });

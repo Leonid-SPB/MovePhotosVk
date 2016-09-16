@@ -268,7 +268,7 @@ photo_id: phl[i]\n\
 }));\n\
 i = i + 1;\n\
 }\n\
-return rsp;"
+return rsp;";
 
     var code = code_.replace("%1", ownerId);
     code = code.replace("%2", targetAlbumId);
