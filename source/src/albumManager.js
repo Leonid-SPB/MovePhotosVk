@@ -650,7 +650,7 @@ var AMApi = {
       var albumID = self.dstAlbumList.item(aidSelIndex).value;
       self.taskInfo.abort = false;
 
-      self.doMovePhotos(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).always(onAlwaysMove).progress(onProgressMove);
+      self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).always(onAlwaysMove).progress(onProgressMove);
     } else {
       //abort task
       self.taskInfo.abort = true;
@@ -729,6 +729,40 @@ var AMApi = {
     var title = "Фотографии из альбома \"" + albumTitle + "\"";
     var divPhotos = null;
     setTimeout(waitLoad, WaitPageLoadTmout);
+
+    return d.promise();
+  },
+
+  doMovePhotosFast: function (ownerId, targetAid, $thumbList, abortFlagRef) {
+    var self = AMApi;
+    var d = $.Deferred();
+
+    var GroupSize = 10;
+
+    function getIds(obj) {
+      return obj.data.vk_img.id;
+    }
+
+    function movePhotoGroup() {
+      //stop if no more images left or the task was aborted
+      if (abortFlagRef.abort || !$thumbList.length) {
+        d.resolve();
+        return;
+      }
+
+      var thumbGrp = $thumbList.splice(0, GroupSize);
+      var ids = thumbGrp.map(getIds);
+      VkApiWrapper.movePhotoList(ownerId, targetAid, ids).fail(function (err) {
+        d.reject(err);
+      }).done(function (rsp) {
+        for (var i = 0; i < thumbGrp.length; ++i) {
+          d.notify(thumbGrp[i].$thumb);
+        }
+        movePhotoGroup();
+      });
+    }
+
+    movePhotoGroup();
 
     return d.promise();
   },
