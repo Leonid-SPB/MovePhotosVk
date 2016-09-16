@@ -22,6 +22,7 @@ var Settings = {
   PageSlideDelay: 1400,
   PageSlideRepeatDelay: 350,
   MovePhotoDelay: 335,
+  SavePhotoDelay: 100,
   WallAlbumId: -7,
   ProfileAlbumId: -6,
 
@@ -580,7 +581,16 @@ var AMApi = {
       //rate request
     }
 
-    function onAlways() {
+    function onAlwaysSave() {
+      Utils.hideSpinner();
+      self.disableControls(0);
+      self.updSelectedNum();
+
+      //update button label
+      self.onDstAlbumChanged();
+    }
+
+    function onAlwaysMove() {
       Utils.hideSpinner();
       self.disableControls(0);
 
@@ -603,7 +613,7 @@ var AMApi = {
 
     function onProgressSave($thumb) {
       self.$progressBar.progressbar("value", ++progress);
-      $thumb.removeClass("selected");
+      self.$thumbsContainer.ThumbsViewer("selectToggle", $thumb);
       self.updSelectedNum();
     }
 
@@ -621,6 +631,9 @@ var AMApi = {
       self.$progressBar.progressbar("option", "max", $thumbLists.length);
       self.$progressBar.progressbar("value", 0);
 
+      self.taskInfo.abort = false;
+      var selIdx = self.srcAlbumList.selectedIndex;
+      self.doSaveAlbum(self.srcAlbumList.item(selIdx).text, $thumbLists, self.taskInfo).progress(onProgressSave).always(onAlwaysSave);
     } else if (self.$goBtn.button("option", "label") == self.goBtnLabelMove) {
       //move
 
@@ -637,7 +650,7 @@ var AMApi = {
       var albumID = self.dstAlbumList.item(aidSelIndex).value;
       self.taskInfo.abort = false;
 
-      self.doMovePhotos(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).always(onAlways).progress(onProgressMove);
+      self.doMovePhotos(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).always(onAlwaysMove).progress(onProgressMove);
     } else {
       //abort task
       self.taskInfo.abort = true;
@@ -652,9 +665,72 @@ var AMApi = {
     //todo: turbo move using VK API exec
   },
 
-  doSaveAlbum: function () {
+  doSaveAlbum: function (albumTitle, $thumbList, abortFlagRef) {
     var self = AMApi;
-    //todo: hint that there are alternative methods of for saving albums
+    var WaitPageLoadTmout = 100;
+    var d = $.Deferred();
+
+    //add leading zero
+    function lzn(num) {
+      return (num < 10) ? "0" + num : "" + num;
+    }
+
+    function savePhoto($where, num) {
+      if (abortFlagRef.abort || !$thumbList.length) {
+        d.resolve();
+      }
+
+      var thumbInfo = $thumbList.shift();
+      var vk_img = thumbInfo.data.vk_img;
+
+      //find max size
+      var src = "";
+      var sz = 0;
+      for (var i = 0; i < vk_img.sizes.length; ++i) {
+        if (vk_img.sizes[i].width >= sz) {
+          src = vk_img.sizes[i].src;
+          sz = vk_img.sizes[i].width;
+        }
+      }
+
+      var cD = new Date(vk_img.date * 1000);
+      var createdStr = lzn(cD.getDay()) + "." + lzn(cD.getMonth()) + "." + cD.getFullYear() + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
+      var text = vk_img.text ? $("<div>").text(vk_img.text).html() : "";
+
+      var htmlStr = "";
+      htmlStr = htmlStr + "<p> Фото №" + num + ", " + createdStr;
+      if (text.length) {
+        htmlStr = htmlStr + ", " + text + "</p>";
+      } else {
+        htmlStr = htmlStr + "</p>";
+      }
+      htmlStr = htmlStr + "<img src=\"" + src + "\" alt=\"" + text + "\"/ ><br/ ><br/ >";
+
+      $where.append(htmlStr);
+      d.notify(thumbInfo.$thumb);
+
+      setTimeout(function () {
+        savePhoto($where, num + 1);
+      }, Settings.SavePhotoDelay);
+    }
+
+    function waitLoad() {
+      divPhotos = popUp.document.getElementById("photos");
+      if (divPhotos) {
+        popUp.document.title = title;
+        savePhoto($(divPhotos), 1);
+      } else {
+        setTimeout(waitLoad, WaitPageLoadTmout);
+      }
+    }
+
+    //open new window and wait when it's loaded
+    var popUp = window.open("SaveAlbum.html", "_blank", "location=yes,menubar=yes,toolbar=yes,titlebar=yes,scrollbars=yes", false);
+    var title = "Фотографии из альбома \"" + albumTitle + "\"";
+    var divPhotos = null;
+    setTimeout(waitLoad, WaitPageLoadTmout);
+
+    return d.promise();
   },
 
   doMovePhotos: function (ownerId, targetAid, $thumbList, abortFlagRef) {

@@ -1,7 +1,6 @@
-) new logo, screenshots and description for app catalog
-) fix logo 150x150 to avoid roud cropping
-) fix horizontal spinner buttons
-) select/deselect in gallery mode
+) save album feature
+
+) new screenshots and description for app catalog
 
 ) update welcome/rate dialogs: recomend rating photo app
 ) update help wiki page
@@ -11,14 +10,18 @@
 ) style tuning: better loadding gif, fonts, etc...
 
 Done:
+x) fix horizontal spinner buttons
 x) convert control links to buttons
 x) make slider more convenient
-
+x) fix logo 150x150 to avoid roud cropping
 
 New features:
+) select/deselect in gallery mode
+) turbo mode
 ) create album
-) warning when moving photos from saved or wall (can't move back)
+) warning when moving photos from saved or wall (can't move back, can break wall posts)
 ) shuffle sort
+
 
 No go:
 ) arrow bg image for album select form
