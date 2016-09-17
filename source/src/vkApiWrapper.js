@@ -258,6 +258,7 @@ var VkApiWrapper = {
     var self = this;
     var d = $.Deferred();
 
+    // jshint multistr:true
     var code_ = "\
 var oid=%1,tid=%2,phl=[%3],rsp=[],i=0;\n\
 while (i < phl.length) {\n\

@@ -187,7 +187,7 @@ var AMApi = {
   },
 
   displayWarn: function (warnMsg) {
-    VkAppUtils.displayWarn(warnMsg, "NoteField", Settings.ErrorHideAfter);
+    VkAppUtils.displayWarn(warnMsg, "globalErrorBox", Settings.ErrorHideAfter);
   },
 
   onFatalError: function (error) {
@@ -541,18 +541,21 @@ var AMApi = {
     var prevPagePhotos = self.albumData.pages[self.albumData.page];
     var newPagePhotos$ = self.$thumbsContainer.ThumbsViewer("getThumbsData");
 
-    if (prevPagePhotos.length != newPagePhotos$.length) {
-      self.albumData.photosCount -= (prevPagePhotos.length - newPagePhotos$.length);
-      self.albumData.pagesCount = Math.ceil(self.albumData.photosCount / Settings.PhotosPerPage);
+    self.albumData.photosCount -= (prevPagePhotos.length - newPagePhotos$.length);
+    self.albumData.pagesCount = Math.ceil(self.albumData.photosCount / Settings.PhotosPerPage);
+    self.albumData.pages = [];
+    if (self.albumData.pagesCount) {
+      self.albumData.page = Math.min(self.albumData.page, self.albumData.pagesCount - 1);
+    } else {
+      self.albumData.page = 0;
+    }
 
-      var photos = [];
-      for (var i = 0; i < newPagePhotos$.length; ++i) {
-        photos.push(newPagePhotos$[i].data.vk_img);
-      }
-
-      self.albumData.pages[self.albumData.page] = photos;
-      self.albumData.page = Math.min(self.albumData.page, self.albumData.pagesCount);
+    if (newPagePhotos$.length) {
+      //don't refresh page automatically if there are some photos left
       self.albumData.dirty = true;
+    } else {
+      //page is empty, refresh it
+      self.onReloadPageClick();
     }
   },
 
@@ -581,8 +584,10 @@ var AMApi = {
       //rate request
     }
 
-    function onFail(errorInfo) {
-      self.displayError(errorInfo.error);
+    function onFailMove(errorInfo) {
+      if (errorInfo) {
+        self.displayWarn(errorInfo.error);
+      }
     }
 
     function onAlwaysSave() {
@@ -654,7 +659,7 @@ var AMApi = {
       var albumID = self.dstAlbumList.item(aidSelIndex).value;
       self.taskInfo.abort = false;
 
-      self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).fail(onFail).always(onAlwaysMove).progress(onProgressMove);
+      self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).fail(onFailMove).always(onAlwaysMove).progress(onProgressMove);
     } else {
       //abort task
       self.taskInfo.abort = true;
@@ -743,6 +748,7 @@ var AMApi = {
 
     var GroupSize = 25;
     var errInfo = null;
+    var trInProgress = 0;
 
     function getIds(obj) {
       return obj.data.vk_img.id;
@@ -751,19 +757,29 @@ var AMApi = {
     function movePhotoGroup() {
       //stop if no more images left or the task was aborted
       if (abortFlagRef.abort || !$thumbList.length) {
-        if (!errInfo) { //no errors
-          d.resolve();
-        } else { //error info is not empty, something happened
-          d.reject(errInfo.error);
+        if (trInProgress) {
+          //some transactions have not finished yet, waiting...
+          setTimeout(movePhotoGroup, Settings.MovePhotoDelay);
+        } else {
+          if (!errInfo) { //no errors
+            d.resolve();
+          } else { //error info is not empty, something happened
+            d.reject(errInfo.error);
+          }
         }
         return;
       }
 
       var thumbGrp = $thumbList.splice(0, GroupSize);
       var ids = thumbGrp.map(getIds);
+      ++trInProgress;
       VkApiWrapper.movePhotoList(ownerId, targetAid, ids).fail(function (err) {
-        d.reject(err);
+        abortFlagRef.abort = true;
+        --trInProgress;
+        d.reject();
+        return;
       }).done(function (rsp) {
+        --trInProgress;
         for (var i = 0; i < thumbGrp.length; ++i) {
           if (rsp[i]) {
             d.notify(thumbGrp[i].$thumb);
