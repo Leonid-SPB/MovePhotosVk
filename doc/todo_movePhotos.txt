@@ -1,5 +1,3 @@
-) save album feature
-
 ) new screenshots and description for app catalog
 
 ) update welcome/rate dialogs: recomend rating photo app
@@ -14,11 +12,12 @@ x) fix horizontal spinner buttons
 x) convert control links to buttons
 x) make slider more convenient
 x) fix logo 150x150 to avoid roud cropping
+x) save album feature
+x) turbo mode
 
 New features:
-) select/deselect in gallery mode
-) turbo mode
 ) create album
+) select/deselect in gallery mode
 ) warning when moving photos from saved or wall (can't move back, can break wall posts)
 ) shuffle sort
 

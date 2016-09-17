@@ -17,7 +17,7 @@ var Settings = {
   MaxGroupNameLen: 40,
   MaxOptionLength: 40,
   MaxFriendsList: 500,
-  PhotosPerPage: 100,
+  PhotosPerPage: 500,
   PhotosPageRefreshDelay: 700,
   PageSlideDelay: 1400,
   PageSlideRepeatDelay: 350,
@@ -98,7 +98,7 @@ var AMApi = {
     self.$selToggleVisibleBtn = $("#Form1_SelToggleVisible");
 
     self.revThumbSortChk = document.getElementById("Form1_RevThumbSort");
-    self.$thumbsContainer = $("#thumbs_container");
+    self.$thumbsContainer = $("#ThumbsViewer");
 
     self.srcAlbumOwnerList.item(0).value = Settings.vkUserId;
     self.dstAlbumOwnerList.item(0).value = Settings.vkUserId;
@@ -120,7 +120,7 @@ var AMApi = {
     self.$selToggleVisibleBtn.click(self.onSelToggleVisible);
     $(self.revThumbSortChk).click(self.onRevThumbSortChkClick);
 
-    self.$thumbsContainer.on("click.AMApi", ".ThumbsViewer-thumb_block", function (event, parent) {
+    self.$thumbsContainer.on("click.AMApi", ".ThumbsViewer-thumb", function (event, parent) {
       self.$thumbsContainer.ThumbsViewer("selectToggle", $(this));
       AMApi.updSelectedNum();
     });
@@ -183,20 +183,20 @@ var AMApi = {
 
   displayError: function (errMsg) {
     //use global displayError(msg, errorBoxId)
-    VkAppUtils.displayError(errMsg, "globalErrorBox", Settings.ErrorHideAfter);
+    VkAppUtils.displayError(errMsg, "GlobalErrorBox", Settings.ErrorHideAfter);
   },
 
   displayWarn: function (warnMsg) {
-    VkAppUtils.displayWarn(warnMsg, "globalErrorBox", Settings.ErrorHideAfter);
+    VkAppUtils.displayWarn(warnMsg, "GlobalErrorBox", Settings.ErrorHideAfter);
   },
 
   onFatalError: function (error) {
     var self = AMApi;
 
     if ("error_msg" in error) {
-      VkAppUtils.displayError(error.error_msg + "<br />Попробуйте перезагрузить приложение.", "globalErrorBox");
+      VkAppUtils.displayError(error.error_msg + "<br />Попробуйте перезагрузить приложение.", "GlobalErrorBox");
     } else {
-      VkAppUtils.displayError("Неизвестная ошибка, попробуйте перезагрузить приложение.", "globalErrorBox");
+      VkAppUtils.displayError("Неизвестная ошибка, попробуйте перезагрузить приложение.", "GlobalErrorBox");
     }
     self.disableControls(1);
   },
@@ -895,7 +895,7 @@ $(function () {
 
   VkAppUtils.validateApp(Settings.vkSid, Settings.VkAppLocation, Settings.RedirectDelay);
 
-  $("#thumbs_container").ThumbsViewer({
+  $("#ThumbsViewer").ThumbsViewer({
     disableSel: false
   });
   $("#Progressbar").progressbar({
@@ -904,6 +904,7 @@ $(function () {
 
   $("#Form1_SelToggleAll").button();
   $("#Form1_SelToggleVisible").button();
+  $("#Form1_CreateAlbum").button();
   $("#Form1_ShowPrev").button({
     text: false,
     icons: {
@@ -978,7 +979,7 @@ $(function () {
     },
     function () {
       // API initialization failed
-      VkAppUtils.displayError("Не удалось инициализировать VK JS API! Попробуйте перезагрузить приложение.", "globalErrorBox");
+      VkAppUtils.displayError("Не удалось инициализировать VK JS API! Попробуйте перезагрузить приложение.", "GlobalErrorBox");
       d.reject();
     },
     '5.53'

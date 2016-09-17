@@ -16,7 +16,7 @@
   };
 
   var PluginName = 'ThumbsViewer';
-  var ThumbClass = '.ThumbsViewer-thumb_block';
+  var ThumbClass = '.ThumbsViewer-thumb';
 
   var thC = {
 
@@ -42,11 +42,11 @@
       $.extend(data, defaults, opts);
 
       $this.data(PluginName, data);
-      $this.addClass("ThumbsViewer-thumbs_container");
+      $this.addClass("ThumbsViewer-list");
       $this.on("click.ThumbsViewer", ThumbClass, function (event) {
         thC.onThumbClick.call(this, event, $this);
       });
-      $this.on("click.ThumbsViewer", ".ThumbsViewer_zoom-ico", function (event) {
+      $this.on("click.ThumbsViewer", ".ThumbsViewer-zoomIco", function (event) {
         thC.onZoomClick.call(this, event, $this);
       });
     },
@@ -367,7 +367,7 @@
     createThumb_: function (vk_img) {
       var $this = $(this);
       var $data = $(this).data(PluginName);
-      var thumb_parent = $("<div class='ThumbsViewer-thumb_block loading' />");
+      var thumb_parent = $("<div class='ThumbsViewer-thumb loading' />");
 
       var titleStr = thC.makeTitle_.call(this, vk_img);
       var captionStr = thC.makeCaption_.call(this, vk_img);
@@ -381,7 +381,7 @@
         title: titleStr,
         caption: captionStr
       });
-      var zoomIcon = $('<div class="ThumbsViewer_zoom-ico" />').append(aa);
+      var zoomIcon = $('<div class="ThumbsViewer-zoomIco" />').append(aa);
 
       thumb_parent.append(zoomIcon);
       thumb_parent.attr("title", "Выбрать");
