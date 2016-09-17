@@ -213,7 +213,7 @@ var AMApi = {
     self.$goBtn.button(dstr);
     self.$selToggleAllBtn.button(dstr);
     self.$selToggleVisibleBtn.button(dstr);
-    self.$reloadPageBtn.button(dstr);
+    self.$reloadPageBtn.button("disable"); //always disable
     self.$showPrevBtn.button(dstr);
     self.$showNextBtn.button(dstr);
     self.revThumbSortChk.disabled = dval;
@@ -491,6 +491,7 @@ var AMApi = {
     //don't change page, refresh current
     if (self.albumData.dirty) {
       self.albumData.dirty = false;
+      self.$reloadPageBtn.button("disable");
       return false;
     }
 
@@ -508,6 +509,7 @@ var AMApi = {
     //don't change page, refresh current
     if (self.albumData.dirty) {
       self.albumData.dirty = false;
+      self.$reloadPageBtn.button("disable");
       return false;
     }
 
@@ -553,6 +555,7 @@ var AMApi = {
     if (newPagePhotos$.length) {
       //don't refresh page automatically if there are some photos left
       self.albumData.dirty = true;
+      self.$reloadPageBtn.button("enable");
     } else {
       //page is empty, refresh it
       self.onReloadPageClick();
@@ -857,6 +860,7 @@ var AMApi = {
       delete self.albumData.pages[self.albumData.page];
     }
     self.albumData.dirty = false;
+    self.$reloadPageBtn.button("disable");
     self.showPhotosPage();
   },
 
