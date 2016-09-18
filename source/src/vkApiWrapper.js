@@ -237,6 +237,23 @@ var VkApiWrapper = {
     return d.promise();
   },
 
+  createAlbum: function (options, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    self.callVkApi("photos.createAlbum", options).fail(function (error) {
+      error.error_msg = "Не удалось создать альбом!<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
   movePhoto: function (options, silent) {
     var self = this;
     var d = $.Deferred();
@@ -275,7 +292,9 @@ return rsp;";
     code = code.replace("%2", targetAlbumId);
     code = code.replace("%3", photoIds.join());
 
-    self.callVkApi("execute", {code: code}).fail(function (error) {
+    self.callVkApi("execute", {
+      code: code
+    }).fail(function (error) {
       error.error_msg = "Не удалось переместить фотографии!<br /><small>" + error.error_msg + "</small>";
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);

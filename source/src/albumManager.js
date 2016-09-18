@@ -48,6 +48,7 @@ var AMApi = {
   $showNextBtn: null,
   $albumPageField: null,
   $reloadPageBtn: null,
+  $createAlbumBtn: null,
 
   selectedPhotosEdit: null,
   $selToggleAllBtn: null,
@@ -96,6 +97,7 @@ var AMApi = {
     self.$showNextBtn = $("#Form1_ShowNext");
     self.$albumPageField = $("#Form1_albumPageField");
     self.$reloadPageBtn = $("#Form1_ReloadAlbumPage");
+    self.$createAlbumBtn = $("#Form1_CreateAlbum");
 
     self.selectedPhotosEdit = document.getElementById("Form1_SelectedPhotos");
     self.$selToggleAllBtn = $("#Form1_SelToggleAll");
@@ -120,6 +122,7 @@ var AMApi = {
       self.onSlideBtnDown(false);
     });
     self.$reloadPageBtn.click(self.onReloadPageClick);
+    self.$createAlbumBtn.click(self.onCreateAlbumClick);
     self.$selToggleAllBtn.click(self.onSelToggleAll);
     self.$selToggleVisibleBtn.click(self.onSelToggleVisible);
     $(self.revThumbSortChk).click(self.onRevThumbSortChkClick);
@@ -127,6 +130,31 @@ var AMApi = {
     self.$thumbsContainer.on("click.AMApi", ".ThumbsViewer-thumb", function (event, parent) {
       self.$thumbsContainer.ThumbsViewer("selectToggle", $(this));
       AMApi.updSelectedNum();
+    });
+
+    $("#createAlbumDialog").dialog({
+      autoOpen: false,
+      //height: 400,
+      width: 350,
+      modal: true,
+      buttons: {
+        "Создать": function () {
+          self.doCreateAlbum();
+        },
+        "Отмена": function () {
+          $("#createAlbumDialog").dialog("close");
+        }
+      },
+      close: function () {
+        $("#createAlbumDialog-tips").text("Введите название нового альбома, описание опционально");
+        $("#createAlbumDialog").find("form")[0].reset();
+        $("#createAlbumDialog-name").removeClass("ui-state-error");
+        $("#createAlbumDialog-description").removeClass("ui-state-error");
+      }
+    });
+    $("#createAlbumDialog").find("form").on("submit", function (event) {
+      event.preventDefault();
+      self.doCreateAlbum();
     });
 
     //
@@ -224,6 +252,7 @@ var AMApi = {
     self.$reloadPageBtn.button("disable"); //always disable
     self.$showPrevBtn.button(dstr);
     self.$showNextBtn.button(dstr);
+    self.$createAlbumBtn.button(dstr);
     self.revThumbSortChk.disabled = dval;
     self.srcAlbumOwnerList.disabled = dval;
     self.srcAlbumList.disabled = dval;
@@ -865,6 +894,63 @@ var AMApi = {
     return d.promise();
   },
 
+  doCreateAlbum: function () {
+    var self = AMApi;
+
+    //validate parameters
+    function updateTips(t) {
+      var tips = $("#createAlbumDialog-tips");
+      tips
+        .text(t)
+        .addClass("ui-state-highlight");
+      setTimeout(function () {
+        tips.removeClass("ui-state-highlight", 1500);
+      }, 500);
+    }
+
+    var albumName = $("#createAlbumDialog-name").val().trim();
+    var albumDescr = $("#createAlbumDialog-description").val().trim();
+
+    if (!albumName.length) {
+      updateTips("Название альбома не может быть пустым!");
+      $("#createAlbumDialog-name").addClass("ui-state-error");
+      return;
+    }
+
+    var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
+    var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+
+    //try to create album
+    $("#createAlbumDialog").dialog("close");
+    Utils.showSpinner();
+    self.disableControls(1);
+
+    VkApiWrapper.createAlbum({
+      title: albumName,
+      group_id: (ownerId < 0) ? -ownerId : "",
+      description: albumDescr,
+      privacy_view: "only_me",
+      upload_by_admins_only: 1,
+      comments_disabled: 1
+    }).done(function (album) {
+      //push new album to list boxes
+      self.albumsCache[ownerId].push(album);
+
+      var opt = new Option(album.title, album.id, false, false);
+      self.srcAlbumList.add(opt, 1);
+
+      var index = 2;
+      opt = new Option(album.title, album.id, false, false);
+      self.dstAlbumList.add(opt, index);
+      self.dstAlbumList.selectedIndex = index;
+      self.onDstAlbumChanged();
+    }).always(function () {
+      Utils.hideSpinner();
+      self.disableControls(0);
+    });
+
+  },
+
   onReloadPageClick: function () {
     var self = AMApi;
 
@@ -874,6 +960,11 @@ var AMApi = {
     self.albumData.dirty = false;
     self.$reloadPageBtn.button("disable");
     self.showPhotosPage();
+  },
+
+  onCreateAlbumClick: function () {
+    var self = AMApi;
+    $("#createAlbumDialog").dialog("open");
   },
 
   onRevThumbSortChkClick: function () {

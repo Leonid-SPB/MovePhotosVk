@@ -116,6 +116,22 @@
     </div>
   </div>
 
+  <div id="createAlbumDialog" title="Создать альбом">
+    <form>
+      <p id="createAlbumDialog-tips" class="validateTips">Введите название нового альбома, описание опционально</p>
+      <fieldset>
+        <label for="createAlbumDialog-name">Название</label>
+        <input type="text" name="createAlbumDialog-name" id="createAlbumDialog-name" value="" class="text ui-widget-content ui-corner-all">
+        <label for="createAlbumDialog-description">Описание</label>
+        <input type="text" name="createAlbumDialog-description" id="createAlbumDialog-description" value="" class="text ui-widget-content ui-corner-all">
+
+        <div><i>Созданный альбом будет скрытым, изменить настройки приватности альбома можно стандартными средствами ВК.</i></div>
+        <!-- Allow form submission with keyboard without duplicating the dialog button -->
+        <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+      </fieldset>
+    </form>
+  </div>
+
   <hr />
   <form name="Form1" action="" class="MainForm">
     <div class="MainForm-body">
