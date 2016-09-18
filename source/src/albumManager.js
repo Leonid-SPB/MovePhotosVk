@@ -6,7 +6,7 @@
 /* globals $, Utils, VkApiWrapper, VkAppUtils, VK*/
 
 var Settings = {
-  VkAppLocation: "https://vk.com/app3231070",
+  VkAppLocation: "https://vk.com/movephotos3",
   GetPhotosChunksSz: 200,
   ErrorHideAfter: 6000,
   NoteHideAfter: 30000,
