@@ -7,7 +7,7 @@ FileList="\
  ../source/src/thumbsContainer.js\
  ../source/src/vkApiWrapper.js\
  ../source/src/vkAppUtils.js\
- ../source/src/photoRating.js"
+ ../source/src/albumManager.js"
 
 echo Generating production folder
 echo &> log.txt
@@ -25,10 +25,10 @@ cp -R ../source/src/*.html ../prod/ >> log.txt 2>&1
 
 #replace links separate scripts to a single minified script
 JSFILES="<!--JSFILES-->(.*)<!--EOF-JSFILES-->"
-MINJSFILE='<script src=\"photoRating_min.js\" type=\"text/javascript\" charset=\"utf-8\"></script>'
-awk -i inplace -v RS='' "{gsub(/$JSFILES/,\"$MINJSFILE\")}; { print }" ../prod/photoRating.html >> log.txt 2>&1
+MINJSFILE='<script src=\"albumManager_min.js\" type=\"text/javascript\" charset=\"utf-8\"></script>'
+awk -i inplace -v RS='' "{gsub(/$JSFILES/,\"$MINJSFILE\")}; { print }" ../prod/albumManager3.html >> log.txt 2>&1
 
 #produce minified script
-uglifyjs $FileList --compress --mangle --verbose --output ../prod/photoRating_min.js >> log.txt 2>&1
+uglifyjs $FileList --compress --mangle --verbose --output ../prod/albumManager_min.js >> log.txt 2>&1
 
 echo Done!
