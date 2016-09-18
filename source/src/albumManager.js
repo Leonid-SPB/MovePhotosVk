@@ -9,6 +9,7 @@ var Settings = {
   VkAppLocation: "https://vk.com/app3231070",
   GetPhotosChunksSz: 200,
   ErrorHideAfter: 6000,
+  NoteHideAfter: 30000,
   MaxTotalPhotos: 1000000,
   RateRequestDelay: 2000,
   BlinkDelay: 500,
@@ -25,6 +26,7 @@ var Settings = {
   SavePhotoDelay: 100,
   WallAlbumId: -7,
   ProfileAlbumId: -6,
+  SavedAlbumId: -15,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -71,6 +73,8 @@ var AMApi = {
 
   pageRefreshTimer: null,
   pageSlideTimer: null,
+
+  saveTipDisplayed: false,
 
   taskInfo: {
     abort: false,
@@ -188,6 +192,10 @@ var AMApi = {
 
   displayWarn: function (warnMsg) {
     VkAppUtils.displayWarn(warnMsg, "GlobalErrorBox", Settings.ErrorHideAfter);
+  },
+
+  displayNote: function (noteMsg) {
+    VkAppUtils.displayNote(noteMsg, "NoteBox", Settings.NoteHideAfter);
   },
 
   onFatalError: function (error) {
@@ -386,6 +394,10 @@ var AMApi = {
 
     if (selIndex == 1) { //save album
       self.$goBtn.button("option", "label", self.goBtnLabelSave);
+      if (!self.saveTipDisplayed) {
+        self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks'>Яндекс Диск</a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
+        self.saveTipDisplayed = true;
+      }
     } else {
       self.$goBtn.button("option", "label", self.goBtnLabelMove);
     }

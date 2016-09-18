@@ -5,12 +5,12 @@
 /* globals $, Utils, Settings, VK, VkApiWrapper */
 
 var VkAppUtils = {
-  displayError: function (eMsg, noteDivId, hideAfter) {
+  displayError: function (eMsg, errDivId, hideAfter) {
     var errEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0 .7em;'><p><span class='ui-icon ui-icon-alert' style='float: left; margin-right: .3em;'></span><strong>ОШИБКА: </strong>" + eMsg + "</p></div></div>";
     var dataKey = "displayError";
-    $("#" + noteDivId).empty().hide(0).html(errEntity).show("highlight");
+    $("#" + errDivId).empty().hide(0).html(errEntity).show("highlight");
     
-    var $data = $("#" + noteDivId).data(dataKey);
+    var $data = $("#" + errDivId).data(dataKey);
     if($data && $data.tm) {
       clearTimeout($data.tm);
       $data.tm = null;
@@ -18,16 +18,36 @@ var VkAppUtils = {
 
     if (hideAfter) {
       var tm_ = setTimeout(function () {
-        $("#" + noteDivId).hide("fade");
+        $("#" + errDivId).hide("fade");
       }, hideAfter);
-      $("#" + noteDivId).data(dataKey, {tm: tm_});
+      $("#" + errDivId).data(dataKey, {tm: tm_});
     }
   },
 
-  displayWarn: function (eMsg, noteDivId, hideAfter) {
-    var errEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0.7em; text-align: center'>" + eMsg + "</div></div>";
-    $("#" + noteDivId).empty().hide(0).html(errEntity).show("highlight");
-    var dataKey = "displayWarn";
+  displayWarn: function (eMsg, warnDivId, hideAfter) {
+    var warnEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0.7em; text-align: center'>" + eMsg + "</div></div>";
+    $("#" + warnDivId).empty().hide(0).html(warnEntity).show("highlight");
+    //var dataKey = "displayWarn";
+    var dataKey = "displayError";
+
+    var $data = $("#" + warnDivId).data(dataKey);
+    if($data && $data.tm) {
+      clearTimeout($data.tm);
+      $data.tm = null;
+    }
+
+    if (hideAfter) {
+      var tm_ = setTimeout(function () {
+        $("#" + warnDivId).hide("fade");
+      }, hideAfter);
+      $("#" + warnDivId).data(dataKey, {tm: tm_});
+    }
+  },
+
+  displayNote: function (eMsg, noteDivId, hideAfter) {
+    var noteEntity = "<div class='ui-widget'><div class='ui-state-highlight ui-corner-all' style='padding: 0 .7em;'><p><span class='ui-icon ui-icon-info' style='float: left; margin-right: .3em;'></span>" + eMsg + "</p></div></div>";
+    $("#" + noteDivId).empty().hide(0).html(noteEntity).show("highlight");
+    var dataKey = "displayNote";
 
     var $data = $("#" + noteDivId).data(dataKey);
     if($data && $data.tm) {
@@ -330,7 +350,7 @@ var VkAppUtils = {
         error.error_msg = "Не удалось получить информацию о пользователе/группе: '" + str + "'";
       }
 
-      VkAppUtils.displayError("Не удалось получить информацию о пользователе/группе: '" + str + "'", "globalErrorBox", Settings.ErrorHideAfter);
+      VkAppUtils.displayError("Не удалось получить информацию о пользователе/группе: '" + str + "'", "GlobalErrorBox", Settings.ErrorHideAfter);
       ddd.reject(error);
     }
 
