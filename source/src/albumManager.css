@@ -194,10 +194,15 @@ hr {
   top: 1px;
   width: 24px;
   height: 24px;
-  opacity: 1;
   filter: saturate(2) brightness(1.3) opacity(0.8);
   -webkit-filter: saturate(2) brightness(1.3) opacity(0.8);
   -ms-filter: saturate(2) brightness(1.3) opacity(0.8);
+}
+
+.ThumbsViewer-zoomIco:hover {
+  filter: saturate(2) brightness(1.1) opacity(1);
+  -webkit-filter: saturate(2) brightness(1.1) opacity(1);
+  -ms-filter: saturate(2) brightness(1.1) opacity(1);
 }
 
 .ThumbsViewer-zoomIco a {
@@ -206,10 +211,31 @@ hr {
   height: 100%;
 }
 
-.ThumbsViewer_zoomIco:hover {
-  filter: saturate(2) brightness(1.1) opacity(1);
-  -webkit-filter: saturate(2) brightness(1.1) opacity(1);
-  -ms-filter: saturate(2) brightness(1.1) opacity(1);
+.ThumbsViewer-checkIco {
+  background: url(graphics/check.png) no-repeat;
+  width: 64px;
+  height: 64px;
+  filter: saturate(2) brightness(1) opacity(0.3);
+  -webkit-filter: saturate(2) brightness(1) opacity(0.3);
+  -ms-filter: saturate(2) brightness(1) opacity(0.3);
+}
+
+.ThumbsViewer-checkIco:hover {
+  filter: saturate(2) brightness(1.3) opacity(1);
+  -webkit-filter: saturate(2) brightness(1.3) opacity(1);
+  -ms-filter: saturate(2) brightness(1.3) opacity(1);
+}
+
+.ThumbsViewer-checkIco.selected {
+  filter: saturate(2) brightness(1.3) opacity(0.8);
+  -webkit-filter: saturate(2) brightness(1.3) opacity(0.8);
+  -ms-filter: saturate(2) brightness(1.3) opacity(0.8);
+}
+
+.ThumbsViewer-checkIco.selected:hover {
+  filter: saturate(2) brightness(1.3) opacity(1);
+  -webkit-filter: saturate(2) brightness(1.3) opacity(1);
+  -ms-filter: saturate(2) brightness(1.3) opacity(1);
 }
 
 .welcome_p {
