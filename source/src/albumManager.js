@@ -135,7 +135,7 @@ var AMApi = {
     $("#createAlbumDialog").dialog({
       autoOpen: false,
       //height: 400,
-      width: 350,
+      width: 450,
       modal: true,
       buttons: {
         "Создать": function () {

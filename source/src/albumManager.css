@@ -292,7 +292,7 @@ hr {
 #createAlbumDialog fieldset {
   padding: 0;
   border: 0;
-  margin-top: 25px;
+  margin-bottom: 25px;
 }
 
 #createAlbumDialog h1 {
