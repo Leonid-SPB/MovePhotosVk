@@ -22,6 +22,7 @@ hs.headingEval = 'hs.makeHeader.apply(this)';
 hs.captionOverlay.position = 'below';
 hs.headingOverlay.position = 'above';
 hs.dragByHeading = false;
+hs.KeyCodeSpace = 32;
 
 // Add the slideshow controller
 hs.addSlideshow({
@@ -85,5 +86,22 @@ hs.makeHeader = function () {
   var title = $(this.a).data().title.replace("%1", index);
   title = title.replace("%2", totalImgs);
 
-  return title + hs.closeButtonHtml;
+  //toggle selected class of thumb using index in container
+  var $thumb = $(this.a).parent().parent();
+  var onCLick = '$("#ThumbsViewer").ThumbsViewer("selectToggle", $($(".ThumbsViewer-thumb")[%3])); $(this).toggleClass("selected");';
+  var checkBox = '<div class="ThumbsViewer-checkIco %1" onClick=\'%2\' title="Выбрать для перемещения">&nbsp;</div>';
+  checkBox = checkBox.replace("%1", $thumb.hasClass("selected") ? "selected" : "");
+  checkBox = checkBox.replace("%2", onCLick);
+  checkBox = checkBox.replace("%3", index - 1);
+
+  return title + hs.closeButtonHtml + checkBox;
+};
+
+hs.onKeyDown = function (sender, e) {
+  if (e.keyCode == hs.KeyCodeSpace) {
+    var exp = hs.getExpander();
+    $(exp.heading).find(".ThumbsViewer-checkIco").click();
+    e.preventDefault();
+    return false;
+  }
 };

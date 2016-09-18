@@ -1,5 +1,4 @@
 New features:
-) select/deselect in gallery mode
 ) shuffle sort
 
 Etc:
@@ -14,6 +13,7 @@ Etc:
 
 
 Done:
+x) select/deselect in gallery mode
 x) fix horizontal spinner buttons
 x) convert control links to buttons
 x) make slider more convenient
