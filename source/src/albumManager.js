@@ -11,7 +11,7 @@ var Settings = {
   ErrorHideAfter: 6000,
   NoteHideAfter: 30000,
   MaxTotalPhotos: 1000000,
-  RateRequestDelay: 2000,
+  RateRequestDelay: 1000,
   BlinkDelay: 500,
   BlinkCount: 12,
   RedirectDelay: 3000,
@@ -595,8 +595,8 @@ var AMApi = {
       return;
     }
 
-    function onDone() {
-      //rate request
+    function onDoneMove() {
+      VkAppUtils.rateRequest(Settings.RateRequestDelay);
     }
 
     function onFailMove(errorInfo) {
@@ -674,7 +674,7 @@ var AMApi = {
       var albumID = self.dstAlbumList.item(aidSelIndex).value;
       self.taskInfo.abort = false;
 
-      self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDone).fail(onFailMove).always(onAlwaysMove).progress(onProgressMove);
+      self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDoneMove).fail(onFailMove).always(onAlwaysMove).progress(onProgressMove);
     } else {
       //abort task
       self.taskInfo.abort = true;
@@ -940,7 +940,7 @@ $(function () {
     },
     hide: true,
     modal: false,
-    width: 600,
+    width: 650,
     position: {
       my: "center center-150",
       at: "center center",
@@ -955,7 +955,7 @@ $(function () {
       duration: 1500
     },
     hide: true,
-    width: 600,
+    width: 650,
     position: {
       my: "center center-150",
       at: "center center",
