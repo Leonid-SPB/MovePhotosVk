@@ -9,9 +9,9 @@ var VkAppUtils = {
     var errEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0 .7em;'><p><span class='ui-icon ui-icon-alert' style='float: left; margin-right: .3em;'></span><strong>ОШИБКА: </strong>" + eMsg + "</p></div></div>";
     var dataKey = "displayError";
     $("#" + errDivId).empty().hide(0).html(errEntity).show("highlight");
-    
+
     var $data = $("#" + errDivId).data(dataKey);
-    if($data && $data.tm) {
+    if ($data && $data.tm) {
       clearTimeout($data.tm);
       $data.tm = null;
     }
@@ -20,7 +20,9 @@ var VkAppUtils = {
       var tm_ = setTimeout(function () {
         $("#" + errDivId).hide("fade");
       }, hideAfter);
-      $("#" + errDivId).data(dataKey, {tm: tm_});
+      $("#" + errDivId).data(dataKey, {
+        tm: tm_
+      });
     }
   },
 
@@ -31,7 +33,7 @@ var VkAppUtils = {
     var dataKey = "displayError";
 
     var $data = $("#" + warnDivId).data(dataKey);
-    if($data && $data.tm) {
+    if ($data && $data.tm) {
       clearTimeout($data.tm);
       $data.tm = null;
     }
@@ -40,7 +42,9 @@ var VkAppUtils = {
       var tm_ = setTimeout(function () {
         $("#" + warnDivId).hide("fade");
       }, hideAfter);
-      $("#" + warnDivId).data(dataKey, {tm: tm_});
+      $("#" + warnDivId).data(dataKey, {
+        tm: tm_
+      });
     }
   },
 
@@ -50,7 +54,7 @@ var VkAppUtils = {
     var dataKey = "displayNote";
 
     var $data = $("#" + noteDivId).data(dataKey);
-    if($data && $data.tm) {
+    if ($data && $data.tm) {
       clearTimeout($data.tm);
       $data.tm = null;
     }
@@ -59,7 +63,9 @@ var VkAppUtils = {
       var tm_ = setTimeout(function () {
         $("#" + noteDivId).hide("fade");
       }, hideAfter);
-      $("#" + noteDivId).data(dataKey, {tm: tm_});
+      $("#" + noteDivId).data(dataKey, {
+        tm: tm_
+      });
     }
   },
 
@@ -205,9 +211,10 @@ var VkAppUtils = {
           //report progress
           ddd.notify(response.items.length, photosFiltered.length);
 
+          offset = offset + response.items.length;
           if ((offset < response.count) && (countLeft > 0)) {
             //request next chunk
-            getNextChunk__(offset + response.items.length, countLeft - response.items.length);
+            getNextChunk__(offset, countLeft - response.items.length);
           } else {
             //finally resolve with the list of retreived photos
             ddd.resolve(photos);
@@ -259,9 +266,10 @@ var VkAppUtils = {
           //report progress
           ddd.notify(response.items.length, photosFiltered.length);
 
+          offset = offset + response.items.length;
           if ((offset < response.count) && (countLeft > 0)) {
             //request next chunk
-            getNextChunk__(offset + response.items.length, countLeft - response.items.length);
+            getNextChunk__(offset, countLeft - response.items.length);
           } else {
             //finally resolve with the list of retreived photos
             ddd.resolve(photos, response.count);

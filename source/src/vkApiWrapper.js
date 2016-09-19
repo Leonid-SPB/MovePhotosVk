@@ -169,6 +169,40 @@ var VkApiWrapper = {
     return d.promise();
   },
 
+  queryAllRatedPhotos: function (ownerId, offset, count, minLikes, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    // jshint multistr:true
+    var code_ = "var tmp,rsp=[],i=0;\n\
+tmp=API.photos.getAll({owner_id:%1,offset:%2,count:%3,extended:1,photo_sizes:1,no_service_albums:1});\n\
+if(tmp.error_code)return tmp;\n\
+while(i<tmp.items.length){\n\
+if(tmp.items[i].likes.count>=%4)rsp.push(tmp.items[i]);\n\
+i=i+1;\n\
+}\n\
+return {count: tmp.count, items: rsp};\n";
+
+    var code = code_.replace(/%1/g, ownerId);
+    code = code.replace(/%2/g, offset);
+    code = code.replace(/%3/g, count);
+    code = code.replace(/%4/g, minLikes);
+
+    self.callVkApi("execute", {
+      code: code
+    }).fail(function (error) {
+      error.error_msg = "Не удалось получить список фотографий пользователя или группы!<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
   queryFriends: function (options, silent) {
     var self = this;
     var d = $.Deferred();
@@ -276,17 +310,7 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     // jshint multistr:true
-    var code_ = "\
-var oid=%1,tid=%2,phl=[%3],rsp=[],i=0;\n\
-while (i < phl.length) {\n\
-rsp.push(API.photos.move({\n\
-owner_id: oid,\n\
-target_album_id: tid,\n\
-photo_id: phl[i]\n\
-}));\n\
-i = i + 1;\n\
-}\n\
-return rsp;";
+    var code_ = "var oid=%1,tid=%2,phl=[%3],rsp=[],i=0;while(i<phl.length){rsp.push(API.photos.move({owner_id:oid,target_album_id:tid,photo_id:phl[i]}));i=i+1;}return rsp;";
 
     var code = code_.replace("%1", ownerId);
     code = code.replace("%2", targetAlbumId);
