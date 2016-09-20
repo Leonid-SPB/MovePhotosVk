@@ -1066,12 +1066,12 @@ $(function () {
       });
 
       //preloader AD
-      /*if (typeof VKAdman !== 'undefined') {
-		var app_id = 3231070; //release: 3231070, beta: 3294304
-		var a = new VKAdman();
-		a.setupPreroll(app_id);
-		admanStat(app_id, Settings.vkUserId);
-      }*/
+      if (typeof VKAdman !== 'undefined') {
+        var app_id = 3294304; //release: 3231070, beta: 3294304
+        var a = new VKAdman();
+        a.setupPreroll(app_id);
+        admanStat(app_id, Settings.vkUserId);
+      }
 
       VK.Widgets.Like("vk_like", {
         type: "button",
