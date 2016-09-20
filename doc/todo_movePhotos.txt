@@ -1,10 +1,7 @@
 New features:
-) shuffle sort
+
 
 Etc:
-) new screenshots and description for app catalog
-
-) update welcome/rate dialogs: recomend rating photo app
 ) update help wiki page
 
 ) test on all modern browsers: chrome, firefox, edge, ie
@@ -13,6 +10,8 @@ Etc:
 
 
 Done:
+x) new screenshots and description for app catalog
+x) update welcome/rate dialogs: recomend rating photo app
 x) select/deselect in gallery mode
 x) fix horizontal spinner buttons
 x) convert control links to buttons
@@ -24,6 +23,7 @@ x) warning when moving photos from saved or wall (can't move back, can break wal
 x) create album
 
 No go:
+) shuffle sort
 ) arrow bg image for album select form
 ) album size in album list select
 ) usage tips: save album using yandex.disk

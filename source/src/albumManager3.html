@@ -56,36 +56,34 @@
 		  var scriptElem = document.createElement('script');
 		  scriptElem.type = 'text/javascript';
 		  scriptElem.async = true;
-		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?117';
+		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?130';
 		  adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
 		}
 	  }, 0);
 	</script>-->
 
   <!-- Beta ADs -->
-  <!--
 	<script type="text/javascript">
 	  setTimeout(function() {
-	    var adsParams = {"ad_unit_id":63212,"ad_unit_hash":"96907895a1331a36a52fe3f8c3a2bf38"};
-	    function vkAdsInit() {
-	      VK.Widgets.Ads('vk_ads_5443', {}, adsParams);
-	    }
-	    if (window.VK && VK.Widgets) {
-	      vkAdsInit();
-	    } else {
-	      if (!window.vkAsyncInitCallbacks) window.vkAsyncInitCallbacks = [];
-	      vkAsyncInitCallbacks.push(vkAdsInit);
-	      var protocol = ((location.protocol === 'https:') ? 'https:' : 'http:');
-	      var adsElem = document.getElementById('vk_ads_5443');
-	      var scriptElem = document.createElement('script');
-	      scriptElem.type = 'text/javascript';
-	      scriptElem.async = true;
-	      scriptElem.src = protocol + '//vk.com/js/api/openapi.js?117';
-	      adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
-	    }
+		var adsParams = {"ad_unit_id":63212,"ad_unit_hash":"96907895a1331a36a52fe3f8c3a2bf38"};
+		function vkAdsInit() {
+		  VK.Widgets.Ads('vk_ads_5443', {}, adsParams);
+		}
+		if (window.VK && VK.Widgets) {
+		  vkAdsInit();
+		} else {
+		  if (!window.vkAsyncInitCallbacks) window.vkAsyncInitCallbacks = [];
+		  vkAsyncInitCallbacks.push(vkAdsInit);
+		  var protocol = ((location.protocol === 'https:') ? 'https:' : 'http:');
+		  var adsElem = document.getElementById('vk_ads_5443');
+		  var scriptElem = document.createElement('script');
+		  scriptElem.type = 'text/javascript';
+		  scriptElem.async = true;
+		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?130';
+		  adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
+		}
 	  }, 0);
 	</script>
-	-->
 
   <div id="welcome_dialog" title="Добро Пожаловать!" style="display: none;">
     <div style="display: table">
