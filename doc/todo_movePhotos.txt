@@ -1,26 +1,30 @@
-Makefile для сжатия кода и выгрузки на сервер (написать на Js)
-Сделать лицензионное соглашение и пр.
-Сделать более крутой стиль приложения (стиль кнопок, списков, фон). Пример стиля для списка вконтакте. Учитывать особенности браузеров.
-Перенос видео
-Снять/выделить 10 после текущей фотографии
+New features:
+) shuffle sort
 
-x Сделать предупреждение при возможном переполнении альбома после переноса фото
-x Сделать показ приветствия при первом запуске приложения
-x Вывести окно с предложением расказать друзьям при завершении первой операции (или при повторном запуске?)
-x Обновить мануал, добавить лицензионный дисклаймер
-x Сделать окно или вкладку со справкой (или заполнить раздел Помощь)
-x Доделать показ ошибок: если не критическая ошибка - сообщение должно исчезать через пару секунд, если критическая - нет.
-x Сделать, чтобы при переносе фотографий thumbnais исчеали из списка по мере переноса.
-x Исправить известные баги
-x Решить вопрос с длинной фрейма приложения, чтобы помещались все 500 фотографий
-x Отображение кол-ва выбранных фоторгафий
-x Функция сохранения: Кнопка "Сохранить выделенные" или опция в альбомах "Сохранить на диске"
-x Менять кнопку "Переместить" на "Сохранить" при выборе "Сохранить локально" в списке "Куда".
-x Кнопка для просмотра увеличенной фотографии
-x Вставлять spinner вместо thumbnail'а на время загрузки
+Etc:
+) new screenshots and description for app catalog
+
+) update welcome/rate dialogs: recomend rating photo app
+) update help wiki page
+
+) test on all modern browsers: chrome, firefox, edge, ie
+) video "how to use"
+) style tuning: better loadding gif, fonts, etc...
 
 
-Licensing:
-jQuery and jQuery UI by The jQuery Foundation, spin.js by Felix Gnass, Highslide JS by Highsoft Solutions AS, graphics from http://www.visualpharm.com
+Done:
+x) select/deselect in gallery mode
+x) fix horizontal spinner buttons
+x) convert control links to buttons
+x) make slider more convenient
+x) fix logo 150x150 to avoid roud cropping
+x) save album feature
+x) turbo mode
+x) warning when moving photos from saved or wall (can't move back, can break wall posts)
+x) create album
 
--6 = profile, -7 = wall, -15 = saved
+No go:
+) arrow bg image for album select form
+) album size in album list select
+) usage tips: save album using yandex.disk
+) donate button (disable ads)
