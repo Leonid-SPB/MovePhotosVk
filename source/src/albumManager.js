@@ -274,17 +274,10 @@ var AMApi = {
       self.srcAlbumList.remove(i);
     }
 
-    /*//my albums, add service albums
-    if (selfOwn) {
-      var opt1 = new Option("Сохраненные фотографии", -15, false, false);
-      $(opt1).addClass("italic_bold");
-      self.srcAlbumList.add(opt1, null);
-    }*/
-
     for (i = 0; i < albums.length; i++) {
       //put service albums to the beginning
       var index = null;
-      if (albums[i].id == Settings.ProfileAlbumId) {
+      if ((albums[i].owner_id > 0) && (albums[i].id == Settings.ProfileAlbumId)) {
         continue;
       } else if (albums[i].id < 0) {
         index = 1;
@@ -408,7 +401,7 @@ var AMApi = {
     }
 
     if ((!self.savedAlbumTipDisplayed) && (albumId == Settings.SavedAlbumId)) {
-      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 2);
+      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 4);
       self.savedAlbumTipDisplayed = true;
     }
 
@@ -597,7 +590,7 @@ var AMApi = {
 
     self.albumData.photosCount -= (prevPagePhotos.length - newPagePhotos$.length);
     self.albumData.pagesCount = Math.ceil(self.albumData.photosCount / Settings.PhotosPerPage);
-    self.albumData.pages = [];
+    self.albumData.pages = {};
     if (self.albumData.pagesCount) {
       self.albumData.page = Math.min(self.albumData.page, self.albumData.pagesCount - 1);
     } else {
@@ -606,6 +599,12 @@ var AMApi = {
 
     if (newPagePhotos$.length) {
       //don't refresh page automatically if there are some photos left
+      var p = [];
+      for (var i = 0; i < newPagePhotos$.length; ++i) {
+        p.push(newPagePhotos$[i].data.vk_img);
+      }
+      self.albumData.pages[self.albumData.page] = p;
+
       self.albumData.dirty = true;
       self.$reloadPageBtn.button("enable");
     } else {
