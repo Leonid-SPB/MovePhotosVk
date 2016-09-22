@@ -408,7 +408,7 @@ var AMApi = {
     }
 
     if ((!self.savedAlbumTipDisplayed) && (albumId == Settings.SavedAlbumId)) {
-      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter/2);
+      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 2);
       self.savedAlbumTipDisplayed = true;
     }
 
@@ -948,6 +948,7 @@ var AMApi = {
       self.albumsCache[ownerId].push(album);
 
       var opt = new Option(album.title, album.id, false, false);
+      $(opt).data("AMApi", album);
       self.srcAlbumList.add(opt, 1);
 
       var index = 2;
