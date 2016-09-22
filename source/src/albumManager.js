@@ -3,7 +3,7 @@
 */
 
 //requires VkApiWrapper, jQuery, highslide, spin.js
-/* globals $, Utils, VkApiWrapper, VkAppUtils, VK*/
+/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat */
 
 var Settings = {
   VkAppLocation: "https://vk.com/movephotos3",
@@ -76,6 +76,7 @@ var AMApi = {
   pageSlideTimer: null,
 
   saveTipDisplayed: false,
+  savedAlbumTipDisplayed: false,
 
   taskInfo: {
     abort: false,
@@ -399,6 +400,11 @@ var AMApi = {
       Utils.hideSpinner();
       self.disableControls(0);
       self.srcAlbumList.selectedIndex = 0;
+    }
+
+    if (!self.savedAlbumTipDisplayed) {
+      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещенные фотографии в этот альбом нельзя.");
+      self.savedAlbumTipDisplayed = true;
     }
 
     //update album data
