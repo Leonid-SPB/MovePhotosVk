@@ -1,0 +1,256 @@
+<!DOCTYPE HTML>
+<!--Copyright (c) 2012-2016 Leonid Azarenkov
+	Licensed under the MIT license
+-->
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="cache-control" content="max-age=0" />
+  <meta http-equiv="cache-control" content="no-cache" />
+  <meta http-equiv="expires" content="0" />
+  <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+  <meta http-equiv="pragma" content="no-cache" />
+  <title>Перенос фотографий между альбомами</title>
+
+  <link href="normalize.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/cupertino/jquery-ui.min.css">
+  <link href="jquery-ui.theme.css" rel="stylesheet" type="text/css" />
+  <link href="albumManager.css" rel="stylesheet" type="text/css" />
+  <link href="highslide.css" rel="stylesheet" type="text/css" />
+
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+  <script src="//ad.mail.ru/static/vkadman.min.js"></script>
+  <script src="//js.appscentrum.com/scr/preroll.js"></script>
+  <script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
+
+  <!--JSFILES-->
+  <script src="spin.js" type="text/javascript" charset="utf-8"></script>
+  <script src="utils.js" type="text/javascript" charset="utf-8"></script>
+  <script src="vkApiWrapper.js" type="text/javascript" charset="utf-8"></script>
+  <script src="vkAppUtils.js" type="text/javascript" charset="utf-8"></script>
+  <script src="highslide-full.packed.js" type="text/javascript" charset="utf-8"></script>
+  <script src="highslide.config.js" type="text/javascript" charset="utf-8"></script>
+  <script src="thumbsContainer.js" type="text/javascript" charset="utf-8"></script>
+  <script src="albumManager.js" type="text/javascript" charset="utf-8"></script>
+  <!--EOF-JSFILES-->
+</head>
+
+<body>
+  <div id="vk_ads_5443"></div>
+  <!-- Release ADs -->
+  <!-- <script type="text/javascript">
+	  setTimeout(function() {
+		var adsParams = {"ad_unit_id":5443,"ad_unit_hash":"d7dff97200aa41db12e81fccd90159d1"};
+		function vkAdsInit() {
+		  VK.Widgets.Ads('vk_ads_5443', {}, adsParams);
+		}
+		if (window.VK && VK.Widgets) {
+		  vkAdsInit();
+		} else {
+		  if (!window.vkAsyncInitCallbacks) window.vkAsyncInitCallbacks = [];
+		  vkAsyncInitCallbacks.push(vkAdsInit);
+		  var protocol = ((location.protocol === 'https:') ? 'https:' : 'http:');
+		  var adsElem = document.getElementById('vk_ads_5443');
+		  var scriptElem = document.createElement('script');
+		  scriptElem.type = 'text/javascript';
+		  scriptElem.async = true;
+		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?130';
+		  adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
+		}
+	  }, 0);
+	</script>-->
+
+  <!-- Beta ADs -->
+	<script type="text/javascript">
+	  setTimeout(function() {
+		var adsParams = {"ad_unit_id":63212,"ad_unit_hash":"96907895a1331a36a52fe3f8c3a2bf38"};
+		function vkAdsInit() {
+		  VK.Widgets.Ads('vk_ads_5443', {}, adsParams);
+		}
+		if (window.VK && VK.Widgets) {
+		  vkAdsInit();
+		} else {
+		  if (!window.vkAsyncInitCallbacks) window.vkAsyncInitCallbacks = [];
+		  vkAsyncInitCallbacks.push(vkAdsInit);
+		  var protocol = ((location.protocol === 'https:') ? 'https:' : 'http:');
+		  var adsElem = document.getElementById('vk_ads_5443');
+		  var scriptElem = document.createElement('script');
+		  scriptElem.type = 'text/javascript';
+		  scriptElem.async = true;
+		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?130';
+		  adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
+		}
+	  }, 0);
+	</script>
+
+  <div id="welcome_dialog" title="Добро Пожаловать!" style="display: none;">
+    <div style="display: table">
+      <div style="display: table-cell; padding-right: 10px">
+        <img src="logo150.png" height="125px" width="125px">
+      </div>
+      <div style="display: table-cell; vertical-align:middle">
+        <p class="welcome_p">Спасибо, что установили
+          <span style="font-weight: bold">&quot;Перенос фото 3.5&quot;</span>!</p>
+        <p class="welcome_p">Ознакомиться с возможностями приложения можно в разделе
+          <a href="https://vk.com/movephotos3?w=page-1003231070_44230814" target="_top">
+            <span class="italic_bold">Помощь</span>
+          </a> (ссылка сверху).</p>
+        <p class="welcome_p">Приятной работы!</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="rateus_dialog" title="Оцените &quot;Перенос фото 3.5&quot;!" style="display: none;">
+    <div style="display: table">
+      <div style="display: table-cell; padding-right: 10px">
+        <img src="logo150.png" height="100px" width="100px">
+      </div>
+      <div style="display: table-cell; vertical-align:middle">
+        <p class="welcome_p">Жмите &quot;Мне нравится&quot; внизу страницы и рекомендуйте друзьям!</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="createAlbumDialog" title="Создать альбом">
+    <form>
+      <p id="createAlbumDialog-tips" class="validateTips">Введите название нового альбома, описание опционально</p>
+      <fieldset>
+        <label for="createAlbumDialog-name">Название</label>
+        <input type="text" name="createAlbumDialog-name" id="createAlbumDialog-name" value="" class="text ui-widget-content ui-corner-all">
+        <label for="createAlbumDialog-description">Описание</label>
+        <input type="text" name="createAlbumDialog-description" id="createAlbumDialog-description" value="" class="text ui-widget-content ui-corner-all">
+
+        <!-- Allow form submission with keyboard without duplicating the dialog button -->
+        <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+      </fieldset>
+      <div>
+        <span class='ui-icon ui-icon-info' style='float: left; margin-right: .3em;'></span><i>Созданный альбом будет скрытым, изменить настройки приватности альбома можно стандартными средствами ВК.</i></div>
+    </form>
+  </div>
+
+  <hr />
+  <form name="Form1" action="" class="MainForm">
+    <div class="MainForm-body">
+      <div class="MainForm-body-div">
+        <div class="MainForm-body-div-col50">
+          <div class="MainForm-body-div-col-row">
+            <label for="Form1_SrcAlbumOwner">Откуда</label>
+          </div>
+          <div class="MainForm-body-div-col-row">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_SrcAlbumOwner">
+              <option value="my albums" class="italic_bold">Мои альбомы</option>
+            </select>
+          </div>
+          <div class="MainForm-body-div-col-row">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_SrcAlbumList">
+              <option value="not selected">Альбом не выбран</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="MainForm-body-div-col50">
+          <div class="MainForm-body-div-col-row">
+            <label for="Form1_DstAlbumOwner">Куда</label>
+          </div>
+          <div class="MainForm-body-div-col-row">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" style="opacity: 0.5;" size="1" id="Form1_DstAlbumOwner" disabled="true">
+              <option value="my albums" class="italic_bold">Мои альбомы</option>
+            </select>
+          </div>
+          <div class="MainForm-body-div-col-row" style="display: table;">
+            <div style="display: table-cell; text-align: center; vertical-align: middle;">
+              <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" style="margin-right: 0.5em" size="1" id="Form1_DstAlbumList">
+                <option value="not selected">Альбом не выбран</option>
+                <option value="save" class="italic_bold">Сохранить</option>
+              </select>
+            </div>
+            <div style="display: table-cell; text-align: center; vertical-align: middle;">
+              <button id="Form1_CreateAlbum" class="MainForm-button-small" type="button" title="Создать новый альбом">создать</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="MainForm-body-div">
+        <div class="MainForm-body-div-col" style="text-align: left; width: 90%; padding: 0 0.5em;">
+          <div id="Progressbar"></div>
+        </div>
+        <div class="MainForm-body-div-col" style="text-align: left">
+          <button id="Form1_goBtn" disabled=1 type="button">Переместить</button>
+        </div>
+      </div>
+
+      <div class="MainForm-body-div">
+        <div class="MainForm-body-div-col" style="text-align: left">
+          <div style="display: table">
+            <div style="display: table-cell; vertical-align: middle">
+              <label>Страница:&nbsp;</label>
+            </div>
+            <div style="display: table-cell; vertical-align: middle">
+              <button id="Form1_ShowPrev" class="ui-corner-tl ui-corner-bl" style="margin: 0; position: relative; right: -1px; padding-top: 0; padding-bottom: 0; height: 24px" type="button" title="Перейти к предыдущей странице альбома"></button>
+            </div>
+            <div style="display: table-cell; vertical-align: middle">
+              <div class="ui-widget ui-widget-content" style="text-align: right; padding-right: 0.2em; height: 22px; line-height: 22px; width: 100px">
+                <span id="Form1_albumPageField" title="Текущая страница альбома/всего страниц в альбоме (по 500 фото)">-/-</span>
+              </div>
+            </div>
+            <div style="display: table-cell; vertical-align: middle">
+              <button id="Form1_ShowNext" class="ui-corner-tr ui-corner-br" style="margin: 0; position: relative; left: -1px; padding-top: 0; padding-bottom: 0; height: 24px" type="button" title="Перейти к следующей странице альбома"></button>
+            </div>
+            <div style="display: table-cell; vertical-align: middle">
+              <button id="Form1_ReloadAlbumPage" class="MainForm-button-small" style="margin-left: 0.5em" type="button" title="Обновить страницу альбома">обновить</button>
+            </div>
+          </div>
+        </div>
+        <div class="MainForm-body-div-col" style="text-align: left">
+          <label>Выделить/убрать:&nbsp;</label>
+          <button id="Form1_SelToggleAll" class="MainForm-button-small" type="button" title="Выделить/убрать выделение для всех фотографий">все</button>
+          <button id="Form1_SelToggleVisible" class="MainForm-button-small" type="button" title="Выделить/убрать выделение для текущих фотографий (16  фото)">текущие</button>
+        </div>
+        <div class="MainForm-body-div-col" style="text-align: right">
+          <label for="Form1_SelectedPhotos">Выбрано:&nbsp;</label>
+          <input id="Form1_SelectedPhotos" class="ui-widget ui-widget-content ui-corner-all" style="text-align: right; padding-right: 0.2em;" readonly="readonly" type="text" size="9" value="0/0" title="Количество выбранных фотографий/всего фотографий на странице">
+        </div>
+      </div>
+
+    </div>
+
+    <div id="NoteBox"></div>
+    <div id="GlobalErrorBox"></div>
+
+    <hr />
+    <div class="ThumbsViewer-container">
+      <ul id="ThumbsViewer">&nbsp;</ul>
+    </div>
+    <hr />
+    <div class="MainForm-body" style="text-align: right">
+      <label for="Form1_RevThumbSort">Обратная сортировка</label>
+      <input id="Form1_RevThumbSort" type="checkbox">
+    </div>
+  </form>
+
+  <div class="footer">
+    <div class="footer-table">
+      <div class="footer-table-cell" style="width: 150px">
+        <a style="color: #2a5885; cursor: pointer" href="//vk.com/id105876" target="_top">&copy; Leonid Azarenkov</a>
+      </div>
+      <div class="footer-table-cell" style="width: 180px" id="vk_like"></div>
+      <div class="footer-table-cell" style="width: 150px">
+        <div class="adbox">
+          <a href="//vk.com/ratingphoto2" target="_top">
+            <div class="adbox-logo">
+              <img src="rphoto.png" height="25px" width="25px">
+            </div>
+            <div class="adbox-text">
+              <strong>Рейтинг Фото 2</strong>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
