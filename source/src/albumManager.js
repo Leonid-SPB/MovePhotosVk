@@ -223,8 +223,13 @@ var AMApi = {
     VkAppUtils.displayWarn(warnMsg, "GlobalErrorBox", Settings.ErrorHideAfter);
   },
 
-  displayNote: function (noteMsg) {
-    VkAppUtils.displayNote(noteMsg, "NoteBox", Settings.NoteHideAfter);
+  displayNote: function (noteMsg, hideDelay) {
+    if (!hideDelay) {
+      VkAppUtils.displayNote(noteMsg, "NoteBox", Settings.NoteHideAfter);
+    } else {
+      VkAppUtils.displayNote(noteMsg, "NoteBox", hideDelay);
+    }
+
   },
 
   onFatalError: function (error) {
@@ -402,8 +407,8 @@ var AMApi = {
       self.srcAlbumList.selectedIndex = 0;
     }
 
-    if (!self.savedAlbumTipDisplayed) {
-      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещенные фотографии в этот альбом нельзя.");
+    if ((!self.savedAlbumTipDisplayed) && (albumId == Settings.SavedAlbumId)) {
+      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter/2);
       self.savedAlbumTipDisplayed = true;
     }
 
