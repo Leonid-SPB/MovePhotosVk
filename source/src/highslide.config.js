@@ -1,6 +1,8 @@
 /**
  *	Site-specific configuration settings for Highslide JS
  */
+/* globals $, hs*/
+
 hs.graphicsDir = 'graphics/';
 hs.showCredits = false;
 hs.outlineType = 'rounded-white';
@@ -16,7 +18,7 @@ hs.width = 800;
 hs.height = 600;
 hs.restoreCursor = null;
 hs.allowMultipleInstances = false;
-hs.closeButtonHtml = '<div class="close-simple-white" onclick="return hs.close(this)" title="Закрыть"></div>';
+hs.closeButtonHtml = '<div class="close-simple-white" onclick="AMApi.updSelectedNum(); return hs.close(this);" title="Закрыть"></div>';
 hs.captionEval = 'hs.makeCaption.apply(this)';
 hs.headingEval = 'hs.makeHeader.apply(this)';
 hs.captionOverlay.position = 'below';
