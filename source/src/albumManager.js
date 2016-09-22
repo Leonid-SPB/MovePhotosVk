@@ -274,17 +274,10 @@ var AMApi = {
       self.srcAlbumList.remove(i);
     }
 
-    /*//my albums, add service albums
-    if (selfOwn) {
-      var opt1 = new Option("Сохраненные фотографии", -15, false, false);
-      $(opt1).addClass("italic_bold");
-      self.srcAlbumList.add(opt1, null);
-    }*/
-
     for (i = 0; i < albums.length; i++) {
       //put service albums to the beginning
       var index = null;
-      if (albums[i].id == Settings.ProfileAlbumId) {
+      if ((albums[i].owner_id > 0) && (albums[i].id == Settings.ProfileAlbumId)) {
         continue;
       } else if (albums[i].id < 0) {
         index = 1;
