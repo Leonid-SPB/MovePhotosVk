@@ -401,7 +401,7 @@ var AMApi = {
     }
 
     if ((!self.savedAlbumTipDisplayed) && (albumId == Settings.SavedAlbumId)) {
-      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 2);
+      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 4);
       self.savedAlbumTipDisplayed = true;
     }
 
@@ -590,7 +590,7 @@ var AMApi = {
 
     self.albumData.photosCount -= (prevPagePhotos.length - newPagePhotos$.length);
     self.albumData.pagesCount = Math.ceil(self.albumData.photosCount / Settings.PhotosPerPage);
-    self.albumData.pages = [];
+    self.albumData.pages = {};
     if (self.albumData.pagesCount) {
       self.albumData.page = Math.min(self.albumData.page, self.albumData.pagesCount - 1);
     } else {
@@ -599,6 +599,12 @@ var AMApi = {
 
     if (newPagePhotos$.length) {
       //don't refresh page automatically if there are some photos left
+      var p = [];
+      for (var i = 0; i < newPagePhotos$.length; ++i) {
+        p.push(newPagePhotos$[i].data.vk_img);
+      }
+      self.albumData.pages[self.albumData.page] = p;
+
       self.albumData.dirty = true;
       self.$reloadPageBtn.button("enable");
     } else {
