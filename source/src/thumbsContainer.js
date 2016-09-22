@@ -340,7 +340,7 @@
 
         ++loadInProgressCnt;
         var vk_img = thumb.data(PluginName).vk_img;
-        var imgSrc = thC.getSelSizeUrl(vk_img, 'p', 'm');
+        var imgSrc = thC.getSelSizeUrl(vk_img, ['p', 'o', 'm', 's']);
         var thumb_img = $("<img />");
         thumb_img.on('load', function () {
           --loadInProgressCnt;
@@ -371,7 +371,7 @@
 
       var titleStr = thC.makeTitle_.call(this, vk_img);
       var captionStr = thC.makeCaption_.call(this, vk_img);
-      var zoomImgSrc = thC.getSelSizeUrl(vk_img, 'y', 'x');
+      var zoomImgSrc = thC.getSelSizeUrl(vk_img, ['y', 'x']);
       var aa = $("<a />", {
         class: 'ThumbsViewer-hslink',
         href: zoomImgSrc,
@@ -384,7 +384,7 @@
       var zoomIcon = $('<div class="ThumbsViewer-zoomIco" />').append(aa);
 
       thumb_parent.append(zoomIcon);
-      thumb_parent.attr("title", "Выбрать");
+      thumb_parent.attr("title", "Открыть оригинал фото");
       thumb_parent.data(PluginName, {
         vk_img: vk_img
       });
@@ -425,17 +425,28 @@
       return caption;
     },
 
-    ///retreive from VK Api image object a link to image with desired size szLiterPref
-    /// or fall back to alternative (old size format) szLiterAlt
-    getSelSizeUrl: function (vk_img, szLiterPref, szLiterAlt) {
-      var src_alt = vk_img.sizes[0].src;
-      for (var i = 0; i < vk_img.sizes.length; ++i) {
-        if (vk_img.sizes[i].type == szLiterPref) {
-          return vk_img.sizes[i].src;
-        } else if (vk_img.sizes[i].type == szLiterAlt) {
-          src_alt = vk_img.sizes[i].src;
+    ///retreive from VK Api image object a link to image with desired size szLiterPrefs
+    getSelSizeUrl: function (vk_img, szLiterPrefs) {
+      var src_alt = "logo150.png";
+
+      if (("sizes" in vk_img) && vk_img.sizes.length) {
+        src_alt = vk_img.sizes[0].src;
+      } else if ("photo_130" in vk_img) {
+        return vk_img.photo_130;
+      } else if ("photo_75" in vk_img) {
+        return vk_img.photo_75;
+      } else {
+        console.log(PluginName + ":getSelSizeUrl() - can't find vk image urls!");
+      }
+
+      for (var j = 0; j < szLiterPrefs.length; ++j) {
+        for (var i = 0; i < vk_img.sizes.length; ++i) {
+          if (vk_img.sizes[i].type == szLiterPrefs[j]) {
+            return vk_img.sizes[i].src;
+          }
         }
       }
+
       return src_alt;
     },
 
