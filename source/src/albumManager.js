@@ -301,7 +301,7 @@ var AMApi = {
     //add new options
     for (i = 0; i < albums.length; i++) {
       var index = null;
-      if (albums[i].id == Settings.WallAlbumId) {
+      if ((albums[i].owner_id > 0) && (albums[i].id == Settings.WallAlbumId)) {
         index = 2;
       } else if (albums[i].id < 0) {
         continue;
@@ -333,7 +333,8 @@ var AMApi = {
       self.disableControls(1);
       VkAppUtils.queryAlbumList({
         owner_id: ownerId,
-        need_system: 1
+        need_system: 1,
+        album_ids: (ownerId < 0) ? Settings.WallAlbumId : ""
       }).done(function (albums) {
         self.albumsCache[ownerId] = albums;
         doUpdate();
@@ -638,9 +639,9 @@ var AMApi = {
       VkAppUtils.rateRequest(Settings.RateRequestDelay);
     }
 
-    function onFailMove(errorInfo) {
-      if (errorInfo) {
-        self.displayWarn(errorInfo.error);
+    function onFailMove(error) {
+      if (error) {
+        self.displayWarn(error);
       }
     }
 
@@ -830,7 +831,7 @@ var AMApi = {
       VkApiWrapper.movePhotoList(ownerId, targetAid, ids).fail(function (err) {
         abortFlagRef.abort = true;
         --trInProgress;
-        d.reject();
+        d.reject(err);
         return;
       }).done(function (rsp) {
         --trInProgress;
