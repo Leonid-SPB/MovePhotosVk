@@ -6,7 +6,12 @@
 
 var VkAppUtils = {
   displayError: function (eMsg, errDivId, hideAfter) {
-    var errEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0 .7em;'><p><span class='ui-icon ui-icon-alert' style='float: left; margin-right: .3em;'></span><strong>ОШИБКА: </strong>" + eMsg + "</p></div></div>";
+    if (!eMsg) {
+      $("#" + errDivId).hide("fade");
+      return;
+    }
+
+    var errEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0 .7em;'><div class='tooltip-close' onclick='VkAppUtils.displayError(null,\"" + errDivId + "\");' title='Закрыть'></div><p><span class='ui-icon ui-icon-alert' style='float: left; margin-right: .3em;'></span><strong>ОШИБКА: </strong>" + eMsg + "</p></div></div>";
     var dataKey = "displayError";
     $("#" + errDivId).empty().hide(0).html(errEntity).show("highlight");
 
@@ -27,7 +32,12 @@ var VkAppUtils = {
   },
 
   displayWarn: function (eMsg, warnDivId, hideAfter) {
-    var warnEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0.7em; text-align: center'>" + eMsg + "</div></div>";
+    if (!eMsg) {
+      $("#" + warnDivId).hide("fade");
+      return;
+    }
+
+    var warnEntity = "<div class='ui-widget'><div class='ui-state-error ui-corner-all' style='padding: 0.7em; text-align: center'><div class='tooltip-close' onclick='VkAppUtils.displayWarn(null,\"" + warnDivId + "\");' title='Закрыть'></div><p>" + eMsg + "</p></div></div>";
     $("#" + warnDivId).empty().hide(0).html(warnEntity).show("highlight");
     //var dataKey = "displayWarn";
     var dataKey = "displayError";
@@ -49,7 +59,12 @@ var VkAppUtils = {
   },
 
   displayNote: function (eMsg, noteDivId, hideAfter) {
-    var noteEntity = "<div class='ui-widget'><div class='ui-state-highlight ui-corner-all' style='padding: 0 .7em;'><p><span class='ui-icon ui-icon-info' style='float: left; margin-right: .3em;'></span>" + eMsg + "</p></div></div>";
+    if (!eMsg) {
+      $("#" + noteDivId).hide("fade");
+      return;
+    }
+
+    var noteEntity = "<div class='ui-widget'><div class='ui-state-highlight ui-corner-all' style='padding: 0 .7em;'><div class='tooltip-close' onclick='VkAppUtils.displayNote(null,\"" + noteDivId + "\");' title='Закрыть'></div><p><span class='ui-icon ui-icon-info' style='float: left; margin-right: .3em;'></span>" + eMsg + "</p></div></div>";
     $("#" + noteDivId).empty().hide(0).html(noteEntity).show("highlight");
     var dataKey = "displayNote";
 

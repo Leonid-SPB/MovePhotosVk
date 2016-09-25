@@ -76,7 +76,9 @@ var AMApi = {
   pageSlideTimer: null,
 
   saveTipDisplayed: false,
+  saveTipDisplayedKey: "saveTipDisplayed",
   savedAlbumTipDisplayed: false,
+  savedAlbumTipDisplayedKey: "savedAlbumTipDisplayed",
 
   taskInfo: {
     abort: false,
@@ -189,6 +191,16 @@ var AMApi = {
         self.dstAlbumOwnerList.add(opt, null);
       }
     }).fail(self.onFatalError);
+
+    //query notifications info
+    VkApiWrapper.storageGet(self.saveTipDisplayedKey + "," + self.savedAlbumTipDisplayedKey).done(function (data) {
+      if (data[self.savedAlbumTipDisplayedKey]) {
+        self.savedAlbumTipDisplayed = true;
+      }
+      if (data[self.saveTipDisplayedKey]) {
+        self.saveTipDisplayed = true;
+      }
+    });
 
     //query albums
     var d2 = VkAppUtils.queryAlbumList({
@@ -402,8 +414,9 @@ var AMApi = {
     }
 
     if ((!self.savedAlbumTipDisplayed) && (albumId == Settings.SavedAlbumId)) {
-      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 4);
+      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 2);
       self.savedAlbumTipDisplayed = true;
+      VkApiWrapper.storageSet(self.savedAlbumTipDisplayedKey, "1");
     }
 
     //update album data
@@ -429,8 +442,9 @@ var AMApi = {
     if (selIndex == 1) { //save album
       self.$goBtn.button("option", "label", self.goBtnLabelSave);
       if (!self.saveTipDisplayed) {
-        self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks'>Яндекс Диск</a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
+        self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks' target='_blank'><u>Яндекс Диск</u></a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
         self.saveTipDisplayed = true;
+        //VkApiWrapper.storageSet(self.saveTipDisplayedKey, "1");
       }
     } else {
       self.$goBtn.button("option", "label", self.goBtnLabelMove);
