@@ -38,8 +38,10 @@ var Settings = {
 var AMApi = {
   srcAlbumOwnerList: null,
   srcAlbumList: null,
+  srcAlbumSizeEdit: null,
   dstAlbumOwnerList: null,
   dstAlbumList: null,
+  dstAlbumSizeEdit: null,
 
   $progressBar: null,
   $goBtn: null,
@@ -76,7 +78,9 @@ var AMApi = {
   pageSlideTimer: null,
 
   saveTipDisplayed: false,
+  saveTipDisplayedKey: "saveTipDisplayed",
   savedAlbumTipDisplayed: false,
+  savedAlbumTipDisplayedKey: "savedAlbumTipDisplayed",
 
   taskInfo: {
     abort: false,
@@ -88,8 +92,10 @@ var AMApi = {
     //assign variables for controls
     self.srcAlbumOwnerList = document.getElementById("Form1_SrcAlbumOwner");
     self.srcAlbumList = document.getElementById("Form1_SrcAlbumList");
+    self.srcAlbumSizeEdit = document.getElementById("Form1_SrcAlbumSize");
     self.dstAlbumOwnerList = document.getElementById("Form1_DstAlbumOwner");
     self.dstAlbumList = document.getElementById("Form1_DstAlbumList");
+    self.dstAlbumSizeEdit = document.getElementById("Form1_DstAlbumSize");
 
     self.$progressBar = $("#Progressbar");
     self.$goBtn = $("#Form1_goBtn");
@@ -189,6 +195,16 @@ var AMApi = {
         self.dstAlbumOwnerList.add(opt, null);
       }
     }).fail(self.onFatalError);
+
+    //query notifications info
+    VkApiWrapper.storageGet(self.saveTipDisplayedKey + "," + self.savedAlbumTipDisplayedKey).done(function (data) {
+      if (data[self.savedAlbumTipDisplayedKey]) {
+        self.savedAlbumTipDisplayed = true;
+      }
+      if (data[self.saveTipDisplayedKey]) {
+        self.saveTipDisplayed = true;
+      }
+    });
 
     //query albums
     var d2 = VkAppUtils.queryAlbumList({
@@ -402,8 +418,9 @@ var AMApi = {
     }
 
     if ((!self.savedAlbumTipDisplayed) && (albumId == Settings.SavedAlbumId)) {
-      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 4);
+      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 2);
       self.savedAlbumTipDisplayed = true;
+      VkApiWrapper.storageSet(self.savedAlbumTipDisplayedKey, "1");
     }
 
     //update album data
@@ -429,10 +446,41 @@ var AMApi = {
     if (selIndex == 1) { //save album
       self.$goBtn.button("option", "label", self.goBtnLabelSave);
       if (!self.saveTipDisplayed) {
-        self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks'>Яндекс Диск</a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
+        self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks' target='_blank'><u>Яндекс Диск</u></a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
         self.saveTipDisplayed = true;
+        //VkApiWrapper.storageSet(self.saveTipDisplayedKey, "1");
       }
-    } else {
+      self.dstAlbumSizeEdit.value = "0";
+    } else if (selIndex > 1) {
+      self.displayNote(); //hide advice
+
+      //query album size
+      Utils.showSpinner();
+      self.disableControls(1);
+
+      var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
+      var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+      var aidSelIndex = self.dstAlbumList.selectedIndex;
+      var albumID = self.dstAlbumList.item(aidSelIndex).value;
+
+      VkApiWrapper.queryPhotos({
+        owner_id: ownerId,
+        album_id: albumID,
+        offset: 0,
+        count: 0
+      }).fail(function () {
+        Utils.hideSpinner();
+        self.disableControls(0);
+        self.dstAlbumSizeEdit.value = "";
+      }).done(function (response) {
+        Utils.hideSpinner();
+        self.disableControls(0);
+        self.dstAlbumSizeEdit.value = response.count;
+      });
+      self.$goBtn.button("option", "label", self.goBtnLabelMove);
+    } else { //not selected
+      self.displayNote(); //hide advice
+      self.dstAlbumSizeEdit.value = "0";
       self.$goBtn.button("option", "label", self.goBtnLabelMove);
     }
   },
@@ -445,8 +493,10 @@ var AMApi = {
     var shownStr;
     if (self.albumData.pagesCount) {
       shownStr = (self.albumData.page + 1) + "/" + self.albumData.pagesCount;
+      self.srcAlbumSizeEdit.value = self.albumData.photosCount;
     } else {
       shownStr = "-/-";
+      self.srcAlbumSizeEdit.value = "0";
     }
 
     self.$albumPageField.text(shownStr);
@@ -999,7 +1049,7 @@ var AMApi = {
   updSelectedNum: function () {
     var self = AMApi;
     var cnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount");
-    this.selectedPhotosEdit.value = cnt.selected + "/" + cnt.total;
+    self.selectedPhotosEdit.value = cnt.selected + "/" + cnt.total;
   }
 };
 

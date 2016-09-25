@@ -40,30 +40,35 @@
 <body>
   <div id="vk_ads_5443"></div>
   <!-- Release ADs -->
-   <script type="text/javascript">
-	  setTimeout(function() {
-		var adsParams = {"ad_unit_id":5443,"ad_unit_hash":"d7dff97200aa41db12e81fccd90159d1"};
-		function vkAdsInit() {
-		  VK.Widgets.Ads('vk_ads_5443', {}, adsParams);
-		}
-		if (window.VK && VK.Widgets) {
-		  vkAdsInit();
-		} else {
-		  if (!window.vkAsyncInitCallbacks) window.vkAsyncInitCallbacks = [];
-		  vkAsyncInitCallbacks.push(vkAdsInit);
-		  var protocol = ((location.protocol === 'https:') ? 'https:' : 'http:');
-		  var adsElem = document.getElementById('vk_ads_5443');
-		  var scriptElem = document.createElement('script');
-		  scriptElem.type = 'text/javascript';
-		  scriptElem.async = true;
-		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?130';
-		  adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
-		}
-	  }, 0);
-	</script>
+  <script type="text/javascript">
+    setTimeout(function() {
+      var adsParams = {
+        "ad_unit_id": 5443,
+        "ad_unit_hash": "d7dff97200aa41db12e81fccd90159d1"
+      };
+
+      function vkAdsInit() {
+        VK.Widgets.Ads('vk_ads_5443', {}, adsParams);
+      }
+      if (window.VK && VK.Widgets) {
+        vkAdsInit();
+      } else {
+        if (!window.vkAsyncInitCallbacks) window.vkAsyncInitCallbacks = [];
+        vkAsyncInitCallbacks.push(vkAdsInit);
+        var protocol = ((location.protocol === 'https:') ? 'https:' : 'http:');
+        var adsElem = document.getElementById('vk_ads_5443');
+        var scriptElem = document.createElement('script');
+        scriptElem.type = 'text/javascript';
+        scriptElem.async = true;
+        scriptElem.src = protocol + '//vk.com/js/api/openapi.js?130';
+        adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
+      }
+    }, 0);
+
+  </script>
 
   <!-- Beta ADs -->
-	<!--<script type="text/javascript">
+  <!--<script type="text/javascript">
 	  setTimeout(function() {
 		var adsParams = {"ad_unit_id":63212,"ad_unit_hash":"96907895a1331a36a52fe3f8c3a2bf38"};
 		function vkAdsInit() {
@@ -143,10 +148,13 @@
               <option value="my albums" class="italic_bold">Мои альбомы</option>
             </select>
           </div>
-          <div class="MainForm-body-div-col-row">
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_SrcAlbumList">
-              <option value="not selected">Альбом не выбран</option>
-            </select>
+          <div class="MainForm-body-div-col-row" style="display: table;">
+            <div style="display: table-cell; text-align: center; vertical-align: middle;">
+              <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_SrcAlbumList">
+                <option value="not selected">Альбом не выбран</option>
+              </select>
+              <input id="Form1_SrcAlbumSize" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="5" value="" title="Количество фотографий в альбоме">
+            </div>
           </div>
         </div>
 
@@ -160,8 +168,9 @@
             </select>
           </div>
           <div class="MainForm-body-div-col-row" style="display: table;">
-            <div style="display: table-cell; text-align: center; vertical-align: middle;">
-              <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" style="margin-right: 0.5em" size="1" id="Form1_DstAlbumList">
+            <div style="display: table-cell; text-align: center; vertical-align: middle; padding-right: 0.5em">
+              <input id="Form1_DstAlbumSize" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="5" value="" title="Количество фотографий в альбоме">
+              <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_DstAlbumList">
                 <option value="not selected">Альбом не выбран</option>
                 <option value="save" class="italic_bold">Сохранить</option>
               </select>
@@ -211,7 +220,7 @@
         </div>
         <div class="MainForm-body-div-col" style="text-align: right">
           <label for="Form1_SelectedPhotos">Выбрано:&nbsp;</label>
-          <input id="Form1_SelectedPhotos" class="ui-widget ui-widget-content ui-corner-all" style="text-align: right; padding-right: 0.2em;" readonly="readonly" type="text" size="9" value="0/0" title="Количество выбранных фотографий/всего фотографий на странице">
+          <input id="Form1_SelectedPhotos" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="9" value="0/0" title="Количество выбранных фотографий/всего фотографий на странице">
         </div>
       </div>
 

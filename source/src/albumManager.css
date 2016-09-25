@@ -263,6 +263,13 @@ hr {
   outline: none;
 }
 
+.MainForm input[type="text"] {
+  text-align: right;
+  padding-right: 0.2em;
+  /*  margin-left: 0.1em;
+  margin-right: 0.1em;*/
+}
+
 .MainForm-button-small {
   font-size: 0.9em;
 }
@@ -332,4 +339,19 @@ hr {
 #createAlbumDialog .validateTips {
   border: 1px solid transparent;
   padding: 0.3em;
+}
+
+.tooltip-close {
+  width: 24px;
+  height: 24px;
+  background: url(graphics/closeX.png);
+  display: inline-block;
+  float: right;
+  cursor: pointer;
+  opacity: 0.5;
+  margin-top: .7em;
+}
+
+.tooltip-close:hover {
+  opacity: 1;
 }
