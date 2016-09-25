@@ -38,8 +38,10 @@ var Settings = {
 var AMApi = {
   srcAlbumOwnerList: null,
   srcAlbumList: null,
+  srcAlbumSizeEdit: null,
   dstAlbumOwnerList: null,
   dstAlbumList: null,
+  dstAlbumSizeEdit: null,
 
   $progressBar: null,
   $goBtn: null,
@@ -90,8 +92,10 @@ var AMApi = {
     //assign variables for controls
     self.srcAlbumOwnerList = document.getElementById("Form1_SrcAlbumOwner");
     self.srcAlbumList = document.getElementById("Form1_SrcAlbumList");
+    self.srcAlbumSizeEdit = document.getElementById("Form1_SrcAlbumSize");
     self.dstAlbumOwnerList = document.getElementById("Form1_DstAlbumOwner");
     self.dstAlbumList = document.getElementById("Form1_DstAlbumList");
+    self.dstAlbumSizeEdit = document.getElementById("Form1_DstAlbumSize");
 
     self.$progressBar = $("#Progressbar");
     self.$goBtn = $("#Form1_goBtn");
@@ -446,7 +450,37 @@ var AMApi = {
         self.saveTipDisplayed = true;
         //VkApiWrapper.storageSet(self.saveTipDisplayedKey, "1");
       }
-    } else {
+      self.dstAlbumSizeEdit.value = "0";
+    } else if (selIndex > 1) {
+      self.displayNote(); //hide advice
+
+      //query album size
+      Utils.showSpinner();
+      self.disableControls(1);
+
+      var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
+      var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+      var aidSelIndex = self.dstAlbumList.selectedIndex;
+      var albumID = self.dstAlbumList.item(aidSelIndex).value;
+
+      VkApiWrapper.queryPhotos({
+        owner_id: ownerId,
+        album_id: albumID,
+        offset: 0,
+        count: 0
+      }).fail(function () {
+        Utils.hideSpinner();
+        self.disableControls(0);
+        self.dstAlbumSizeEdit.value = "";
+      }).done(function (response) {
+        Utils.hideSpinner();
+        self.disableControls(0);
+        self.dstAlbumSizeEdit.value = response.count;
+      });
+      self.$goBtn.button("option", "label", self.goBtnLabelMove);
+    } else { //not selected
+      self.displayNote(); //hide advice
+      self.dstAlbumSizeEdit.value = "0";
       self.$goBtn.button("option", "label", self.goBtnLabelMove);
     }
   },
@@ -459,8 +493,10 @@ var AMApi = {
     var shownStr;
     if (self.albumData.pagesCount) {
       shownStr = (self.albumData.page + 1) + "/" + self.albumData.pagesCount;
+      self.srcAlbumSizeEdit.value = self.albumData.photosCount;
     } else {
       shownStr = "-/-";
+      self.srcAlbumSizeEdit.value = "0";
     }
 
     self.$albumPageField.text(shownStr);
@@ -1013,7 +1049,7 @@ var AMApi = {
   updSelectedNum: function () {
     var self = AMApi;
     var cnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount");
-    this.selectedPhotosEdit.value = cnt.selected + "/" + cnt.total;
+    self.selectedPhotosEdit.value = cnt.selected + "/" + cnt.total;
   }
 };
 

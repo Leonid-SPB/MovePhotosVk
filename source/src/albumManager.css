@@ -263,6 +263,13 @@ hr {
   outline: none;
 }
 
+.MainForm input[type="text"] {
+  text-align: right;
+  padding-right: 0.2em;
+  /*  margin-left: 0.1em;
+  margin-right: 0.1em;*/
+}
+
 .MainForm-button-small {
   font-size: 0.9em;
 }
@@ -345,6 +352,6 @@ hr {
   margin-top: .7em;
 }
 
-.tooltip-close:hover{
+.tooltip-close:hover {
   opacity: 1;
 }
