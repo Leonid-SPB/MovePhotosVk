@@ -384,7 +384,7 @@
       var zoomIcon = $('<div class="ThumbsViewer-zoomIco" />').append(aa);
 
       thumb_parent.append(zoomIcon);
-      thumb_parent.attr("title", "Выбрать");
+      thumb_parent.attr("title", "Выбрать фото");
       thumb_parent.data(PluginName, {
         vk_img: vk_img
       });

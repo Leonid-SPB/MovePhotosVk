@@ -25,7 +25,7 @@ var Utils = {
     //fixme using real sanitizer
     if (str) {
       //keep only alpha-numeric characters and "._"
-      return str.toString().replace(/[^0-9a-z_.]/gi, '');
+      return str.toString().replace(/[^0-9a-z_.\-]/gi, '');
     } else {
       return "";
     }

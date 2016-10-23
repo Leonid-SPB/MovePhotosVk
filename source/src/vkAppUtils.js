@@ -412,7 +412,7 @@ var VkAppUtils = {
       }
     }).fail(onFail);
 
-    return ddd;
+    return ddd.promise();
   },
 
   validateApp: function (vkSid, appLocation, delay) {
@@ -425,46 +425,53 @@ var VkAppUtils = {
     }, delay);
   },
 
+  IsWelcomedKey: "isWelcomed3",
+  IsRatedKey: "isRated3",
+
   welcomeCheck: function () {
     var d = $.Deferred();
 
     //request isWelcomed var
-    var isWelcomedKey = "isWelcomed3";
-    VkApiWrapper.storageGet(isWelcomedKey).done(function (data) {
-      if (data[isWelcomedKey] == "1") { //already welcomed
+    VkApiWrapper.storageGet(VkAppUtils.IsWelcomedKey).done(function (data) {
+      if (data[VkAppUtils.IsWelcomedKey] == "1") { //already welcomed
         d.resolve();
         return;
       }
 
       //if not welcomed yet -> show welcome dialog
       $("#welcome_dialog").dialog("open").on("dialogclose", function (event, ui) {
+        VkApiWrapper.storageSet(VkAppUtils.IsWelcomedKey, "1");
         d.resolve();
       });
-      VkApiWrapper.storageSet(isWelcomedKey, "1");
     });
 
     return d.promise();
   },
 
   rateRequest: function (delay) {
-    var isRatedKey = "isRated3";
-    var isWelcomedKey = "isWelcomed3";
     var BlinkAfterDialogDelay = 2000;
+    var d = $.Deferred();
 
     setTimeout(function () {
-      VkApiWrapper.storageGet(isWelcomedKey + "," + isRatedKey).done(function (data) {
-        if ((data[isWelcomedKey] == "0") || (data[isRatedKey] == "1")) { //already rated or first run
+      VkApiWrapper.storageGet(VkAppUtils.IsWelcomedKey + "," + VkAppUtils.IsRatedKey).done(function (data) {
+        if ((data[VkAppUtils.IsWelcomedKey] == "0") || (data[VkAppUtils.IsRatedKey] == "1")) { //already rated or first run
+          d.resolve();
           return;
         }
 
         //if not rated yet -> show rate us dialog
-        $("#rateus_dialog").dialog("open");
-        VkApiWrapper.storageSet(isRatedKey, "1");
+        $("#rateus_dialog").dialog("open").on("dialogclose", function (event, ui) {
+          VkApiWrapper.storageSet(VkAppUtils.IsRatedKey, "1");
+          d.resolve();
+        });
 
         setTimeout(function () {
           Utils.blinkDiv("vk_like", Settings.BlinkCount, Settings.BlinkDelay);
         }, BlinkAfterDialogDelay);
       });
     }, delay);
+
+    return d.promise();
   }
+
 };
