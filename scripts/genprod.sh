@@ -1,6 +1,8 @@
 #!/bin/sh
 FileList="\
  ../source/src/highslide-full.packed.js\
+ ../source/src/load-image.js\
+ ../source/src/canvas-to-blob.js\
  ../source/src/highslide.config.js\
  ../source/src/spin.js\
  ../source/src/utils.js\

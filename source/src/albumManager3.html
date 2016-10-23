@@ -26,6 +26,8 @@
   <script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
 
   <!--JSFILES-->
+  <script src="load-image.js" type="text/javascript" charset="utf-8"></script>
+  <script src="canvas-to-blob.js" type="text/javascript" charset="utf-8"></script>
   <script src="spin.js" type="text/javascript" charset="utf-8"></script>
   <script src="utils.js" type="text/javascript" charset="utf-8"></script>
   <script src="vkApiWrapper.js" type="text/javascript" charset="utf-8"></script>
@@ -163,8 +165,9 @@
             <label for="Form1_DstAlbumOwner">Куда</label>
           </div>
           <div class="MainForm-body-div-col-row">
-            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" style="opacity: 0.5;" size="1" id="Form1_DstAlbumOwner" disabled="true">
+            <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" style="opacity: 0.5;" size="1" id="Form1_DstAlbumOwner">
               <option value="my albums" class="italic_bold">Мои альбомы</option>
+              <option value="save" class="italic_bold">Сохранить</option>
             </select>
           </div>
           <div class="MainForm-body-div-col-row" style="display: table;">
@@ -172,7 +175,6 @@
               <input id="Form1_DstAlbumSize" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="5" value="" title="Количество фотографий в альбоме">
               <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_DstAlbumList">
                 <option value="not selected">Альбом не выбран</option>
-                <option value="save" class="italic_bold">Сохранить</option>
               </select>
             </div>
             <div style="display: table-cell; text-align: center; vertical-align: middle;">

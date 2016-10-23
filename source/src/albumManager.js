@@ -62,6 +62,7 @@ var AMApi = {
   busyFlag: true,
   goBtnLabelMove: "Переместить",
   goBtnLabelSave: "Сохранить",
+  goBtnLabelCopy: "Копировать",
   goBtnLabelCancel: "Отмена",
 
   albumsCache: {},
@@ -118,6 +119,7 @@ var AMApi = {
 
     //assign event handlers
     $(self.srcAlbumOwnerList).change(self.onSrcOwnerChanged);
+    $(self.dstAlbumOwnerList).change(self.onDstOwnerChanged);
     $(self.srcAlbumList).change(self.onSrcAlbumChanged);
     $(self.dstAlbumList).change(self.onDstAlbumChanged);
     self.$goBtn.click(self.onGoBtnClick);
@@ -277,6 +279,7 @@ var AMApi = {
     self.$createAlbumBtn.button(dstr);
     self.revThumbSortChk.disabled = dval;
     self.srcAlbumOwnerList.disabled = dval;
+    self.dstAlbumOwnerList.disabled = dval;
     self.srcAlbumList.disabled = dval;
     self.dstAlbumList.disabled = dval;
   },
@@ -309,8 +312,8 @@ var AMApi = {
     self.dstAlbumList.selectedIndex = 0;
 
     //remove old options
-    //i >= 2 to skip "not selected" and "save locally" options
-    for (var i = self.dstAlbumList.length - 1; i >= 2; --i) {
+    //i >= 1 to skip "not selected" option
+    for (var i = self.dstAlbumList.length - 1; i >= 1; --i) {
       self.dstAlbumList.remove(i);
     }
 
@@ -318,7 +321,7 @@ var AMApi = {
     for (i = 0; i < albums.length; i++) {
       var index = null;
       if ((albums[i].owner_id > 0) && (albums[i].id == Settings.WallAlbumId)) {
-        index = 2;
+        index = 1;
       } else if (albums[i].id < 0) {
         continue;
       }
@@ -334,8 +337,8 @@ var AMApi = {
     var ownerId = self.srcAlbumOwnerList.item(selIndex).value;
 
     function doUpdate() {
-      //synchronize with srcAlbumOwner as it is disabled
-      self.dstAlbumOwnerList.selectedIndex = selIndex;
+      //synchronize to dstAlbumOwner, index mapping: 0 -> 0, i -> i+1 because of "Save" option
+      self.dstAlbumOwnerList.selectedIndex = selIndex ? selIndex + 1 : selIndex;
       self.onDstOwnerChanged();
 
       self.updateSrcAlbumsListBox(self.albumsCache[ownerId]);
@@ -361,28 +364,45 @@ var AMApi = {
   onDstOwnerChanged: function () {
     var self = AMApi;
 
-    var selIndex = self.dstAlbumOwnerList.selectedIndex;
-    var ownerId = self.dstAlbumOwnerList.item(selIndex).value;
+    var srcSelIndex = self.srcAlbumOwnerList.selectedIndex;
+    var dstSelIndex = self.dstAlbumOwnerList.selectedIndex;
+    var ownerId = self.dstAlbumOwnerList.value;
 
     function doUpdate() {
       self.updateDstAlbumsListBox(self.albumsCache[ownerId]);
       self.onDstAlbumChanged();
     }
 
+    self.displayNote(); //hide advice
+
+    //index mapping: 0 -> 0, i -> i+1 because of "Save" option
+    if ((!srcSelIndex && !dstSelIndex) || (dstSelIndex == srcSelIndex + 1)) {
+      self.$goBtn.button("option", "label", self.goBtnLabelMove);
+    } else if (dstSelIndex == 1) {
+      self.$goBtn.button("option", "label", self.goBtnLabelSave);
+      self.albumsCache[ownerId] = {};
+      if (!self.saveTipDisplayed) {
+        self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks' target='_blank'><u>Яндекс Диск</u></a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
+        self.saveTipDisplayed = true;
+        //VkApiWrapper.storageSet(self.saveTipDisplayedKey, "1");
+      }
+    } else {
+      self.$goBtn.button("option", "label", self.goBtnLabelCopy);
+    }
+
     if (ownerId in self.albumsCache) {
       doUpdate();
+    } else {
+      Utils.showSpinner();
+      self.disableControls(1);
+      VkAppUtils.queryAlbumList({
+        owner_id: ownerId,
+        need_system: 1
+      }).done(function (albums) {
+        self.albumsCache[ownerId] = albums;
+        doUpdate();
+      }).fail(self.onFatalError);
     }
-    /* else {
-          Utils.showSpinner();
-          self.disableControls(1);
-          VkAppUtils.queryAlbumList({
-            owner_id: ownerId,
-            need_system: 1
-          }).done(function (albums) {
-            self.albumsCache[ownerId] = albums;
-            doUpdate();
-          }).fail(self.onFatalError);
-        }*/
   },
 
   onSrcAlbumChanged: function () {
@@ -442,24 +462,15 @@ var AMApi = {
     var self = AMApi;
 
     var selIndex = self.dstAlbumList.selectedIndex;
-
-    if (selIndex == 1) { //save album
-      self.$goBtn.button("option", "label", self.goBtnLabelSave);
-      if (!self.saveTipDisplayed) {
-        self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks' target='_blank'><u>Яндекс Диск</u></a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
-        self.saveTipDisplayed = true;
-        //VkApiWrapper.storageSet(self.saveTipDisplayedKey, "1");
-      }
-      self.dstAlbumSizeEdit.value = "0";
-    } else if (selIndex > 1) {
+    if (selIndex > 1) {
       self.displayNote(); //hide advice
 
       //query album size
       Utils.showSpinner();
       self.disableControls(1);
 
-      var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
-      var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+      var ownSelIndex = self.dstAlbumOwnerList.selectedIndex;
+      var ownerId = self.dstAlbumOwnerList.item(ownSelIndex).value;
       var aidSelIndex = self.dstAlbumList.selectedIndex;
       var albumID = self.dstAlbumList.item(aidSelIndex).value;
 
@@ -477,11 +488,8 @@ var AMApi = {
         self.disableControls(0);
         self.dstAlbumSizeEdit.value = response.count;
       });
-      self.$goBtn.button("option", "label", self.goBtnLabelMove);
     } else { //not selected
-      self.displayNote(); //hide advice
       self.dstAlbumSizeEdit.value = "0";
-      self.$goBtn.button("option", "label", self.goBtnLabelMove);
     }
   },
 
@@ -667,40 +675,39 @@ var AMApi = {
   onGoBtnClick: function () {
     var self = AMApi;
 
-    var dstSelIndex = self.dstAlbumList.selectedIndex;
-    if (!dstSelIndex) { //dst album not selected
-      self.displayWarn("Не выбран альбом, куда перемещать фотографии");
-      return;
-    }
-
-    var srcSelIndex = self.srcAlbumList.selectedIndex;
-    if (self.dstAlbumList.item(dstSelIndex).value == self.srcAlbumList.item(srcSelIndex).value) {
-      self.displayWarn("Нельзя переместить фотографии в тот же самый альбом!");
-      return;
-    }
-
     var selThumbsCnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount").selected;
     if (!selThumbsCnt) { //no images selected
       self.displayWarn("Не выбраны фотографии для перемещения/сохранения");
       return;
     }
 
-    function onDoneMove() {
+    var dstSelIndex = self.dstAlbumList.selectedIndex;
+    if (!dstSelIndex && (self.$goBtn.button("option", "label") != self.goBtnLabelSave)) { //dst album not selected
+      self.displayWarn("Не выбран альбом, куда перемещать фотографии");
+      return;
+    }
+
+    var srcSelIndex = self.srcAlbumList.selectedIndex;
+    if ((self.dstAlbumList.value == self.srcAlbumList.value) && (self.$goBtn.button("option", "label") == self.goBtnLabelMove)) {
+      self.displayWarn("Нельзя переместить фотографии в тот же самый альбом!");
+      return;
+    }
+
+    function onDoneMoveCopy() {
       VkAppUtils.rateRequest(Settings.RateRequestDelay);
     }
 
-    function onFailMove(error) {
+    function onFailMoveCopy(error) {
       if (error) {
         self.displayWarn(error);
       }
     }
 
-    function onAlwaysSave() {
+    function onAlwaysSaveCopy() {
       Utils.hideSpinner();
       self.disableControls(0);
       self.updSelectedNum();
 
-      //update button label
       self.onDstAlbumChanged();
     }
 
@@ -710,7 +717,6 @@ var AMApi = {
 
       self.invalidateAlbumPageCache();
 
-      //update button label
       self.onDstAlbumChanged();
 
       self.updSelectedNum();
@@ -725,7 +731,7 @@ var AMApi = {
       self.updSelectedNum();
     }
 
-    function onProgressSave($thumb) {
+    function onProgressSaveCopy($thumb) {
       self.$progressBar.progressbar("value", ++progress);
       self.$thumbsContainer.ThumbsViewer("selectToggle", $thumb);
       self.updSelectedNum();
@@ -747,7 +753,7 @@ var AMApi = {
 
       self.taskInfo.abort = false;
       var selIdx = self.srcAlbumList.selectedIndex;
-      self.doSaveAlbum(self.srcAlbumList.item(selIdx).text, $thumbLists, self.taskInfo).progress(onProgressSave).always(onAlwaysSave);
+      self.doSaveAlbum(self.srcAlbumList.item(selIdx).text, $thumbLists, self.taskInfo).progress(onProgressSaveCopy).always(onAlwaysSaveCopy);
     } else if (self.$goBtn.button("option", "label") == self.goBtnLabelMove) {
       //move
 
@@ -764,7 +770,21 @@ var AMApi = {
       var albumID = self.dstAlbumList.item(aidSelIndex).value;
       self.taskInfo.abort = false;
 
-      self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDoneMove).fail(onFailMove).always(onAlwaysMove).progress(onProgressMove);
+      self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDoneMoveCopy).fail(onFailMoveCopy).always(onAlwaysMove).progress(onProgressMove);
+    } else if (self.$goBtn.button("option", "label") == self.goBtnLabelCopy) {
+      //copy (upload)
+
+      //collect list of selected photos
+      var $thumbListc = self.$thumbsContainer.ThumbsViewer("getThumbsData", true);
+
+      //set new progress bar range
+      self.$progressBar.progressbar("option", "max", $thumbListc.length);
+      self.$progressBar.progressbar("value", 0);
+
+      var dstOwnerId = self.dstAlbumOwnerList.value;
+      var dstAlbumId = self.dstAlbumList.value;
+      self.taskInfo.abort = false;
+      self.doCopyPhotos(dstOwnerId, dstAlbumId, $thumbListc, self.taskInfo).done(onDoneMoveCopy).fail(onFailMoveCopy).always(onAlwaysSaveCopy).progress(onProgressSaveCopy);
     } else {
       //abort task
       self.taskInfo.abort = true;
@@ -774,9 +794,13 @@ var AMApi = {
     //enable "Cancel" button
     self.$goBtn.button("option", "label", self.goBtnLabelCancel);
     self.$goBtn.button("enable");
+  },
 
-    //todo: hint for service albums, that move is irreversible
-    //todo: turbo move using VK API exec
+  doCopyPhotos: function (dstOwnerId, dstAlbumId, $thumbList, abortFlagRef) {
+    var self = AMApi;
+    var d = $.Deferred();
+    
+    return d.promise();
   },
 
   doSaveAlbum: function (albumTitle, $thumbList, abortFlagRef) {
@@ -978,8 +1002,8 @@ var AMApi = {
       return;
     }
 
-    var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
-    var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+    var ownSelIndex = self.dstAlbumOwnerList.selectedIndex;
+    var ownerId = self.dstAlbumOwnerList.item(ownSelIndex).value;
 
     //try to create album
     $("#createAlbumDialog").dialog("close");
