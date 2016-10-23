@@ -223,7 +223,6 @@ var AMApi = {
       self.busyFlag = false;
       Utils.hideSpinner();
       self.disableControls(0);
-      return;
     }).fail(function () {
       //initialization failed, disable controls, hide spinner
       self.busyFlag = false;
@@ -804,6 +803,46 @@ var AMApi = {
     var self = AMApi;
     var d = $.Deferred();
 
+    var GroupSize = 5;
+    var errInfo = null;
+    var trInProgress = 0;
+
+    function getVkImgs(obj) {
+      return obj.data.vk_img;
+    }
+
+    function uploadPhotoGroup() {
+      //stop if no more images left or the task was aborted
+      if (abortFlagRef.abort || !$thumbList.length) {
+        if (trInProgress) {
+          //some transactions have not finished yet, waiting...
+          setTimeout(uploadPhotoGroup, Settings.MovePhotoDelay);
+        } else {
+          if (!errInfo) { //no errors
+            d.resolve();
+          } else { //error info is not empty, something happened
+            d.reject(errInfo.error_msg);
+          }
+        }
+        return;
+      }
+
+      var thumbGrp = $thumbList.splice(0, GroupSize);
+      var vkImgs = thumbGrp.map(getVkImgs);
+      ++trInProgress;
+
+      VkAppUtils.uploadPhotos(-dstOwnerId, dstAlbumId, vkImgs).fail(function (err) {
+        abortFlagRef.abort = true;
+        --trInProgress;
+        d.reject(err.error_msg);
+      }).done(function (rsp) {
+        --trInProgress;
+        uploadPhotoGroup();
+      });
+    }
+
+    uploadPhotoGroup();
+
     return d.promise();
   },
 
@@ -824,16 +863,7 @@ var AMApi = {
 
       var thumbInfo = $thumbList.shift();
       var vk_img = thumbInfo.data.vk_img;
-
-      //find max size
-      var src = "";
-      var sz = 0;
-      for (var i = 0; i < vk_img.sizes.length; ++i) {
-        if (vk_img.sizes[i].width >= sz) {
-          src = vk_img.sizes[i].src;
-          sz = vk_img.sizes[i].width;
-        }
-      }
+      var src = VkAppUtils.getVkImgMaxSizeSrc(vk_img);
 
       var cD = new Date(vk_img.date * 1000);
       var createdStr = lzn(cD.getDay()) + "." + lzn(cD.getMonth()) + "." + cD.getFullYear() + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
@@ -897,7 +927,7 @@ var AMApi = {
           if (!errInfo) { //no errors
             d.resolve();
           } else { //error info is not empty, something happened
-            d.reject(errInfo.error);
+            d.reject(errInfo.error_msg);
           }
         }
         return;
@@ -909,8 +939,7 @@ var AMApi = {
       VkApiWrapper.movePhotoList(ownerId, targetAid, ids).fail(function (err) {
         abortFlagRef.abort = true;
         --trInProgress;
-        d.reject(err);
-        return;
+        d.reject(err.error_msg);
       }).done(function (rsp) {
         --trInProgress;
         for (var i = 0; i < thumbGrp.length; ++i) {
@@ -918,7 +947,7 @@ var AMApi = {
             d.notify(thumbGrp[i].$thumb);
           } else {
             errInfo = {
-              error: "Не удалось переместить некоторые фотографии, попробуйте еще раз."
+              error_msg: "Не удалось переместить некоторые фотографии, попробуйте еще раз."
             };
           }
         }
@@ -948,7 +977,7 @@ var AMApi = {
           if (!errInfo) { //no errors
             d.resolve();
           } else { //error info is not empty, something happened
-            d.reject(errInfo.error, errInfo.thumbInfo);
+            d.reject(errInfo.error_msg, errInfo.thumbInfo);
           }
         }
 
@@ -970,7 +999,7 @@ var AMApi = {
         //cancell any further tasks and set error information
         abortFlagRef.abort = true;
         errInfo = {
-          error: error,
+          error_msg: error.error_msg,
           thumbInfo: thumbInfo
         };
       });

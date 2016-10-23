@@ -308,6 +308,23 @@ return {count: tmp.count, items: rsp, rated: rtd};\n";
     return d.promise();
   },
 
+  copyPhoto: function (options, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    self.callVkApi("photos.copy", options).fail(function (error) {
+      error.error_msg = "Не удалось сохранить фотографию!<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
   movePhotoList: function (ownerId, targetAlbumId, photoIds, silent) {
     var self = this;
     var d = $.Deferred();
@@ -340,6 +357,40 @@ return {count: tmp.count, items: rsp, rated: rtd};\n";
 
     self.callVkApi("utils.resolveScreenName", options).fail(function (error) {
       error.error_msg = "Не удалось получить информацию о пользователе/группе:<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
+  getUploadServer: function (options, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    self.callVkApi("photos.getUploadServer", options).fail(function (error) {
+      error.error_msg = "Не удалось получить адрес сервера для загрузки фотографий:<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
+  saveUploadPhotos: function (options, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    self.callVkApi("photos.save", options).fail(function (error) {
+      error.error_msg = "Не удалось cохранить фотографии после успешной загрузки:<br /><small>" + error.error_msg + "</small>";
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }

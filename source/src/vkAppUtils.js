@@ -141,6 +141,45 @@ var VkAppUtils = {
     return groups;
   },
 
+  getVkImgMaxSizeSrc: function (vk_img) {
+    var src = "";
+    var sz = 0;
+    for (var i = 0; i < vk_img.sizes.length; ++i) {
+      if (vk_img.sizes[i].width >= sz) {
+        src = vk_img.sizes[i].src;
+        sz = vk_img.sizes[i].width;
+      }
+    }
+    return src;
+  },
+
+  imageToBlob: function (imageUrl) {
+    var liDD = $.Deferred();
+
+    loadImage(
+      imageUrl,
+      function (result) {
+        if (result.type === "error") {
+          liDD.reject("Failed to load image");
+        } else {
+          try {
+            result.toBlob(function (blob) {
+              liDD.resolve(blob);
+            }, "image/jpeg", 1.0);
+          } catch (err) {
+            liDD.reject("Failed to convert image to blob");
+          }
+        }
+      }, {
+        canvas: true,
+        noRevoke: true,
+        crossOrigin: "Anonymous"
+      }
+    );
+
+    return liDD.promise();
+  },
+
   //query total number of photos in all albums
   getTotalPhotosCount: function (ownerId) {
     var ddd = $.Deferred();
@@ -332,6 +371,56 @@ var VkAppUtils = {
     });
 
     return d.promise();
+  },
+
+  uploadPhotos: function (ownerId, albumId, photosList) {
+    var ddd = $.Deferred();
+
+    //!positive ownerId for groups, empty value for self
+    VkApiWrapper.getUploadServer({
+      album_id: albumId,
+      group_id: ownerId
+    }).fail(function (err) {
+      ddd.reject(err);
+    }).done(function (upsRsp) {
+      var promiseList = [];
+      var photoBlobs = [];
+      for (var i = 0; i < photosList.length; ++i) {
+        var imageUrl = VkAppUtils.getVkImgMaxSizeSrc(photosList[i]);
+        promiseList.push(VkAppUtils.imageToBlob(imageUrl));
+      }
+
+      $.when.apply($, promiseList).fail(function () {
+        promiseList = [];
+        ddd.reject({
+          error_msg: "Ошибка при подготовке фотографий для загрузки на сервер."
+        });
+      }).done(function () {
+        photoBlobs = Array.prototype.slice.call(arguments);
+
+        var formData = new FormData();
+        for (var k = 0; k < photoBlobs.length; ++k) {
+          formData.append('file' + (k + 1), photoBlobs[k]);
+        }
+
+        $.ajax({
+          url: upsRsp.upload_url,
+          type: 'POST',
+          data: formData,
+          contentType: false,
+          processData: false,
+          dataType: 'JSON',
+          crossDomain: true
+        }).done(function (data) {
+          console.log("Sample of data:", data.slice(0, 100));
+          
+        }).fail(function( jqXHR, textStatus, errorThrown ) {
+          ddd.reject({error_msg: "Ошибка при загрузке фотографий на сервер.<br /><small>" + textStatus + "</small>"});
+        });
+      });
+    });
+
+    return ddd.promise();
   },
 
   //creates map: album id -> album.title
