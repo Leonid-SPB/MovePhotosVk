@@ -276,7 +276,7 @@ var AMApi = {
     self.$reloadPageBtn.button("disable"); //always disable
     self.$showPrevBtn.button(dstr);
     self.$showNextBtn.button(dstr);
-    self.$createAlbumBtn.button(dstr);
+    self.$createAlbumBtn.button((self.$goBtn.button("option", "label") != self.goBtnLabelSave) ? dstr : "disable");
     self.revThumbSortChk.disabled = dval;
     self.srcAlbumOwnerList.disabled = dval;
     self.dstAlbumOwnerList.disabled = dval;
@@ -374,12 +374,14 @@ var AMApi = {
     }
 
     self.displayNote(); //hide advice
+    self.$createAlbumBtn.button("enable");
 
     //index mapping: 0 -> 0, i -> i+1 because of "Save" option
-    if ((!srcSelIndex && !dstSelIndex) || (dstSelIndex == srcSelIndex + 1)) {
+    if ((!srcSelIndex && !dstSelIndex) || srcSelIndex && (dstSelIndex == srcSelIndex + 1)) {
       self.$goBtn.button("option", "label", self.goBtnLabelMove);
     } else if (dstSelIndex == 1) {
       self.$goBtn.button("option", "label", self.goBtnLabelSave);
+      self.$createAlbumBtn.button("disable");
       self.albumsCache[ownerId] = {};
       if (!self.saveTipDisplayed) {
         self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks' target='_blank'><u>Яндекс Диск</u></a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
@@ -421,9 +423,8 @@ var AMApi = {
     self.updateAlbumPageField();
 
     var selIndex = self.srcAlbumList.selectedIndex;
-    var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
-    var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
-    var albumId = self.srcAlbumList.item(selIndex).value;
+    var ownerId = self.srcAlbumOwnerList.value;
+    var albumId = self.srcAlbumList.value;
 
     if (!selIndex) { //not selected
       Utils.hideSpinner();
@@ -462,23 +463,24 @@ var AMApi = {
     var self = AMApi;
 
     var selIndex = self.dstAlbumList.selectedIndex;
-    if (selIndex > 1) {
+    if (selIndex > 0) {
       self.displayNote(); //hide advice
 
       //query album size
       Utils.showSpinner();
       self.disableControls(1);
 
-      var ownSelIndex = self.dstAlbumOwnerList.selectedIndex;
-      var ownerId = self.dstAlbumOwnerList.item(ownSelIndex).value;
-      var aidSelIndex = self.dstAlbumList.selectedIndex;
-      var albumID = self.dstAlbumList.item(aidSelIndex).value;
+      var ownerId = self.dstAlbumOwnerList.value;
+      var albumID = self.dstAlbumList.value;
 
       VkApiWrapper.queryPhotos({
         owner_id: ownerId,
         album_id: albumID,
         offset: 0,
-        count: 0
+        count: 0,
+        extended: 1,
+        photo_sizes: 1,
+        no_service_albums: 0
       }).fail(function () {
         Utils.hideSpinner();
         self.disableControls(0);
@@ -490,6 +492,8 @@ var AMApi = {
       });
     } else { //not selected
       self.dstAlbumSizeEdit.value = "0";
+      Utils.hideSpinner();
+      self.disableControls(0);
     }
   },
 
@@ -799,7 +803,7 @@ var AMApi = {
   doCopyPhotos: function (dstOwnerId, dstAlbumId, $thumbList, abortFlagRef) {
     var self = AMApi;
     var d = $.Deferred();
-    
+
     return d.promise();
   },
 
