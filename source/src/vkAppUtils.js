@@ -2,7 +2,7 @@
 	Licensed under the MIT license
 */
 
-/* globals $, Utils, Settings, VK, VkApiWrapper */
+/* globals $, Utils, Settings, VK, VkApiWrapper, loadImage */
 
 var VkAppUtils = {
   displayError: function (eMsg, errDivId, hideAfter) {
@@ -400,7 +400,7 @@ var VkAppUtils = {
 
         var formData = new FormData();
         for (var k = 0; k < photoBlobs.length; ++k) {
-          formData.append('file' + (k + 1), photoBlobs[k]);
+          formData.append('file' + (k + 1), photoBlobs[k], 'file' + k + '.jpg');
         }
 
         $.ajax({
@@ -410,12 +410,15 @@ var VkAppUtils = {
           contentType: false,
           processData: false,
           dataType: 'JSON',
-          crossDomain: true
+          crossDomain: true,
+          cache: false
         }).done(function (data) {
           console.log("Sample of data:", data.slice(0, 100));
-          
-        }).fail(function( jqXHR, textStatus, errorThrown ) {
-          ddd.reject({error_msg: "Ошибка при загрузке фотографий на сервер.<br /><small>" + textStatus + "</small>"});
+
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+          ddd.reject({
+            error_msg: "Ошибка при загрузке фотографий на сервер.<br /><small>" + textStatus + "</small>"
+          });
         });
       });
     });
