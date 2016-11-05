@@ -118,6 +118,7 @@ var AMApi = {
 
     //assign event handlers
     $(self.srcAlbumOwnerList).change(self.onSrcOwnerChanged);
+    $(self.dstAlbumOwnerList).change(self.onDstOwnerChanged);
     $(self.srcAlbumList).change(self.onSrcAlbumChanged);
     $(self.dstAlbumList).change(self.onDstAlbumChanged);
     self.$goBtn.click(self.onGoBtnClick);
@@ -221,7 +222,6 @@ var AMApi = {
       self.busyFlag = false;
       Utils.hideSpinner();
       self.disableControls(0);
-      return;
     }).fail(function () {
       //initialization failed, disable controls, hide spinner
       self.busyFlag = false;
@@ -361,28 +361,18 @@ var AMApi = {
   onDstOwnerChanged: function () {
     var self = AMApi;
 
-    var selIndex = self.dstAlbumOwnerList.selectedIndex;
-    var ownerId = self.dstAlbumOwnerList.item(selIndex).value;
+    var ownerId = self.dstAlbumOwnerList.value;
 
     function doUpdate() {
       self.updateDstAlbumsListBox(self.albumsCache[ownerId]);
       self.onDstAlbumChanged();
     }
 
+    self.displayNote(); //hide advice
+
     if (ownerId in self.albumsCache) {
       doUpdate();
     }
-    /* else {
-          Utils.showSpinner();
-          self.disableControls(1);
-          VkAppUtils.queryAlbumList({
-            owner_id: ownerId,
-            need_system: 1
-          }).done(function (albums) {
-            self.albumsCache[ownerId] = albums;
-            doUpdate();
-          }).fail(self.onFatalError);
-        }*/
   },
 
   onSrcAlbumChanged: function () {
@@ -401,9 +391,8 @@ var AMApi = {
     self.updateAlbumPageField();
 
     var selIndex = self.srcAlbumList.selectedIndex;
-    var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
-    var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
-    var albumId = self.srcAlbumList.item(selIndex).value;
+    var ownerId = self.srcAlbumOwnerList.value;
+    var albumId = self.srcAlbumList.value;
 
     if (!selIndex) { //not selected
       Utils.hideSpinner();
@@ -458,16 +447,15 @@ var AMApi = {
       Utils.showSpinner();
       self.disableControls(1);
 
-      var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
-      var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
-      var aidSelIndex = self.dstAlbumList.selectedIndex;
-      var albumID = self.dstAlbumList.item(aidSelIndex).value;
+      var ownerId = self.dstAlbumOwnerList.value;
+      var albumID = self.dstAlbumList.value;
 
       VkApiWrapper.queryPhotos({
         owner_id: ownerId,
         album_id: albumID,
         offset: 0,
-        count: 0
+        count: 0,
+        no_service_albums: 0
       }).fail(function () {
         Utils.hideSpinner();
         self.disableControls(0);
@@ -775,8 +763,6 @@ var AMApi = {
     self.$goBtn.button("option", "label", self.goBtnLabelCancel);
     self.$goBtn.button("enable");
 
-    //todo: hint for service albums, that move is irreversible
-    //todo: turbo move using VK API exec
   },
 
   doSaveAlbum: function (albumTitle, $thumbList, abortFlagRef) {
@@ -796,16 +782,7 @@ var AMApi = {
 
       var thumbInfo = $thumbList.shift();
       var vk_img = thumbInfo.data.vk_img;
-
-      //find max size
-      var src = "";
-      var sz = 0;
-      for (var i = 0; i < vk_img.sizes.length; ++i) {
-        if (vk_img.sizes[i].width >= sz) {
-          src = vk_img.sizes[i].src;
-          sz = vk_img.sizes[i].width;
-        }
-      }
+      var src = VkAppUtils.getVkImgMaxSizeSrc(vk_img);
 
       var cD = new Date(vk_img.date * 1000);
       var createdStr = lzn(cD.getDay()) + "." + lzn(cD.getMonth()) + "." + cD.getFullYear() + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
@@ -869,7 +846,7 @@ var AMApi = {
           if (!errInfo) { //no errors
             d.resolve();
           } else { //error info is not empty, something happened
-            d.reject(errInfo.error);
+            d.reject(errInfo.error_msg);
           }
         }
         return;
@@ -881,8 +858,7 @@ var AMApi = {
       VkApiWrapper.movePhotoList(ownerId, targetAid, ids).fail(function (err) {
         abortFlagRef.abort = true;
         --trInProgress;
-        d.reject(err);
-        return;
+        d.reject(err.error_msg);
       }).done(function (rsp) {
         --trInProgress;
         for (var i = 0; i < thumbGrp.length; ++i) {
@@ -890,7 +866,7 @@ var AMApi = {
             d.notify(thumbGrp[i].$thumb);
           } else {
             errInfo = {
-              error: "Не удалось переместить некоторые фотографии, попробуйте еще раз."
+              error_msg: "Не удалось переместить некоторые фотографии, попробуйте еще раз."
             };
           }
         }
@@ -920,7 +896,7 @@ var AMApi = {
           if (!errInfo) { //no errors
             d.resolve();
           } else { //error info is not empty, something happened
-            d.reject(errInfo.error, errInfo.thumbInfo);
+            d.reject(errInfo.error_msg, errInfo.thumbInfo);
           }
         }
 
@@ -942,7 +918,7 @@ var AMApi = {
         //cancell any further tasks and set error information
         abortFlagRef.abort = true;
         errInfo = {
-          error: error,
+          error_msg: error.error_msg,
           thumbInfo: thumbInfo
         };
       });
@@ -978,8 +954,8 @@ var AMApi = {
       return;
     }
 
-    var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
-    var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+    var ownSelIndex = self.dstAlbumOwnerList.selectedIndex;
+    var ownerId = self.dstAlbumOwnerList.item(ownSelIndex).value;
 
     //try to create album
     $("#createAlbumDialog").dialog("close");

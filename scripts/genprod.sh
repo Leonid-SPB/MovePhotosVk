@@ -22,6 +22,7 @@ cp -R ../source/src/*.css ../prod/ >> log.txt 2>&1
 cp -R ../source/src/*.png ../prod/ >> log.txt 2>&1
 cp -R ../source/src/*.jpg ../prod/ >> log.txt 2>&1
 cp -R ../source/src/*.html ../prod/ >> log.txt 2>&1
+cp -R ../source/src/HackTimer*.js ../prod/ >> log.txt 2>&1
 
 #replace links separate scripts to a single minified script
 JSFILES="<!--JSFILES-->(.*)<!--EOF-JSFILES-->"
