@@ -340,7 +340,7 @@
 
         ++loadInProgressCnt;
         var vk_img = thumb.data(PluginName).vk_img;
-        var imgSrc = thC.getSelSizeUrl(vk_img, ['p', 'o', 'm', 's']);
+        var imgSrc = thC.fixHttpUrl(thC.getSelSizeUrl(vk_img, ['p', 'o', 'm', 's']));
         var thumb_img = $("<img />");
         thumb_img.on('load', function () {
           --loadInProgressCnt;
@@ -374,7 +374,7 @@
 
       var titleStr = thC.makeTitle_.call(this, vk_img);
       var captionStr = thC.makeCaption_.call(this, vk_img);
-      var zoomImgSrc = thC.getSelSizeUrl(vk_img, ['y', 'x']);
+      var zoomImgSrc = thC.fixHttpUrl(thC.getSelSizeUrl(vk_img, ['y', 'x']));
       var aa = $("<a />", {
         class: 'ThumbsViewer-hslink',
         href: zoomImgSrc,
@@ -426,6 +426,11 @@
       caption = caption.replace("%3", vk_img.text);
 
       return caption;
+    },
+
+    //replace protocol prefix to fix insecure http://<...> links
+    fixHttpUrl: function (url) {
+      return url.replace("https:", "").replace("http:", "");
     },
 
     ///retreive from VK Api image object a link to image with desired size szLiterPrefs

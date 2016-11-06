@@ -314,21 +314,21 @@ var VkAppUtils = {
 
       VkApiWrapper.queryPhotosByIds(opt).done(
         function (response) {
-          if (!response.items) {
-            response.items = [];
+          if (!response) {
+            response = [];
           }
 
           //filter photos if filtering function is defined
           var photosFiltered;
           if (filterFn) {
-            photosFiltered = filterFn(response.items);
+            photosFiltered = filterFn(response);
           } else {
-            photosFiltered = response.items;
+            photosFiltered = response;
           }
           photos = photos.concat(photosFiltered);
 
           //report progress
-          ddd.notify(response.items.length, photosFiltered.length);
+          ddd.notify(response.length, photosFiltered.length);
           getNextChunk__();
         }
       ).fail(function (error) {

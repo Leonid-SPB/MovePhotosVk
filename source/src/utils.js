@@ -38,6 +38,11 @@ var Utils = {
     };
     return html_sanitize(str, urlTransformer, nameIdClassTransformer);*/
   },
+  
+  //replace protocol prefix to fix insecure http://<...> links
+  fixHttpUrl: function(url){
+    return url.replace("https:", "").replace("http:", "");
+  },
 
   showSpinner: function (opts) {
     var defaults = {

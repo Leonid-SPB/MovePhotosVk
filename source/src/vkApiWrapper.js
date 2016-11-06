@@ -137,10 +137,7 @@ var VkApiWrapper = {
     }).fail(function (error) {
       if (("error_code" in error) && ((error.error_code == self.ApiErrCodes.AccessDenied) ||
           (error.error_code == self.ApiErrCodes.AlbumAccessDenied))) { //handle access denied error, return empty data
-        var resp = {
-          items: [],
-          count: 0
-        };
+        var resp = [];
         d.resolve(resp);
       } else {
         error.error_msg = "Не удалось получить выбранные фотографий!<br /><small>" + error.error_msg + "</small>";
