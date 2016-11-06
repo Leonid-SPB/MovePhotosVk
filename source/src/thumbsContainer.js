@@ -348,6 +348,9 @@
           thumb.addClass('showphoto');
           thumb.css('background-image', 'url(' + imgSrc + ')');
           thumb_img.on('load', null);
+        }).on('error', function () {
+          --loadInProgressCnt;
+          thumb_img.on('error', null);
         });
         thumb_img.attr("src", imgSrc);
         //thumb_img = null;

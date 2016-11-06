@@ -128,6 +128,32 @@ var VkApiWrapper = {
     return d.promise();
   },
 
+  queryPhotosByIds: function (options, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    self.callVkApi("photos.getById", options).done(function (response) {
+      d.resolve(response);
+    }).fail(function (error) {
+      if (("error_code" in error) && ((error.error_code == self.ApiErrCodes.AccessDenied) ||
+          (error.error_code == self.ApiErrCodes.AlbumAccessDenied))) { //handle access denied error, return empty data
+        var resp = {
+          items: [],
+          count: 0
+        };
+        d.resolve(resp);
+      } else {
+        error.error_msg = "Не удалось получить выбранные фотографий!<br /><small>" + error.error_msg + "</small>";
+        if (!silent) {
+          self.settings_.errorHandler(error.error_msg);
+        }
+        d.reject(error);
+      }
+    });
+
+    return d.promise();
+  },
+
   queryPhotos: function (options, silent) {
     var self = this;
     var d = $.Deferred();

@@ -2,6 +2,7 @@
 FileList="\
  ../source/src/highslide-full.packed.js\
  ../source/src/highslide.config.js\
+ ../source/src/simi.js\
  ../source/src/spin.js\
  ../source/src/utils.js\
  ../source/src/thumbsContainer.js\

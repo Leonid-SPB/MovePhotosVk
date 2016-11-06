@@ -28,6 +28,7 @@
 
   <!--JSFILES-->
   <script src="spin.js" type="text/javascript" charset="utf-8"></script>
+  <script src="simi.js" type="text/javascript" charset="utf-8"></script>
   <script src="utils.js" type="text/javascript" charset="utf-8"></script>
   <script src="vkApiWrapper.js" type="text/javascript" charset="utf-8"></script>
   <script src="vkAppUtils.js" type="text/javascript" charset="utf-8"></script>
@@ -153,6 +154,7 @@
             <div style="display: table-cell; text-align: center; vertical-align: middle;">
               <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_SrcAlbumList">
                 <option value="not selected">Альбом не выбран</option>
+                <option value="duplicates" class="italic_bold">Поиск дубликатов</option>
               </select>
               <input id="Form1_SrcAlbumSize" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="5" value="" title="Количество фотографий в альбоме">
             </div>
@@ -235,16 +237,29 @@
       <ul id="ThumbsViewer">&nbsp;</ul>
     </div>
     <hr />
-    <div class="MainForm-body" style="text-align: right">
-      <label for="Form1_RevThumbSort">Обратная сортировка</label>
-      <input id="Form1_RevThumbSort" type="checkbox">
+    <div class="MainForm-body">
+      <div class="MainForm-body-div">
+        <div class="MainForm-body-div-col" style="text-align: left">
+          <button id="Form1_DupSearch" class="MainForm-button-small" type="button" title="Поиск дубликатов изображений">Поиск дубликатов</button>
+        </div>
+        <div class="MainForm-body-div-col" style="text-align: right">
+          <label for="Form1_RevThumbSort">Обратная сортировка</label>
+          <input id="Form1_RevThumbSort" type="checkbox">
+        </div>
+      </div>
     </div>
   </form>
 
   <div class="footer">
     <div class="footer-table">
-      <div class="footer-table-cell" style="width: 150px">
-        <a style="color: #2a5885; cursor: pointer" href="//vk.com/id105876" target="_top">&copy; Leonid Azarenkov</a>
+      <div class="footer-table-cell">
+        <a style="color: #2a5885; cursor: pointer" href="//vk.com/id105876" target="_top">
+          &copy; Leonid Azarenkov</a>
+      </div>
+      <div class="footer-table-cell" style="padding-left: 10px; padding-right: 40px">
+        <a style="color: #2a5885; cursor: pointer" href="//vk.com/id105876" target="_top">
+          <img src="//pp.vk.me/c636121/v636121876/137aa/b2tWvvFINR8.jpg" height="25px" width="25px">
+        </a>
       </div>
       <div class="footer-table-cell" style="width: 180px" id="vk_like"></div>
       <div class="footer-table-cell" style="width: 150px">

@@ -233,7 +233,7 @@ var VkAppUtils = {
   //query photos from all public albums (except for service albums)
   //applies filterFn to each retreived chunk of photos
   //reports progress (photos retreived, photos left after filtering)
-  queryAllPhotos: function (ownerId, offset, maxCount, filterFn) {
+  queryAllPhotos: function (ownerId, offset, maxCount, filterFn, noExtended) {
     var self = this;
     var ddd = $.Deferred();
     var photos = [];
@@ -244,8 +244,8 @@ var VkAppUtils = {
         owner_id: ownerId,
         offset: offset,
         count: count,
-        extended: 1,
-        photo_sizes: 1,
+        extended: +!noExtended,
+        photo_sizes: +!noExtended,
         no_service_albums: 1
       }).done(
         function (response) {
@@ -284,10 +284,67 @@ var VkAppUtils = {
     return ddd.promise();
   },
 
+  queryPhotosById: function (ownerId, photoIds, filterFn, noExtended) {
+    var self = this;
+    var ddd = $.Deferred();
+
+    var opt = {
+      photos: "",
+      extended: +!noExtended,
+      photo_sizes: +!noExtended
+    };
+
+    var photos = [];
+
+    function getNextChunk__() {
+      //stop if no more images left
+      if (!photoIds.length) {
+        ddd.resolve(photos, photos.length);
+        return;
+      }
+
+      var ids = photoIds.splice(0, Settings.GetPhotosChunksSz);
+
+      var idstr = ownerId + "_" + ids[0];
+      for (var i = 1; i < ids.length; ++i) {
+        idstr += "," + ownerId + "_" + ids[i];
+      }
+
+      opt.photos = idstr;
+
+      VkApiWrapper.queryPhotosByIds(opt).done(
+        function (response) {
+          if (!response.items) {
+            response.items = [];
+          }
+
+          //filter photos if filtering function is defined
+          var photosFiltered;
+          if (filterFn) {
+            photosFiltered = filterFn(response.items);
+          } else {
+            photosFiltered = response.items;
+          }
+          photos = photos.concat(photosFiltered);
+
+          //report progress
+          ddd.notify(response.items.length, photosFiltered.length);
+          getNextChunk__();
+        }
+      ).fail(function (error) {
+        ddd.reject(error);
+      });
+    }
+
+    getNextChunk__();
+
+    return ddd.promise();
+  },
+
   //query photos from all public albums (except for service albums)
   //applies filterFn to each retreived chunk of photos
   //reports progress (photos retreived, photos left after filtering)
-  queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, filterFn) {
+  queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, filterFn, noExtended) {
     var self = this;
     var ddd = $.Deferred();
     var photos = [];
@@ -299,9 +356,8 @@ var VkAppUtils = {
         album_id: albumId,
         offset: offset,
         count: count,
-        extended: 1,
-        photo_sizes: 1,
-        no_service_albums: 0
+        extended: +!noExtended,
+        photo_sizes: +!noExtended
       }).done(
         function (response) {
           if (!response.items) {

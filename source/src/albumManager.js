@@ -3,7 +3,7 @@
 */
 
 //requires VkApiWrapper, jQuery, highslide, spin.js
-/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat */
+/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat, simi */
 
 var Settings = {
   VkAppLocation: "https://vk.com/movephotos3",
@@ -27,6 +27,9 @@ var Settings = {
   WallAlbumId: -7,
   ProfileAlbumId: -6,
   SavedAlbumId: -15,
+
+  LoadThumbDelay: 100,
+  LoadThumbSldownThresh: 10,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -56,6 +59,8 @@ var AMApi = {
   $selToggleAllBtn: null,
   $selToggleVisibleBtn: null,
 
+  $dupSearchBtn: null,
+
   revThumbSortChk: null,
   $thumbsContainer: null,
 
@@ -64,15 +69,17 @@ var AMApi = {
   goBtnLabelSave: "Сохранить",
   goBtnLabelCancel: "Отмена",
 
+  albumMap: {},
   albumsCache: {},
   albumData: {
     photosCount: 0,
     pagesCount: 0,
-    albumInfo: null,
+    albumId: null,
     dirty: false,
     pages: {},
     page: 0
   },
+  duplicatesCache: [],
 
   pageRefreshTimer: null,
   pageSlideTimer: null,
@@ -81,6 +88,9 @@ var AMApi = {
   saveTipDisplayedKey: "saveTipDisplayed",
   savedAlbumTipDisplayed: false,
   savedAlbumTipDisplayedKey: "savedAlbumTipDisplayed",
+
+  duplicatesAlbumName: "duplicates", 
+  duplicatesAlbumIndex: 1,
 
   taskInfo: {
     abort: false,
@@ -105,6 +115,7 @@ var AMApi = {
     self.$albumPageField = $("#Form1_albumPageField");
     self.$reloadPageBtn = $("#Form1_ReloadAlbumPage");
     self.$createAlbumBtn = $("#Form1_CreateAlbum");
+    self.$dupSearchBtn = $("#Form1_DupSearch");
 
     self.selectedPhotosEdit = document.getElementById("Form1_SelectedPhotos");
     self.$selToggleAllBtn = $("#Form1_SelToggleAll");
@@ -122,6 +133,7 @@ var AMApi = {
     $(self.srcAlbumList).change(self.onSrcAlbumChanged);
     $(self.dstAlbumList).change(self.onDstAlbumChanged);
     self.$goBtn.click(self.onGoBtnClick);
+    self.$dupSearchBtn.click(self.onDupSearchBtnClick);
     self.$goBtn.button("option", "label", self.goBtnLabelMove);
     self.$showNextBtn.mouseup(self.onSlideBtnUp).mousedown(function (event) {
       self.onSlideBtnDown(true);
@@ -275,6 +287,7 @@ var AMApi = {
     self.$showPrevBtn.button(dstr);
     self.$showNextBtn.button(dstr);
     self.$createAlbumBtn.button(dstr);
+    self.$dupSearchBtn.button(dstr);
     self.revThumbSortChk.disabled = dval;
     self.srcAlbumOwnerList.disabled = dval;
     self.srcAlbumList.disabled = dval;
@@ -285,18 +298,21 @@ var AMApi = {
     var self = AMApi;
     self.srcAlbumList.selectedIndex = 0;
 
-    //remove old options, skip "not selected" option
-    for (var i = self.srcAlbumList.length - 1; i >= 1; --i) {
+    //remove old options, skip "not selected" and "duplicates" options
+    for (var i = self.srcAlbumList.length - 1; i >= 2; --i) {
       self.srcAlbumList.remove(i);
     }
+    self.albumMap = {};
 
     for (i = 0; i < albums.length; i++) {
+      self.albumMap[albums[i].id] = albums[i].title;
+
       //put service albums to the beginning
       var index = null;
       if ((albums[i].owner_id > 0) && (albums[i].id == Settings.ProfileAlbumId)) {
         continue;
       } else if (albums[i].id < 0) {
-        index = 1;
+        index = 2;
       }
       var opt = new Option(albums[i].title, albums[i].id, false, false);
       $(opt).data("AMApi", albums[i]);
@@ -332,6 +348,7 @@ var AMApi = {
 
     var selIndex = self.srcAlbumOwnerList.selectedIndex;
     var ownerId = self.srcAlbumOwnerList.item(selIndex).value;
+    self.duplicatesCache = [];
 
     function doUpdate() {
       //synchronize with srcAlbumOwner as it is disabled
@@ -377,6 +394,7 @@ var AMApi = {
 
   onSrcAlbumChanged: function () {
     var self = AMApi;
+    var ddd = $.Deferred();
 
     self.$thumbsContainer.ThumbsViewer("empty");
     self.updSelectedNum();
@@ -384,7 +402,7 @@ var AMApi = {
     //clean album data
     self.albumData.photosCount = 0;
     self.albumData.pagesCount = 0;
-    self.albumData.albumInfo = null;
+    self.albumData.albumId = null;
     self.albumData.pages = {};
     self.albumData.page = 0;
     self.albumData.dirty = false;
@@ -397,13 +415,15 @@ var AMApi = {
     if (!selIndex) { //not selected
       Utils.hideSpinner();
       self.disableControls(0);
-      return;
+      ddd.resolve();
+      return ddd.promise();
     }
 
     function onFail() {
       Utils.hideSpinner();
       self.disableControls(0);
       self.srcAlbumList.selectedIndex = 0;
+      ddd.resolve();
     }
 
     if ((!self.savedAlbumTipDisplayed) && (albumId == Settings.SavedAlbumId)) {
@@ -416,15 +436,19 @@ var AMApi = {
     Utils.showSpinner();
     self.disableControls(1);
 
-    VkAppUtils.queryAlbumPhotos(ownerId, albumId, 0, Settings.PhotosPerPage).done(function (photos, count) {
+    self.queryAlbumPhotos(ownerId, albumId, 0, Settings.PhotosPerPage).done(function (photos, count) {
       self.albumData.photosCount = count;
       self.albumData.pagesCount = Math.ceil(count / Settings.PhotosPerPage);
       self.albumData.pages[0] = photos;
-      self.albumData.albumInfo = $(self.srcAlbumList.item(selIndex)).data("AMApi");
+      self.albumData.albumId = albumId;
 
       self.updateAlbumPageField();
-      self.showPhotosPage();
+      self.showPhotosPage().always(function () {
+        ddd.resolve();
+      });
     }).fail(onFail);
+
+    return ddd.promise();
   },
 
   onDstAlbumChanged: function () {
@@ -454,8 +478,7 @@ var AMApi = {
         owner_id: ownerId,
         album_id: albumID,
         offset: 0,
-        count: 0,
-        no_service_albums: 0
+        count: 0
       }).fail(function () {
         Utils.hideSpinner();
         self.disableControls(0);
@@ -492,22 +515,21 @@ var AMApi = {
 
   showPhotosPage: function () {
     var self = AMApi;
+    var ddd = $.Deferred();
 
-    if (!self.albumData.albumInfo) {
-      return;
+    if (!self.albumData.albumId) {
+      ddd.resolve();
+      return ddd.promise();
     }
 
     function showThumbs() {
       self.$thumbsContainer.ThumbsViewer("empty");
-
-      var albumMap = {};
-      albumMap[self.albumData.albumInfo.id] = self.albumData.albumInfo.title;
-
-      self.$thumbsContainer.ThumbsViewer("updateAlbumMap", albumMap);
+      self.$thumbsContainer.ThumbsViewer("updateAlbumMap", self.albumMap);
       self.$thumbsContainer.ThumbsViewer("addThumbList", self.albumData.pages[self.albumData.page]).done(function () {
         self.updSelectedNum();
         Utils.hideSpinner();
         self.disableControls(0);
+        ddd.resolve();
       });
     }
 
@@ -520,15 +542,16 @@ var AMApi = {
     } else {
       //download images for the current page
 
-      var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
-      var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
+      var ownerId = self.srcAlbumOwnerList.value;
       var offset = self.albumData.page * Settings.PhotosPerPage;
 
-      VkAppUtils.queryAlbumPhotos(ownerId, self.albumData.albumInfo.id, offset, Settings.PhotosPerPage).done(function (photos, count) {
+      self.queryAlbumPhotos(ownerId, self.albumData.albumId, offset, Settings.PhotosPerPage).done(function (photos, count) {
         self.albumData.pages[self.albumData.page] = photos;
         showThumbs();
       }).fail(self.onFatalError);
     }
+
+    return ddd.promise();
   },
 
   onSlideBtnDown: function (slideNext) {
@@ -652,17 +675,268 @@ var AMApi = {
     }
   },
 
+  queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, filterFn, noExtended) {
+    var self = AMApi;
+    if (albumId == self.duplicatesAlbumName) {
+      var ddd = $.Deferred();
+      ddd.resolve(self.duplicatesCache.slice(offset, offset + maxCount));
+      return ddd.promise();
+    }
+    return VkAppUtils.queryAlbumPhotos(ownerId, albumId, offset, maxCount, filterFn, noExtended);
+  },
+
+  collectAllPhotos: function (ownerId) {
+    var self = AMApi;
+    var ddd = $.Deferred();
+
+    var progress = 0;
+
+    function onProgress(p) {
+      progress += p;
+      self.$progressBar.progressbar("value", progress);
+    }
+
+    var allPhotosList = [];
+
+    function pushPhotos(photos) {
+      allPhotosList = allPhotosList.concat(photos);
+    }
+
+    //request total number of photos for progress reporting purpose
+    VkAppUtils.getTotalPhotosCount(ownerId).done(function (totalPhotosCount) {
+
+      //no photos, nothing to do
+      if (!totalPhotosCount) {
+        self.$progressBar.progressbar("option", "max", 0);
+        self.$progressBar.progressbar("value", 0);
+
+        ddd.resolve();
+        return;
+      }
+
+      //set new progress bar range
+      self.$progressBar.progressbar("option", "max", totalPhotosCount);
+      self.$progressBar.progressbar("value", 0);
+
+      //query photos from all albums and from service albums
+      var d1 = VkAppUtils.queryAllPhotos(ownerId, 0, Settings.MaxTotalPhotos, false, true);
+      var d2 = VkAppUtils.queryAlbumPhotos(ownerId, 'saved', 0, Settings.MaxTotalPhotos, false, true);
+      var d3 = VkAppUtils.queryAlbumPhotos(ownerId, 'wall', 0, Settings.MaxTotalPhotos, false, true);
+      var d4 = VkAppUtils.queryAlbumPhotos(ownerId, 'profile', 0, Settings.MaxTotalPhotos, false, true);
+
+      d1.progress(onProgress).done(pushPhotos);
+      d2.progress(onProgress).done(pushPhotos);
+      d3.progress(onProgress).done(pushPhotos);
+      d4.progress(onProgress).done(pushPhotos);
+
+      //when all photos have been retreived
+      $.when(d1, d2, d3, d4).fail(function () {
+        ddd.reject();
+      }).done(function () {
+        ddd.resolve(allPhotosList);
+      });
+    }).fail(function () {
+      ddd.reject();
+    });
+
+    return ddd.promise();
+  },
+
+  collectAlbumPhotos: function (ownerId, albumId) {
+    var self = AMApi;
+    var ddd = $.Deferred();
+
+    var progress = 0;
+
+    function onProgress(p) {
+      progress += p;
+      self.$progressBar.progressbar("value", progress);
+    }
+
+    //request total number of photos for progress reporting purpose
+    VkApiWrapper.queryPhotos({
+      owner_id: ownerId,
+      album_id: albumId,
+      offset: 0,
+      count: 0
+    }).done(function (rsp) {
+      var photosCount = rsp.count;
+
+      //no photos, nothing to do
+      if (!photosCount) {
+        self.$progressBar.progressbar("option", "max", 0);
+        self.$progressBar.progressbar("value", 0);
+
+        ddd.resolve();
+        return;
+      }
+
+      //set new progress bar range
+      self.$progressBar.progressbar("option", "max", photosCount);
+      self.$progressBar.progressbar("value", 0);
+
+      //query photos from all albums and from service albums
+      VkAppUtils.queryAlbumPhotos(ownerId, albumId, 0, Settings.MaxTotalPhotos, false, true).progress(onProgress).done(function (photos) {
+        ddd.resolve(photos);
+      }).fail(function (error) {
+        ddd.reject(error);
+      });
+    }).fail(function () {
+      ddd.reject();
+    });
+
+    return ddd.promise();
+  },
+
+  loadImages: function (photosList, abortFlagRef) {
+    var self = AMApi;
+    var ddd = $.Deferred();
+
+    var loadInProgressCnt = 0;
+
+    function loadImg__() {
+      //stop if no more images left or the task was aborted
+      if (abortFlagRef.abort || !photosList.length) {
+        ddd.resolve();
+        return;
+      }
+
+      var vk_img = photosList.shift();
+      var imgSrc = vk_img.photo_75;
+      var img = $("<img />");
+      img.on('load', function () {
+        --loadInProgressCnt;
+        ddd.notify(img, vk_img);
+        img.on('load', null);
+      }).on('error', function () {
+        --loadInProgressCnt;
+        img.on('error', null);
+      });
+      img.attr("src", imgSrc);
+
+      ++loadInProgressCnt;
+
+      //timeout depends on number of images being loaded
+      var tmout = (loadInProgressCnt < Settings.LoadThumbSldownThresh) ? Settings.LoadThumbDelay : loadInProgressCnt * Settings.LoadThumbDelay;
+      setTimeout(function () {
+        loadImg__();
+      }, tmout);
+    }
+
+    loadImg__();
+
+    return ddd.promise();
+  },
+
+  onDupSearchBtnClick: function () {
+    var self = AMApi;
+
+    var srcSelIndex = self.srcAlbumList.selectedIndex;
+    var ownerId = self.srcAlbumOwnerList.value;
+    var albumId = self.srcAlbumList.value;
+    var atitle = self.srcAlbumList.item(srcSelIndex).text;
+    var imgHashedList = [];
+    var dupImgIdList = [];
+    
+     self.taskInfo.abort = false;
+
+    //show empty "duplicates" album while collecting data
+    self.srcAlbumList.selectedIndex = self.duplicatesAlbumIndex;
+    self.onSrcAlbumChanged().done(function () {
+      Utils.showSpinner();
+      self.disableControls(1);
+    });
+
+    if (!srcSelIndex) {
+      //album not selected, search duplicates in all photos
+      self.displayNote("Поиск дубликатов изображений по всем альбомам (может занять длительное время): загрузка списка изображений ...");
+
+      self.collectAllPhotos(ownerId).done(onPhotosListLoaded).fail(onFail);
+    } else {
+      //search duplicates in selected album
+      self.displayNote("Поиск дубликатов изображений в альбоме &quot;" + atitle + "&quot;: загрузка списка изображений ...");
+
+      self.collectAlbumPhotos(ownerId, albumId).done(onPhotosListLoaded).fail(onFail);
+    }
+
+    function onFail() {
+      Utils.hideSpinner();
+      self.disableControls(0);
+
+      //update button label
+      self.onDstAlbumChanged();
+    }
+
+    function onImageLoaded(img, vk_img) {
+      var hash = simi.hash(img[0]);
+      imgHashedList.push({
+        hash: hash,
+        id: vk_img.id
+      });
+      self.$progressBar.progressbar("value", imgHashedList.length);
+    }
+
+    function onPhotosListLoaded(photosList) {
+      //enable "Cancel" button
+      self.$goBtn.button("option", "label", self.goBtnLabelCancel);
+      self.$goBtn.button("enable");
+
+      self.displayNote("Поиск дубликатов изображений (может занять длительное время): загрузка изображений ...");
+      self.$progressBar.progressbar("option", "max", photosList.length);
+      self.$progressBar.progressbar("value", 0);
+
+      //load images and calculate hashes
+      self.loadImages(photosList, self.taskInfo).done(function () {
+        //images loaded, hashes calculated, sort images and get duplicates
+        imgHashedList = imgHashedList.sort(compareByHash);
+
+        for (var i = 0; i < imgHashedList.length - 1; ++i) {
+          if (imgHashedList[i].hash == imgHashedList[i + 1].hash) {
+            var h = imgHashedList[i].hash;
+            while ((imgHashedList[i] == h) && (i < imgHashedList.length)) {
+              dupImgIdList.push(imgHashedList[i].id);
+              ++i;
+            }
+          }
+        }
+
+        //query photos by their ids in list of duplicates
+        self.displayNote("Найдено " + dupImgIdList.length + " дубликатов изображений");
+        VkAppUtils.queryPhotosById(ownerId, dupImgIdList).done(function (photosList) {
+          self.duplicatesCache = photosList;
+          self.onSrcAlbumChanged();
+
+          //update GO button label
+          self.onDstAlbumChanged();
+        }).fail(onFail);
+      }).progress(onImageLoaded);
+    }
+
+    function compareByHash(a, b) {
+      if (a.hash < b.hash) {
+        return -1;
+      } else if (a.hash > b.hash) {
+        return 1;
+      }
+      return 0;
+    }
+  },
+
   onGoBtnClick: function () {
     var self = AMApi;
 
-    var dstSelIndex = self.dstAlbumList.selectedIndex;
-    if (!dstSelIndex) { //dst album not selected
+    if (self.$goBtn.button("option", "label") == self.goBtnLabelCancel) {
+      //abort current task
+      self.taskInfo.abort = true;
+      return;
+    }
+
+    if (!self.dstAlbumList.selectedIndex) { //dst album not selected
       self.displayWarn("Не выбран альбом, куда перемещать фотографии");
       return;
     }
 
-    var srcSelIndex = self.srcAlbumList.selectedIndex;
-    if (self.dstAlbumList.item(dstSelIndex).value == self.srcAlbumList.item(srcSelIndex).value) {
+    if (self.dstAlbumList.value == self.srcAlbumList.value) {
       self.displayWarn("Нельзя переместить фотографии в тот же самый альбом!");
       return;
     }
@@ -746,17 +1020,11 @@ var AMApi = {
       self.$progressBar.progressbar("option", "max", $thumbListm.length);
       self.$progressBar.progressbar("value", 0);
 
-      var ownSelIndex = self.srcAlbumOwnerList.selectedIndex;
-      var ownerId = self.srcAlbumOwnerList.item(ownSelIndex).value;
-      var aidSelIndex = self.dstAlbumList.selectedIndex;
-      var albumID = self.dstAlbumList.item(aidSelIndex).value;
+      var ownerId = self.srcAlbumOwnerList.value;
+      var albumID = self.dstAlbumList.value;
       self.taskInfo.abort = false;
 
       self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDoneMove).fail(onFailMove).always(onAlwaysMove).progress(onProgressMove);
-    } else {
-      //abort task
-      self.taskInfo.abort = true;
-      return;
     }
 
     //enable "Cancel" button
@@ -954,8 +1222,7 @@ var AMApi = {
       return;
     }
 
-    var ownSelIndex = self.dstAlbumOwnerList.selectedIndex;
-    var ownerId = self.dstAlbumOwnerList.item(ownSelIndex).value;
+    var ownerId = self.dstAlbumOwnerList.value;
 
     //try to create album
     $("#createAlbumDialog").dialog("close");
@@ -1060,6 +1327,7 @@ $(function () {
   }).removeClass('ui-corner-all');
   $("#Form1_ReloadAlbumPage").button();
   $("#Form1_goBtn").button();
+  $("#Form1_DupSearch").button();
 
   $("#welcome_dialog").dialog({
     autoOpen: false,

@@ -1,5 +1,6 @@
 New features:
-)
+) duplicate finder
+) progress bar label
 
 Etc:
 ) update help wiki page
