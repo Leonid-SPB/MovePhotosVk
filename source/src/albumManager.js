@@ -30,9 +30,10 @@ var Settings = {
 
   LoadThumbDelay: 100,
   LoadThumbSldownThresh: 10,
+
   LoadThumbRetriesx: 5,
-  LoadThumbDelayx: 30,
-  LoadThumbSldownThreshx: 10,
+  LoadThumbThreadsx: 10,
+  LoadThumbDelayx: 200,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -255,7 +256,7 @@ var AMApi = {
   },
 
   displayNote: function (noteMsg, hideDelay) {
-    if (!hideDelay) {
+    if (!hideDelay && (hideDelay !== 0)) {
       VkAppUtils.displayNote(noteMsg, "NoteBox", Settings.NoteHideAfter);
     } else {
       VkAppUtils.displayNote(noteMsg, "NoteBox", hideDelay);
@@ -807,12 +808,13 @@ var AMApi = {
       }).on('error', function () {
         img.on('load', null);
         img.on('error', null);
-        if (retries) {
+        if (retries && !abortFlagRef.abort) {
           setTimeout(function () {
             tryLoadVkImg(imgSrc, vk_img, --retries);
-          }, Settings.LoadThumbDelay);
+          }, Settings.LoadThumbDelayx * (Settings.LoadThumbRetriesx - retries));
           return;
         }
+        console.log("tryLoadVkImg failed: " + vk_img.photo_75);
         --loadInProgressCnt;
       });
       img.attr("crossOrigin", "Anonymous");
@@ -826,23 +828,23 @@ var AMApi = {
           //wait till all images loaded
           setTimeout(function () {
             loadNextImg();
-          }, Settings.LoadThumbDelay);
+          }, Settings.LoadThumbDelayx);
         } else {
           ddd.resolve();
         }
         return;
       }
 
-      var vk_img = photosList.shift();
-      var imgSrc = Utils.fixHttpUrl(vk_img.photo_75);
-      ++loadInProgressCnt;
-      tryLoadVkImg(imgSrc, vk_img, Settings.LoadThumbRetriesx);
+      for (; photosList.length && (loadInProgressCnt < Settings.LoadThumbThreadsx); ++loadInProgressCnt) {
+        var vk_img = photosList.shift();
+        var imgSrc = Utils.fixHttpUrl(vk_img.photo_75);
+        //var imgSrc = vk_img.photo_75;
+        tryLoadVkImg(imgSrc, vk_img, Settings.LoadThumbRetriesx);
+      }
 
-      //timeout depends on number of images being loaded
-      var tmout = (loadInProgressCnt < Settings.LoadThumbSldownThreshx) ? 10 : loadInProgressCnt * Settings.LoadThumbDelayx;
       setTimeout(function () {
         loadNextImg();
-      }, tmout);
+      }, Settings.LoadThumbDelayx);
     }
 
     loadNextImg();
@@ -877,12 +879,12 @@ var AMApi = {
 
     if (!srcSelIndex) {
       //album not selected, search duplicates in all photos
-      self.displayNote("Поиск дубликатов изображений по всем альбомам (может занять длительное время): загрузка списка изображений ...");
+      self.displayNote("Поиск дубликатов изображений по всем альбомам: загрузка списка изображений ...", 0);
 
       self.collectAllPhotos(ownerId).done(onPhotosListLoaded).fail(onFail);
     } else {
       //search duplicates in selected album
-      self.displayNote("Поиск дубликатов изображений в альбоме &quot;" + atitle + "&quot;: загрузка списка изображений ...");
+      self.displayNote("Поиск дубликатов изображений в альбоме &quot;" + atitle + "&quot;: загрузка списка изображений ...", 0);
 
       self.collectAlbumPhotos(ownerId, albumId).done(onPhotosListLoaded).fail(onFail);
     }
@@ -909,7 +911,7 @@ var AMApi = {
       self.$goBtn.button("option", "label", self.goBtnLabelCancel);
       self.$goBtn.button("enable");
 
-      self.displayNote("Поиск дубликатов изображений (может занять длительное время): загрузка изображений ...");
+      self.displayNote("Поиск дубликатов изображений: загрузка изображений ...", 0);
       self.$progressBar.progressbar("option", "max", photosList.length);
       self.$progressBar.progressbar("value", 0);
 
@@ -917,12 +919,13 @@ var AMApi = {
       self.loadVkImages(photosList, self.taskInfo).done(function () {
         //images loaded, hashes calculated, sort images and get duplicates
         imgHashedList = imgHashedList.sort(compareByHash);
-
+        var dupIdHashMap = {};
         for (var i = 0; i < imgHashedList.length - 1; ++i) {
           if (imgHashedList[i].hash == imgHashedList[i + 1].hash) {
             var h = imgHashedList[i].hash;
             while ((imgHashedList[i].hash == h) && (i < imgHashedList.length)) {
               dupImgIdList.push(imgHashedList[i].id);
+              dupIdHashMap[imgHashedList[i].id] = h;
               ++i;
             }
           }
@@ -930,14 +933,21 @@ var AMApi = {
         imgHashedList = [];
 
         //query photos by their ids in list of duplicates
+        var dupcount = dupImgIdList.length;
         VkAppUtils.queryPhotosById(ownerId, dupImgIdList).done(function (photosList) {
           self.duplicatesCache = photosList;
+
+          //replace likes with hash for debugging
+          for (var k = 0; k < photosList.length; ++k) {
+            photosList[k].likes.count = dupIdHashMap[photosList[k].id];
+          }
+
           self.onSrcAlbumChanged();
 
           //update GO button label
           self.onDstAlbumChanged();
 
-          self.displayNote("Найдено " + dupImgIdList.length + " возможных дубликатов изображений");
+          self.displayNote("Найдено " + dupcount + " возможных дубликатов изображений");
         }).fail(onFail);
       }).progress(onImageLoaded);
     }
