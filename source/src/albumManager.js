@@ -11,6 +11,7 @@ var Settings = {
   ErrorHideAfter: 6000,
   NoteHideAfter: 30000,
   MaxTotalPhotos: 1000000,
+  MaxAlbumPhotos: 10000,
   RateRequestDelay: 1000,
   BlinkDelay: 500,
   BlinkCount: 12,
@@ -27,6 +28,7 @@ var Settings = {
   WallAlbumId: -7,
   ProfileAlbumId: -6,
   SavedAlbumId: -15,
+  SavedAlbumTipTimes: 3,
 
   LoadThumbDelay: 100,
   LoadThumbSldownThresh: 10,
@@ -90,7 +92,7 @@ var AMApi = {
 
   saveTipDisplayed: false,
   saveTipDisplayedKey: "saveTipDisplayed",
-  savedAlbumTipDisplayed: false,
+  savedAlbumTipDisplayed: 0,
   savedAlbumTipDisplayedKey: "savedAlbumTipDisplayed",
 
   duplicatesAlbumName: "duplicates",
@@ -216,7 +218,7 @@ var AMApi = {
     //query notifications info
     VkApiWrapper.storageGet(self.saveTipDisplayedKey + "," + self.savedAlbumTipDisplayedKey).done(function (data) {
       if (data[self.savedAlbumTipDisplayedKey]) {
-        self.savedAlbumTipDisplayed = true;
+        self.savedAlbumTipDisplayed = +data[self.savedAlbumTipDisplayedKey];
       }
       if (data[self.saveTipDisplayedKey]) {
         self.saveTipDisplayed = true;
@@ -430,10 +432,9 @@ var AMApi = {
       ddd.resolve();
     }
 
-    if ((!self.savedAlbumTipDisplayed) && (albumId == Settings.SavedAlbumId)) {
-      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя.", Settings.NoteHideAfter / 2);
-      self.savedAlbumTipDisplayed = true;
-      VkApiWrapper.storageSet(self.savedAlbumTipDisplayedKey, "1");
+    if ((self.savedAlbumTipDisplayed < Settings.SavedAlbumTipTimes) && (albumId == Settings.SavedAlbumId)) {
+      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя!", Settings.NoteHideAfter / 2);
+      VkApiWrapper.storageSet(self.savedAlbumTipDisplayedKey, ++self.savedAlbumTipDisplayed);
     }
 
     //update album data
@@ -1055,6 +1056,12 @@ var AMApi = {
 
       //collect list of selected photos
       var $thumbListm = self.$thumbsContainer.ThumbsViewer("getThumbsData", true);
+      
+      //check album overflow
+      if ($thumbListm.length + self.dstAlbumSizeEdit.value > Settings.MaxAlbumPhotos) {
+        self.displayError("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
+        return;
+      }
 
       //set new progress bar range
       self.$progressBar.progressbar("option", "max", $thumbListm.length);
