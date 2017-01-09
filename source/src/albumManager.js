@@ -3,39 +3,41 @@
 */
 
 //requires VkApiWrapper, jQuery, highslide, spin.js
-/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat, simi */
+/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat, simi, loadImage */
 
 var Settings = {
   VkAppLocation: "https://vk.com/movephotos3",
+
   GetPhotosChunksSz: 200,
-  ErrorHideAfter: 6000,
-  NoteHideAfter: 30000,
   MaxTotalPhotos: 1000000,
   MaxAlbumPhotos: 10000,
+
+  RedirectDelay: 3000,
   RateRequestDelay: 1000,
+  ErrorHideAfter: 6000,
+  NoteHideAfter: 30000,
   BlinkDelay: 500,
   BlinkCount: 12,
-  RedirectDelay: 3000,
-  MaxGroupNameLen: 40,
-  MaxOptionLength: 40,
-  MaxFriendsList: 500,
-  PhotosPerPage: 500,
+  SavedAlbumTipTimes: 3,
+
   PhotosPageRefreshDelay: 700,
   PageSlideDelay: 1400,
   PageSlideRepeatDelay: 350,
   MovePhotoDelay: 335,
   SavePhotoDelay: 100,
+
+  MaxGroupNameLen: 40,
+  MaxOptionLength: 40,
+  MaxFriendsList: 500,
+  PhotosPerPage: 500,
+
   WallAlbumId: -7,
   ProfileAlbumId: -6,
   SavedAlbumId: -15,
-  SavedAlbumTipTimes: 3,
 
-  LoadThumbDelay: 100,
-  LoadThumbSldownThresh: 10,
-
-  LoadThumbRetriesx: 5,
-  LoadThumbThreadsx: 10,
-  LoadThumbDelayx: 200,
+  LoadImgRetries: 3,
+  LoadImgSldownThresh: 10,
+  LoadImgDelay: 100,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -780,7 +782,6 @@ var AMApi = {
       self.$progressBar.progressbar("option", "max", photosCount);
       self.$progressBar.progressbar("value", 0);
 
-      //query photos from all albums and from service albums
       VkAppUtils.queryAlbumPhotos(ownerId, albumId, 0, Settings.MaxTotalPhotos, false, true).progress(onProgress).done(function (photos) {
         ddd.resolve(photos);
       }).fail(function (error) {
@@ -797,58 +798,62 @@ var AMApi = {
     var self = AMApi;
     var ddd = $.Deferred();
 
+    var loadImgQueue = photosList;
     var loadInProgressCnt = 0;
 
-    function tryLoadVkImg(imgSrc, vk_img, retries) {
-      var img = $("<img />");
-      img.on('load', function () {
-        --loadInProgressCnt;
-        img.on('load', null);
-        img.on('error', null);
-        ddd.notify(this, vk_img);
-      }).on('error', function () {
-        img.on('load', null);
-        img.on('error', null);
-        if (retries && !abortFlagRef.abort) {
-          setTimeout(function () {
-            tryLoadVkImg(imgSrc, vk_img, --retries);
-          }, Settings.LoadThumbDelayx * (Settings.LoadThumbRetriesx - retries));
-          return;
-        }
-        console.log("tryLoadVkImg failed: " + vk_img.photo_75);
-        --loadInProgressCnt;
-      });
-      img.attr("crossOrigin", "Anonymous");
-      img.attr("src", imgSrc);
-    }
-
-    function loadNextImg() {
-      //stop if no more images left or the task was aborted
-      if (abortFlagRef.abort || !photosList.length) {
-        if (loadInProgressCnt) {
-          //wait till all images loaded
-          setTimeout(function () {
-            loadNextImg();
-          }, Settings.LoadThumbDelayx);
-        } else {
-          ddd.resolve();
-        }
+    function loadImg__() {
+      //stop if no more images left and all loaded or the task was aborted
+      if (abortFlagRef.abort || (!loadImgQueue.length && !loadInProgressCnt)) {
+        ddd.resolve();
         return;
       }
 
-      for (; photosList.length && (loadInProgressCnt < Settings.LoadThumbThreadsx); ++loadInProgressCnt) {
-        var vk_img = photosList.shift();
-        var imgSrc = Utils.fixHttpUrl(vk_img.photo_75);
-        //var imgSrc = vk_img.photo_75;
-        tryLoadVkImg(imgSrc, vk_img, Settings.LoadThumbRetriesx);
+      //timeout depends on number of images being loaded
+      var tmout = (loadInProgressCnt < Settings.LoadImgSldownThresh) ? Settings.LoadImgDelay : loadInProgressCnt * Settings.LoadImgDelay;
+
+      if (loadImgQueue.length) {
+        ++loadInProgressCnt;
+        var vk_img = loadImgQueue.shift();
+        //var imgSrc = Utils.fixHttpUrl(vk_img.photo_75);
+        var imgSrc = Utils.fixHttpUrl(vk_img.photo_130);
+
+        //slow down for retries
+        if (vk_img.loadAttempts) {
+          tmout = loadInProgressCnt * Settings.LoadImgDelay;
+        }
+
+        loadImage(
+          imgSrc,
+          function (result) {
+            if (result.type === "error") {
+              if (!("loadAttempts" in vk_img)) {
+                vk_img.loadAttempts = 0;
+              }
+
+              if (++vk_img.loadAttempts < Settings.LoadImgRetries) {
+                loadImgQueue.push(vk_img);
+              }
+
+              --loadInProgressCnt;
+              console.warn("AMApi::loadImg__() failed to load '" + imgSrc + "', att=" + vk_img.loadAttempts);
+            } else {
+              --loadInProgressCnt;
+              ddd.notify(result, vk_img);
+            }
+          }, {
+            canvas: false,
+            noRevoke: true,
+            crossOrigin: "Anonymous"
+          }
+        );
       }
 
       setTimeout(function () {
-        loadNextImg();
-      }, Settings.LoadThumbDelayx);
+        loadImg__();
+      }, tmout);
     }
 
-    loadNextImg();
+    loadImg__();
 
     return ddd.promise();
   },
@@ -860,10 +865,6 @@ var AMApi = {
     var ownerId = self.srcAlbumOwnerList.value;
     var albumId = self.srcAlbumList.value;
     var atitle = self.srcAlbumList.item(srcSelIndex).text;
-    var imgHashedList = [];
-    var dupImgIdList = [];
-
-    self.taskInfo.abort = false;
 
     if (srcSelIndex == self.duplicatesAlbumIndex) {
       //nothing to do
@@ -898,12 +899,21 @@ var AMApi = {
       self.onDstAlbumChanged();
     }
 
+    var imgHashedList = [];
+
     function onImageLoaded(img, vk_img) {
       var hash = simi.hash(img);
       imgHashedList.push({
         hash: hash,
         id: vk_img.id
       });
+
+      //dispose unnecessary image
+      if (img._objectURL) {
+        loadImage.revokeObjectURL(img._objectURL);
+        delete img._objectURL;
+      }
+
       self.$progressBar.progressbar("value", imgHashedList.length);
     }
 
@@ -912,33 +922,31 @@ var AMApi = {
       self.$goBtn.button("option", "label", self.goBtnLabelCancel);
       self.$goBtn.button("enable");
 
-      self.displayNote("Поиск дубликатов изображений: загрузка изображений ...", 0);
+      //TODO: show time estimation for image loadding
+      var timeEst = photosList.length * Settings.LoadImgDelay * 2;
+      var timeEstHms = new Date(timeEst).toISOString().substr(11, 8);
+      var startTime = new Date();
+      self.displayNote("Поиск дубликатов изображений: загрузка изображений займет " + timeEstHms + " ...", 0);
       self.$progressBar.progressbar("option", "max", photosList.length);
       self.$progressBar.progressbar("value", 0);
 
       //load images and calculate hashes
+      self.taskInfo.abort = false;
       self.loadVkImages(photosList, self.taskInfo).done(function () {
+        var endTime = new Date();
+        var actualTime = endTime - startTime;
+        var actualTimeHms = new Date(actualTime).toISOString().substr(11, 8);
+        console.log("Image load estimated time was: " + timeEstHms + ", actual time was " + actualTimeHms);
+
         //images loaded, hashes calculated, sort images and get duplicates
-        imgHashedList = imgHashedList.sort(compareByHash);
-        var dupIdHashMap = {};
-        for (var i = 0; i < imgHashedList.length - 1; ++i) {
-          if (imgHashedList[i].hash == imgHashedList[i + 1].hash) {
-            var h = imgHashedList[i].hash;
-            while ((imgHashedList[i].hash == h) && (i < imgHashedList.length)) {
-              dupImgIdList.push(imgHashedList[i].id);
-              dupIdHashMap[imgHashedList[i].id] = h;
-              ++i;
-            }
-          }
-        }
-        imgHashedList = [];
+        var dupImgIdList = findDuplicates(imgHashedList);
 
         //query photos by their ids in list of duplicates
         var dupcount = dupImgIdList.length;
         VkAppUtils.queryPhotosById(ownerId, dupImgIdList).done(function (photosList) {
-          self.duplicatesCache = photosList;
+          self.duplicatesCache = photosList; //save photos to the cache
 
-          //replace likes with hash for debugging
+          //!!!DEBUG: replace likes with hash for debugging
           for (var k = 0; k < photosList.length; ++k) {
             photosList[k].likes.count = dupIdHashMap[photosList[k].id];
           }
@@ -961,6 +969,26 @@ var AMApi = {
       }
       return 0;
     }
+
+    var dupIdHashMap = {}; //!!!DEBUG
+    function findDuplicates(imgHashedList_) {
+      var dupImgIdList_ = [];
+
+      //sort by hash and collect duplicates to the dupImgIdList_
+      imgHashedList_ = imgHashedList_.sort(compareByHash);
+      for (var i = 0; i < imgHashedList_.length - 1; ++i) {
+        if (imgHashedList_[i].hash == imgHashedList_[i + 1].hash) {
+          var h = imgHashedList_[i].hash;
+          while ((i < imgHashedList_.length) && (imgHashedList_[i].hash == h)) {
+            dupImgIdList_.push(imgHashedList_[i].id);
+            dupIdHashMap[imgHashedList_[i].id] = h; //!!!DEBUG
+            ++i;
+          }
+        }
+      }
+      return dupImgIdList_;
+    }
+
   },
 
   onGoBtnClick: function () {
@@ -1056,7 +1084,7 @@ var AMApi = {
 
       //collect list of selected photos
       var $thumbListm = self.$thumbsContainer.ThumbsViewer("getThumbsData", true);
-      
+
       //check album overflow
       if ($thumbListm.length + self.dstAlbumSizeEdit.value > Settings.MaxAlbumPhotos) {
         self.displayError("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");

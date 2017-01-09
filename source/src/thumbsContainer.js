@@ -362,9 +362,11 @@
               thumb.data(PluginName).loadAttempts = 0;
             }
 
-            if (thumb.data(PluginName).loadAttempts++ < $data.LoadThumbRetries) {
+            if (++thumb.data(PluginName).loadAttempts < $data.LoadThumbRetries) {
               loadImgQueue.push(thumb[0]);
             }
+
+            console.warn(PluginName + "::loadImg__() failed to load '" + imgSrc + "', att=" + thumb.data(PluginName).loadAttempts);
 
             thumb_img.on('error', null);
             --loadInProgressCnt;
