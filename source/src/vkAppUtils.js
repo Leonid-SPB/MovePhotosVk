@@ -206,7 +206,7 @@ var VkAppUtils = {
   },
 
   //query total number of photos in all albums
-  getTotalPhotosCount: function (ownerId) {
+  getTotalPhotosCount: function (ownerId, noWallProfile) {
     var ddd = $.Deferred();
     var photosCount = 0;
 
@@ -218,22 +218,38 @@ var VkAppUtils = {
     });
     var d2 = VkApiWrapper.queryPhotos({
       owner_id: ownerId,
-      album_id: 'wall',
-      offset: 0,
-      count: 0
-    });
-    var d3 = VkApiWrapper.queryPhotos({
-      owner_id: ownerId,
       album_id: 'saved',
       offset: 0,
       count: 0
     });
-    var d4 = VkApiWrapper.queryPhotos({
-      owner_id: ownerId,
-      album_id: 'profile',
-      offset: 0,
-      count: 0
-    });
+
+    var d3, d4;
+
+    if (noWallProfile) {
+      d3 = $.Deferred();
+      d3.resolve({
+        count: 0
+      });
+
+      d4 = $.Deferred();
+      d4.resolve({
+        count: 0
+      });
+    } else {
+      d3 = VkApiWrapper.queryPhotos({
+        owner_id: ownerId,
+        album_id: 'wall',
+        offset: 0,
+        count: 0
+      });
+
+      d4 = VkApiWrapper.queryPhotos({
+        owner_id: ownerId,
+        album_id: 'profile',
+        offset: 0,
+        count: 0
+      });
+    }
 
     function updCnt(response) {
       photosCount += response.count;
