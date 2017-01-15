@@ -35,7 +35,7 @@ var Settings = {
   ProfileAlbumId: -6,
   SavedAlbumId: -15,
 
-  LoadImgRetries: 3,
+  LoadImgRetries: 2,
   LoadImgSldownThresh: 10,
   LoadImgDelay: 25,
 
@@ -728,16 +728,12 @@ var AMApi = {
       //query photos from all albums and from service albums
       var d1 = VkAppUtils.queryAllPhotos(ownerId, 0, Settings.MaxTotalPhotos, false, true);
       var d2 = VkAppUtils.queryAlbumPhotos(ownerId, 'saved', 0, Settings.MaxTotalPhotos, false, true);
-      var d3 = VkAppUtils.queryAlbumPhotos(ownerId, 'wall', 0, Settings.MaxTotalPhotos, false, true);
-      var d4 = VkAppUtils.queryAlbumPhotos(ownerId, 'profile', 0, Settings.MaxTotalPhotos, false, true);
 
       d1.progress(onProgress).done(pushPhotos);
       d2.progress(onProgress).done(pushPhotos);
-      d3.progress(onProgress).done(pushPhotos);
-      d4.progress(onProgress).done(pushPhotos);
 
       //when all photos have been retreived
-      $.when(d1, d2, d3, d4).fail(function () {
+      $.when(d1, d2).fail(function () {
         ddd.reject();
       }).done(function () {
         ddd.resolve(allPhotosList);
@@ -794,6 +790,7 @@ var AMApi = {
     return ddd.promise();
   },
 
+  //!!!DEBUG
   reportFailedImages: function (images) {
     var self = AMApi;
 
@@ -815,6 +812,7 @@ var AMApi = {
       for (var i = 0; i < images.length; ++i) {
         var imgSrc = Utils.fixHttpUrl(images[i].photo_130);
         var str = "ID: " + images[i].id + ", URL: " + imgSrc;
+        //str = str + "<img src=\"" + imgSrc + "\" / >";
         $ul.append($("<li />", {
           html: str
         }));
@@ -951,32 +949,51 @@ var AMApi = {
 
     var imgHashedList = [];
 
-    function onImageLoaded(img, vk_img) {
-      var hash = simi.hash(img);
-      imgHashedList.push({
-        hash: hash,
-        id: vk_img.id
-      });
-
-      //dispose unnecessary image
-      if (img._objectURL) {
-        loadImage.revokeObjectURL(img._objectURL);
-        delete img._objectURL;
-      }
-
-      self.$progressBar.progressbar("value", imgHashedList.length);
-    }
-
     function onPhotosListLoaded(photosList) {
       //enable "Cancel" button
       self.$goBtn.button("option", "label", self.goBtnLabelCancel);
       self.$goBtn.button("enable");
 
-      //TODO: show time estimation for image loadding
-      var timeEst = photosList.length * Settings.LoadImgDelay * 2;
-      var timeEstHms = new Date(timeEst).toISOString().substr(11, 8);
+      var dupImgIdList = findDuplicatesByName(photosList);
+
+      //query photos by their ids in list of duplicates
+      var dupcount = dupImgIdList.length;
+      VkAppUtils.queryPhotosById(ownerId, dupImgIdList).done(function (photosList) {
+        self.duplicatesCache = photosList; //save photos to the cache
+
+        //!!!DEBUG: replace likes with hash for debugging
+        for (var k = 0; k < photosList.length; ++k) {
+          photosList[k].likes.count = dupIdHashMap[photosList[k].id];
+        }
+
+        self.onSrcAlbumChanged();
+
+        //update GO button label
+        self.onDstAlbumChanged();
+
+        self.displayNote("Найдено " + dupcount + " изображений с дубликатами");
+      }).fail(onFail);
+
+      /*
+      //Find duplicates using perceptual hash
+      function onImageLoaded(img, vk_img) {
+        var hash = simi.hash(img);
+        imgHashedList.push({
+          hash: hash,
+          id: vk_img.id
+        });
+
+        //dispose unnecessary image
+        if (img._objectURL) {
+          loadImage.revokeObjectURL(img._objectURL);
+          delete img._objectURL;
+        }
+
+        self.$progressBar.progressbar("value", imgHashedList.length);
+      }
+
       var startTime = new Date();
-      self.displayNote("Поиск дубликатов изображений: загрузка изображений займет " + timeEstHms + " ...", 0);
+      self.displayNote("Поиск дубликатов изображений: загрузка изображений и вычисление хэшей ...", 0);
       self.$progressBar.progressbar("option", "max", photosList.length);
       self.$progressBar.progressbar("value", 0);
 
@@ -986,7 +1003,7 @@ var AMApi = {
         var endTime = new Date();
         var actualTime = endTime - startTime;
         var actualTimeHms = new Date(actualTime).toISOString().substr(11, 8);
-        console.log("Image load estimated time was: " + timeEstHms + ", actual time was " + actualTimeHms);
+        console.log("Image load time was " + actualTimeHms);
 
         //images loaded, hashes calculated, sort images and get duplicates
         var dupImgIdList = findDuplicates(imgHashedList);
@@ -1008,7 +1025,7 @@ var AMApi = {
 
           self.displayNote("Найдено " + dupcount + " возможных дубликатов изображений");
         }).fail(onFail);
-      }).progress(onImageLoaded);
+      }).progress(onImageLoaded);*/
     }
 
     function compareByHash(a, b) {
@@ -1037,6 +1054,20 @@ var AMApi = {
         }
       }
       return dupImgIdList_;
+    }
+
+    function findDuplicatesByName(vkImgList) {
+      var imgHashedList_ = [];
+
+      for (var i = 0; i < vkImgList.length; ++i) {
+        var fname = vkImgList[i].photo_130;
+        imgHashedList_.push({
+          hash: fname.substring(fname.lastIndexOf('/') + 1), //use image file name as a hash
+          id: vkImgList[i].id
+        });
+      }
+
+      return findDuplicates(imgHashedList_);
     }
 
   },
