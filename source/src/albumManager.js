@@ -37,7 +37,7 @@ var Settings = {
 
   LoadImgRetries: 3,
   LoadImgSldownThresh: 10,
-  LoadImgDelay: 100,
+  LoadImgDelay: 25,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -794,17 +794,65 @@ var AMApi = {
     return ddd.promise();
   },
 
+  reportFailedImages: function (images) {
+    var self = AMApi;
+
+    function compareById(a, b) {
+      if (a.id < b.id) {
+        return -1;
+      } else if (a.id > b.id) {
+        return 1;
+      }
+      return 0;
+    }
+
+    function printFailedPhotos($where) {
+      images = images.sort(compareById);
+
+      var $ul = $("<ul />");
+      $where.append($ul);
+
+      for (var i = 0; i < images.length; ++i) {
+        var imgSrc = Utils.fixHttpUrl(images[i].photo_130);
+        var str = "ID: " + images[i].id + ", URL: " + imgSrc;
+        $ul.append($("<li />", {
+          html: str
+        }));
+      }
+    }
+
+    function waitLoad() {
+      divPhotos = popUp.document.getElementById("photos");
+      if (divPhotos) {
+        popUp.document.title = title;
+        printFailedPhotos($(divPhotos));
+      } else {
+        setTimeout(waitLoad, WaitPageLoadTmout);
+      }
+    }
+
+    //open new window and wait when it's loaded
+    var popUp = window.open("SaveAlbum.html", "_blank", "location=yes,menubar=yes,toolbar=yes,titlebar=yes,scrollbars=yes", false);
+    var title = "Failed photos";
+    var divPhotos = null;
+    var WaitPageLoadTmout = 100;
+    setTimeout(waitLoad, WaitPageLoadTmout);
+
+  },
+
   loadVkImages: function (photosList, abortFlagRef) {
     var self = AMApi;
     var ddd = $.Deferred();
 
     var loadImgQueue = photosList;
     var loadInProgressCnt = 0;
+    var failedImages = [];
 
     function loadImg__() {
       //stop if no more images left and all loaded or the task was aborted
       if (abortFlagRef.abort || (!loadImgQueue.length && !loadInProgressCnt)) {
         ddd.resolve();
+        self.reportFailedImages(failedImages);
         return;
       }
 
@@ -832,10 +880,12 @@ var AMApi = {
 
               if (++vk_img.loadAttempts < Settings.LoadImgRetries) {
                 loadImgQueue.push(vk_img);
+              } else {
+                console.warn("AMApi::loadImg__() failed to load '" + imgSrc + "', att=" + vk_img.loadAttempts);
+                failedImages.push(vk_img);
               }
 
               --loadInProgressCnt;
-              console.warn("AMApi::loadImg__() failed to load '" + imgSrc + "', att=" + vk_img.loadAttempts);
             } else {
               --loadInProgressCnt;
               ddd.notify(result, vk_img);
