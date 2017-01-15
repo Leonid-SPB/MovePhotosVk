@@ -147,6 +147,31 @@ hr {
   padding: 0 0 0 0;
 }
 
+.ThumbsViewer-list li {
+  text-align: left;
+  list-style-type: none;
+}
+
+.ThumbsViewer-list li:nth-child(odd) {
+  background-color: #ecf1f5;
+}
+
+.ThumbsViewer-liDiv {
+  display: table;
+}
+
+.ThumbsViewer-liDivImg {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.ThumbsViewer-liDivInfo {
+  display: table-cell;
+  vertical-align: middle;
+  padding: 5px;
+}
+
+
 .ThumbsViewer-thumb {
   height: 127px;
   width: 185px;

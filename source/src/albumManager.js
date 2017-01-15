@@ -26,8 +26,7 @@ var Settings = {
   MovePhotoDelay: 335,
   SavePhotoDelay: 100,
 
-  MaxGroupNameLen: 40,
-  MaxOptionLength: 40,
+  MaxUserGrpAlbumNameLen: 40,
   MaxFriendsList: 500,
   PhotosPerPage: 500,
 
@@ -73,9 +72,9 @@ var AMApi = {
   $thumbsContainer: null,
 
   busyFlag: true,
-  goBtnLabelMove: "Переместить",
-  goBtnLabelSave: "Сохранить",
-  goBtnLabelCancel: "Отмена",
+  GoBtnLabelMove: "Переместить",
+  GoBtnLabelSave: "Сохранить",
+  GoBtnLabelCancel: "Отмена",
 
   albumMap: {},
   albumsCache: {},
@@ -93,12 +92,12 @@ var AMApi = {
   pageSlideTimer: null,
 
   saveTipDisplayed: false,
-  saveTipDisplayedKey: "saveTipDisplayed",
+  SaveTipDisplayedKey: "saveTipDisplayed",
   savedAlbumTipDisplayed: 0,
-  savedAlbumTipDisplayedKey: "savedAlbumTipDisplayed",
+  SavedAlbumTipDisplayedKey: "savedAlbumTipDisplayed",
 
-  duplicatesAlbumName: "duplicates",
-  duplicatesAlbumIndex: 1,
+  DuplicatesAlbumId: "duplicates",
+  DuplicatesAlbumIndex: 1,
 
   taskInfo: {
     abort: false,
@@ -142,7 +141,7 @@ var AMApi = {
     $(self.dstAlbumList).change(self.onDstAlbumChanged);
     self.$goBtn.click(self.onGoBtnClick);
     self.$dupSearchBtn.click(self.onDupSearchBtnClick);
-    self.$goBtn.button("option", "label", self.goBtnLabelMove);
+    self.$goBtn.button("option", "label", self.GoBtnLabelMove);
     self.$showNextBtn.mouseup(self.onSlideBtnUp).mousedown(function (event) {
       self.onSlideBtnDown(true);
     });
@@ -218,11 +217,11 @@ var AMApi = {
     }).fail(self.onFatalError);
 
     //query notifications info
-    VkApiWrapper.storageGet(self.saveTipDisplayedKey + "," + self.savedAlbumTipDisplayedKey).done(function (data) {
-      if (data[self.savedAlbumTipDisplayedKey]) {
-        self.savedAlbumTipDisplayed = +data[self.savedAlbumTipDisplayedKey];
+    VkApiWrapper.storageGet(self.SaveTipDisplayedKey + "," + self.SavedAlbumTipDisplayedKey).done(function (data) {
+      if (data[self.SavedAlbumTipDisplayedKey]) {
+        self.savedAlbumTipDisplayed = +data[self.SavedAlbumTipDisplayedKey];
       }
-      if (data[self.saveTipDisplayedKey]) {
+      if (data[self.SaveTipDisplayedKey]) {
         self.saveTipDisplayed = true;
       }
     });
@@ -436,7 +435,7 @@ var AMApi = {
 
     if ((self.savedAlbumTipDisplayed < Settings.SavedAlbumTipTimes) && (albumId == Settings.SavedAlbumId)) {
       self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя!", Settings.NoteHideAfter / 2);
-      VkApiWrapper.storageSet(self.savedAlbumTipDisplayedKey, ++self.savedAlbumTipDisplayed);
+      VkApiWrapper.storageSet(self.SavedAlbumTipDisplayedKey, ++self.savedAlbumTipDisplayed);
     }
 
     //update album data
@@ -464,11 +463,11 @@ var AMApi = {
     var selIndex = self.dstAlbumList.selectedIndex;
 
     if (selIndex == 1) { //save album
-      self.$goBtn.button("option", "label", self.goBtnLabelSave);
+      self.$goBtn.button("option", "label", self.GoBtnLabelSave);
       if (!self.saveTipDisplayed) {
         self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks' target='_blank'><u>Яндекс Диск</u></a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
         self.saveTipDisplayed = true;
-        //VkApiWrapper.storageSet(self.saveTipDisplayedKey, "1");
+        //VkApiWrapper.storageSet(self.SaveTipDisplayedKey, "1");
       }
       self.dstAlbumSizeEdit.value = "0";
     } else if (selIndex > 1) {
@@ -495,11 +494,11 @@ var AMApi = {
         self.disableControls(0);
         self.dstAlbumSizeEdit.value = response.count;
       });
-      self.$goBtn.button("option", "label", self.goBtnLabelMove);
+      self.$goBtn.button("option", "label", self.GoBtnLabelMove);
     } else { //not selected
       self.displayNote(); //hide advice
       self.dstAlbumSizeEdit.value = "0";
-      self.$goBtn.button("option", "label", self.goBtnLabelMove);
+      self.$goBtn.button("option", "label", self.GoBtnLabelMove);
     }
   },
 
@@ -532,10 +531,65 @@ var AMApi = {
       self.$thumbsContainer.ThumbsViewer("updateAlbumMap", self.albumMap);
       self.$thumbsContainer.ThumbsViewer("addThumbList", self.albumData.pages[self.albumData.page]).done(function () {
         self.updSelectedNum();
+
+        if (self.albumData.albumId == self.DuplicatesAlbumId) {
+          showDuplicates();
+        }
+
         Utils.hideSpinner();
         self.disableControls(0);
         ddd.resolve();
       });
+    }
+
+    function showDuplicates() {
+      var ThumbClass = '.ThumbsViewer-thumb';
+      var PluginName = 'ThumbsViewer';
+      var MaxDescrLen = 200;
+
+      var $thumbs = self.$thumbsContainer.find(ThumbClass);
+      var thumbsData = [];
+      $thumbs.each(function () {
+        thumbsData.push($(this).data(PluginName));
+      });
+      $thumbs.detach();
+
+      for (var i = 0; i < thumbsData.length - 1;) {
+        if (thumbsData[i].vk_img.hash == thumbsData[i + 1].vk_img.hash) {
+          var h = thumbsData[i].vk_img.hash;
+          var $li = $("<li />");
+
+          while ((i < thumbsData.length) && (thumbsData[i].vk_img.hash == h)) {
+            var $divSubLi = $("<div class='ThumbsViewer-liDiv'></div>");
+            var $divImg = $("<div class='ThumbsViewer-liDivImg'></div>");
+            var $divInfo = $("<div class='ThumbsViewer-liDivInfo'></div>");
+
+            var likes = (thumbsData[i].vk_img.likes.count) ? "<b>" + thumbsData[i].vk_img.likes.count + "</b>" : thumbsData[i].vk_img.likes.count;
+            var comments = (thumbsData[i].vk_img.comments.count) ? "<b>" + thumbsData[i].vk_img.comments.count + "</b>" : thumbsData[i].vk_img.comments.count;
+            var reposts = (thumbsData[i].vk_img.reposts.count) ? "<b>" + thumbsData[i].vk_img.reposts.count + "</b>" : thumbsData[i].vk_img.reposts.count;
+
+            var cD = new Date(thumbsData[i].vk_img.date * 1000);
+            var dateStr = Utils.date2Str(cD);
+
+            var maxSz = VkAppUtils.getVkImgMaxSizeDim(thumbsData[i].vk_img);
+            var maxSzStr = maxSz.width + "x" + maxSz.height;
+
+            $divInfo.append("<p><b>Альбом: " + self.albumMap[thumbsData[i].vk_img.album_id] + "</b></p>");
+            $divInfo.append("<p>Лайки: " + likes + ", комментарии: " + comments + ", репосты: " + reposts + "</p>");
+            $divInfo.append("<p>Дата добавления: " + dateStr + ". Размер: " + maxSzStr + "</p>");
+            $divInfo.append("<p>Описание:" + Utils.html2Text(thumbsData[i].vk_img.text, MaxDescrLen) + "</p>");
+
+            $divImg.append($thumbs[i]);
+            $divSubLi.append($divImg).append($divInfo);
+            $li.append($divSubLi);
+            ++i;
+          }
+
+          self.$thumbsContainer.append($li);
+        } else {
+          ++i;
+        }
+      }
     }
 
     Utils.showSpinner();
@@ -682,7 +736,7 @@ var AMApi = {
 
   queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, filterFn, noExtended) {
     var self = AMApi;
-    if (albumId == self.duplicatesAlbumName) {
+    if (albumId == self.DuplicatesAlbumId) {
       var ddd = $.Deferred();
       ddd.resolve(self.duplicatesCache.slice(offset, offset + maxCount), self.duplicatesCache.length);
       return ddd.promise();
@@ -912,14 +966,14 @@ var AMApi = {
     var albumId = self.srcAlbumList.value;
     var atitle = self.srcAlbumList.item(srcSelIndex).text;
 
-    if (srcSelIndex == self.duplicatesAlbumIndex) {
+    if (srcSelIndex == self.DuplicatesAlbumIndex) {
       //nothing to do
       return;
     }
 
     //show empty "duplicates" album while collecting data
     self.duplicatesCache = [];
-    self.srcAlbumList.selectedIndex = self.duplicatesAlbumIndex;
+    self.srcAlbumList.selectedIndex = self.DuplicatesAlbumIndex;
     self.onSrcAlbumChanged().done(function () {
       Utils.showSpinner();
       self.disableControls(1);
@@ -947,7 +1001,7 @@ var AMApi = {
 
     function onPhotosListLoaded(photosList) {
       //enable "Cancel" button
-      self.$goBtn.button("option", "label", self.goBtnLabelCancel);
+      self.$goBtn.button("option", "label", self.GoBtnLabelCancel);
       self.$goBtn.button("enable");
 
       var dupInfo = findDuplicatesByUrl(photosList);
@@ -1043,7 +1097,7 @@ var AMApi = {
 
       //sort by hash and collect duplicates to the dupImgIdList_
       idHashList_ = idHashList_.sort(compareByHash);
-      for (var i = 0; i < idHashList_.length - 1; ++i) {
+      for (var i = 0; i < idHashList_.length - 1;) {
         if (idHashList_[i].hash == idHashList_[i + 1].hash) {
           var h = idHashList_[i].hash;
           ++dupHashCount;
@@ -1052,6 +1106,8 @@ var AMApi = {
             dupIdHashMap[idHashList_[i].id] = h;
             ++i;
           }
+        } else {
+          ++i;
         }
       }
 
@@ -1081,7 +1137,7 @@ var AMApi = {
   onGoBtnClick: function () {
     var self = AMApi;
 
-    if (self.$goBtn.button("option", "label") == self.goBtnLabelCancel) {
+    if (self.$goBtn.button("option", "label") == self.GoBtnLabelCancel) {
       //abort current task
       self.taskInfo.abort = true;
       return;
@@ -1153,7 +1209,7 @@ var AMApi = {
     self.disableControls(1);
 
     //do action
-    if (self.$goBtn.button("option", "label") == self.goBtnLabelSave) {
+    if (self.$goBtn.button("option", "label") == self.GoBtnLabelSave) {
       //save
 
       //collect list of selected photos
@@ -1166,7 +1222,7 @@ var AMApi = {
       self.taskInfo.abort = false;
       var selIdx = self.srcAlbumList.selectedIndex;
       self.doSaveAlbum(self.srcAlbumList.item(selIdx).text, $thumbLists, self.taskInfo).progress(onProgressSave).always(onAlwaysSave);
-    } else if (self.$goBtn.button("option", "label") == self.goBtnLabelMove) {
+    } else if (self.$goBtn.button("option", "label") == self.GoBtnLabelMove) {
       //move
 
       //collect list of selected photos
@@ -1190,7 +1246,7 @@ var AMApi = {
     }
 
     //enable "Cancel" button
-    self.$goBtn.button("option", "label", self.goBtnLabelCancel);
+    self.$goBtn.button("option", "label", self.GoBtnLabelCancel);
     self.$goBtn.button("enable");
 
   },
@@ -1215,7 +1271,7 @@ var AMApi = {
       var src = VkAppUtils.getVkImgMaxSizeSrc(vk_img);
 
       var cD = new Date(vk_img.date * 1000);
-      var createdStr = lzn(cD.getDay()) + "." + lzn(cD.getMonth()) + "." + cD.getFullYear() + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
+      var createdStr = Utils.date2Str(cD);
       var text = vk_img.text ? $("<div>").text(vk_img.text).html() : "";
 
       var htmlStr = "";
@@ -1436,7 +1492,12 @@ var AMApi = {
 
   onRevThumbSortChkClick: function () {
     var self = AMApi;
-    self.$thumbsContainer.ThumbsViewer("reorder", self.revThumbSortChk.checked);
+
+    if (self.albumData.albumId == self.DuplicatesAlbumId) {
+      self.revThumbSortChk.checked = !self.revThumbSortChk.checked;
+    } else {
+      self.$thumbsContainer.ThumbsViewer("reorder", self.revThumbSortChk.checked);
+    }
   },
 
   onSelToggleAll: function () {

@@ -92,8 +92,7 @@ var VkAppUtils = {
         continue;
       }
       //to convert escape sequences (&amp;, &quot;...) to chars
-      var title = $("<div>").html(friendList[i].first_name + " " + friendList[i].last_name).text();
-      friendList[i].title = title;
+      friendList[i].title = Utils.html2Text(friendList[i].first_name + " " + friendList[i].last_name, Settings.MaxUserGrpAlbumNameLen);
       friends.push(friendList[i]);
     }
 
@@ -119,11 +118,7 @@ var VkAppUtils = {
         continue;
       }
       //to convert escape sequences (&amp;, &quot;...) to chars
-      var title = $("<div>").html(groupList[i].name).text();
-      if (title.length > Settings.MaxGroupNameLen) {
-        title = title.substring(0, Settings.MaxGroupNameLen) + "...";
-      }
-      groupList[i].title = title;
+      groupList[i].title = Utils.html2Text(groupList[i].name, Settings.MaxUserGrpAlbumNameLen);
       groups.push(groupList[i]);
     }
 
@@ -176,6 +171,22 @@ var VkAppUtils = {
       }
     }
     return src;
+  },
+
+  getVkImgMaxSizeDim: function (vk_img) {
+    var dim = {
+      height: 0,
+      width: 0
+    };
+    var sz = 0;
+    for (var i = 0; i < vk_img.sizes.length; ++i) {
+      var x = vk_img.sizes[i].width * vk_img.sizes[i].height;
+      if (x >= sz) {
+        dim = vk_img.sizes[i];
+        sz = x;
+      }
+    }
+    return dim;
   },
 
   imageToBlob: function (imageUrl) {
@@ -443,11 +454,7 @@ var VkAppUtils = {
       albums = albums.items;
 
       for (var i = 0; i < albums.length; ++i) {
-        var title = $("<div>").html(albums[i].title).text();
-        if (title.length > Settings.MaxOptionLength) {
-          title = title.substring(0, Settings.MaxOptionLength) + "...";
-        }
-        albums[i].title = title;
+        albums[i].title = Utils.html2Text(albums[i].title, Settings.MaxUserGrpAlbumNameLen);
       }
 
       //sort albums by name
