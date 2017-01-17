@@ -1306,11 +1306,6 @@ var AMApi = {
     var WaitPageLoadTmout = 100;
     var d = $.Deferred();
 
-    //add leading zero
-    function lzn(num) {
-      return (num < 10) ? "0" + num : "" + num;
-    }
-
     function savePhoto($where, num) {
       if (abortFlagRef.abort || !$thumbList.length) {
         d.resolve();
