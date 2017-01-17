@@ -2,7 +2,7 @@
 	Licensed under the MIT license
 */
 
-/* globals $, Utils, Settings, VK, VkApiWrapper */
+/* globals $, Utils, Settings, VK, VkApiWrapper, loadImage */
 
 var VkAppUtils = {
   displayError: function (eMsg, errDivId, hideAfter) {
@@ -92,8 +92,7 @@ var VkAppUtils = {
         continue;
       }
       //to convert escape sequences (&amp;, &quot;...) to chars
-      var title = $("<div>").html(friendList[i].first_name + " " + friendList[i].last_name).text();
-      friendList[i].title = title;
+      friendList[i].title = Utils.html2Text(friendList[i].first_name + " " + friendList[i].last_name, Settings.MaxUserGrpAlbumNameLen);
       friends.push(friendList[i]);
     }
 
@@ -119,11 +118,7 @@ var VkAppUtils = {
         continue;
       }
       //to convert escape sequences (&amp;, &quot;...) to chars
-      var title = $("<div>").html(groupList[i].name).text();
-      if (title.length > Settings.MaxGroupNameLen) {
-        title = title.substring(0, Settings.MaxGroupNameLen) + "...";
-      }
-      groupList[i].title = title;
+      groupList[i].title = Utils.html2Text(groupList[i].name, Settings.MaxUserGrpAlbumNameLen);
       groups.push(groupList[i]);
     }
 
@@ -141,8 +136,88 @@ var VkAppUtils = {
     return groups;
   },
 
+  ///retreive from VK Api image object a link to image with desired size szLiterPrefs
+  getSelSizeUrl: function (vk_img, szLiterPrefs) {
+    var src_alt = "";
+
+    if (("sizes" in vk_img) && vk_img.sizes.length) {
+      src_alt = vk_img.sizes[0].src;
+    } else if ("photo_130" in vk_img) {
+      return vk_img.photo_130;
+    } else if ("photo_75" in vk_img) {
+      return vk_img.photo_75;
+    } else {
+      console.error("VkAppUtils::getSelSizeUrl() - can't find vk image urls!");
+    }
+
+    for (var j = 0; j < szLiterPrefs.length; ++j) {
+      for (var i = 0; i < vk_img.sizes.length; ++i) {
+        if (vk_img.sizes[i].type == szLiterPrefs[j]) {
+          return vk_img.sizes[i].src;
+        }
+      }
+    }
+
+    return src_alt;
+  },
+
+  getVkImgMaxSizeSrc: function (vk_img) {
+    var src = "";
+    var sz = 0;
+    for (var i = 0; i < vk_img.sizes.length; ++i) {
+      if (vk_img.sizes[i].width >= sz) {
+        src = vk_img.sizes[i].src;
+        sz = vk_img.sizes[i].width;
+      }
+    }
+    return src;
+  },
+
+  getVkImgMaxSizeDim: function (vk_img) {
+    var dim = {
+      height: 0,
+      width: 0
+    };
+    var sz = 0;
+    for (var i = 0; i < vk_img.sizes.length; ++i) {
+      var x = vk_img.sizes[i].width * vk_img.sizes[i].height;
+      if (x >= sz) {
+        dim = vk_img.sizes[i];
+        sz = x;
+      }
+    }
+    return dim;
+  },
+
+  imageToBlob: function (imageUrl) {
+    var liDD = $.Deferred();
+
+    loadImage(
+      imageUrl,
+      function (result) {
+        if (result.type === "error") {
+          liDD.reject("Failed to load image");
+        } else {
+          try {
+            result.toBlob(function (blob) {
+              liDD.resolve(blob);
+            }, "image/jpeg", 1.0);
+          } catch (err) {
+            liDD.reject("Failed to convert image to blob");
+          }
+        }
+      }, {
+        canvas: true,
+        noRevoke: true,
+        crossOrigin: "Anonymous"
+      }
+    );
+
+    return liDD.promise();
+  },
+
   //query total number of photos in all albums
-  getTotalPhotosCount: function (ownerId) {
+  getTotalPhotosCount: function (ownerId, noWallProfile) {
     var ddd = $.Deferred();
     var photosCount = 0;
 
@@ -154,22 +229,38 @@ var VkAppUtils = {
     });
     var d2 = VkApiWrapper.queryPhotos({
       owner_id: ownerId,
-      album_id: 'wall',
-      offset: 0,
-      count: 0
-    });
-    var d3 = VkApiWrapper.queryPhotos({
-      owner_id: ownerId,
       album_id: 'saved',
       offset: 0,
       count: 0
     });
-    var d4 = VkApiWrapper.queryPhotos({
-      owner_id: ownerId,
-      album_id: 'profile',
-      offset: 0,
-      count: 0
-    });
+
+    var d3, d4;
+
+    if (noWallProfile) {
+      d3 = $.Deferred();
+      d3.resolve({
+        count: 0
+      });
+
+      d4 = $.Deferred();
+      d4.resolve({
+        count: 0
+      });
+    } else {
+      d3 = VkApiWrapper.queryPhotos({
+        owner_id: ownerId,
+        album_id: 'wall',
+        offset: 0,
+        count: 0
+      });
+
+      d4 = VkApiWrapper.queryPhotos({
+        owner_id: ownerId,
+        album_id: 'profile',
+        offset: 0,
+        count: 0
+      });
+    }
 
     function updCnt(response) {
       photosCount += response.count;
@@ -194,7 +285,7 @@ var VkAppUtils = {
   //query photos from all public albums (except for service albums)
   //applies filterFn to each retreived chunk of photos
   //reports progress (photos retreived, photos left after filtering)
-  queryAllPhotos: function (ownerId, offset, maxCount, filterFn) {
+  queryAllPhotos: function (ownerId, offset, maxCount, filterFn, noExtended) {
     var self = this;
     var ddd = $.Deferred();
     var photos = [];
@@ -205,8 +296,8 @@ var VkAppUtils = {
         owner_id: ownerId,
         offset: offset,
         count: count,
-        extended: 1,
-        photo_sizes: 1,
+        extended: +!noExtended,
+        photo_sizes: +!noExtended,
         no_service_albums: 1
       }).done(
         function (response) {
@@ -245,10 +336,67 @@ var VkAppUtils = {
     return ddd.promise();
   },
 
+  queryPhotosById: function (ownerId, photoIds, filterFn, noExtended) {
+    var self = this;
+    var ddd = $.Deferred();
+
+    var opt = {
+      photos: "",
+      extended: +!noExtended,
+      photo_sizes: +!noExtended
+    };
+
+    var photos = [];
+
+    function getNextChunk__() {
+      //stop if no more images left
+      if (!photoIds.length) {
+        ddd.resolve(photos, photos.length);
+        return;
+      }
+
+      var ids = photoIds.splice(0, Settings.GetPhotosChunksSz);
+
+      var idstr = ownerId + "_" + ids[0];
+      for (var i = 1; i < ids.length; ++i) {
+        idstr += "," + ownerId + "_" + ids[i];
+      }
+
+      opt.photos = idstr;
+
+      VkApiWrapper.queryPhotosByIds(opt).done(
+        function (response) {
+          if (!response) {
+            response = [];
+          }
+
+          //filter photos if filtering function is defined
+          var photosFiltered;
+          if (filterFn) {
+            photosFiltered = filterFn(response);
+          } else {
+            photosFiltered = response;
+          }
+          photos = photos.concat(photosFiltered);
+
+          //report progress
+          ddd.notify(response.length, photosFiltered.length);
+          getNextChunk__();
+        }
+      ).fail(function (error) {
+        ddd.reject(error);
+      });
+    }
+
+    getNextChunk__();
+
+    return ddd.promise();
+  },
+
   //query photos from all public albums (except for service albums)
   //applies filterFn to each retreived chunk of photos
   //reports progress (photos retreived, photos left after filtering)
-  queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, filterFn) {
+  queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, filterFn, noExtended) {
     var self = this;
     var ddd = $.Deferred();
     var photos = [];
@@ -260,9 +408,8 @@ var VkAppUtils = {
         album_id: albumId,
         offset: offset,
         count: count,
-        extended: 1,
-        photo_sizes: 1,
-        no_service_albums: 0
+        extended: +!noExtended,
+        photo_sizes: +!noExtended
       }).done(
         function (response) {
           if (!response.items) {
@@ -307,11 +454,7 @@ var VkAppUtils = {
       albums = albums.items;
 
       for (var i = 0; i < albums.length; ++i) {
-        var title = $("<div>").html(albums[i].title).text();
-        if (title.length > Settings.MaxOptionLength) {
-          title = title.substring(0, Settings.MaxOptionLength) + "...";
-        }
-        albums[i].title = title;
+        albums[i].title = Utils.html2Text(albums[i].title, Settings.MaxUserGrpAlbumNameLen);
       }
 
       //sort albums by name
@@ -412,7 +555,7 @@ var VkAppUtils = {
       }
     }).fail(onFail);
 
-    return ddd;
+    return ddd.promise();
   },
 
   validateApp: function (vkSid, appLocation, delay) {
@@ -425,46 +568,53 @@ var VkAppUtils = {
     }, delay);
   },
 
+  IsWelcomedKey: "isWelcomed3",
+  IsRatedKey: "isRated3",
+
   welcomeCheck: function () {
     var d = $.Deferred();
 
     //request isWelcomed var
-    var isWelcomedKey = "isWelcomed3";
-    VkApiWrapper.storageGet(isWelcomedKey).done(function (data) {
-      if (data[isWelcomedKey] == "1") { //already welcomed
+    VkApiWrapper.storageGet(VkAppUtils.IsWelcomedKey).done(function (data) {
+      if (data[VkAppUtils.IsWelcomedKey] == "1") { //already welcomed
         d.resolve();
         return;
       }
 
       //if not welcomed yet -> show welcome dialog
       $("#welcome_dialog").dialog("open").on("dialogclose", function (event, ui) {
+        VkApiWrapper.storageSet(VkAppUtils.IsWelcomedKey, "1");
         d.resolve();
       });
-      VkApiWrapper.storageSet(isWelcomedKey, "1");
     });
 
     return d.promise();
   },
 
   rateRequest: function (delay) {
-    var isRatedKey = "isRated3";
-    var isWelcomedKey = "isWelcomed3";
     var BlinkAfterDialogDelay = 2000;
+    var d = $.Deferred();
 
     setTimeout(function () {
-      VkApiWrapper.storageGet(isWelcomedKey + "," + isRatedKey).done(function (data) {
-        if ((data[isWelcomedKey] == "0") || (data[isRatedKey] == "1")) { //already rated or first run
+      VkApiWrapper.storageGet(VkAppUtils.IsWelcomedKey + "," + VkAppUtils.IsRatedKey).done(function (data) {
+        if ((data[VkAppUtils.IsWelcomedKey] == "0") || (data[VkAppUtils.IsRatedKey] == "1")) { //already rated or first run
+          d.resolve();
           return;
         }
 
         //if not rated yet -> show rate us dialog
-        $("#rateus_dialog").dialog("open");
-        VkApiWrapper.storageSet(isRatedKey, "1");
+        $("#rateus_dialog").dialog("open").on("dialogclose", function (event, ui) {
+          VkApiWrapper.storageSet(VkAppUtils.IsRatedKey, "1");
+          d.resolve();
+        });
 
         setTimeout(function () {
           Utils.blinkDiv("vk_like", Settings.BlinkCount, Settings.BlinkDelay);
         }, BlinkAfterDialogDelay);
       });
     }, delay);
+
+    return d.promise();
   }
+
 };

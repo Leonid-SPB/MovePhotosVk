@@ -7,10 +7,11 @@
 
 (function ($, hs) {
   var defaults = {
-    AddThumbDelay: 10,
-    AddThumbCount: 20,
+    AddThumbDelay: 40,
+    AddThumbCount: 25,
     LoadThumbDelay: 100,
     LoadThumbSldownThresh: 10,
+    LoadThumbRetries: 3,
 
     VkPhotoPopupSettings: 'toolbar=yes,scrollbars=yes,resizable=yes,width=1024,height=600'
   };
@@ -302,14 +303,21 @@
       if ($data.revSortOrder != revSort) {
         $data.revSortOrder = revSort;
 
-        var $thumbs = $this.find(ThumbClass);
-        $thumbs.detach();
-        var thumbsLi = $thumbs.toArray().reverse();
-        for (var i = 0; i < thumbsLi.length; ++i) {
-          $this.append(thumbsLi[i]);
-        }
+        //when prev job aborted, start new job
+        $data.abortTask__ = true; //abort any job in progress(if any)
+        $.when($data.busy_dfrd__).done(function () {
+          $data.busy_dfrd__ = $.Deferred();
+          $data.abortTask__ = false;
 
-        thC.loadImages.call(self);
+          var $thumbs = $this.find(ThumbClass);
+          $thumbs.detach();
+          var thumbsLi = $thumbs.toArray().reverse();
+          for (var i = 0; i < thumbsLi.length; ++i) {
+            $this.append(thumbsLi[i]);
+          }
+
+          thC.loadImages.call(self);
+        });
       }
     },
 
@@ -327,30 +335,44 @@
       var loadInProgressCnt = 0;
 
       function loadImg__() {
-        //stop if no more images left or the task was aborted
-        if ($data.abortTask__ || !loadImgQueue.length) {
+        //stop if no more images left and all loaded or the task was aborted
+        if ($data.abortTask__ || (!loadImgQueue.length && !loadInProgressCnt)) {
           $data.busy_dfrd__.resolve();
           return;
         }
 
-        var thumb = $(loadImgQueue.shift());
-        if (!$.contains(document, thumb[0])) { //don't load image if element has already been removed
-          return loadImg__();
-        }
+        if (loadImgQueue.length) {
+          var thumb = $(loadImgQueue.shift());
+          if (!$.contains(document, thumb[0])) { //don't load image if element has already been removed
+            return loadImg__();
+          }
 
-        ++loadInProgressCnt;
-        var vk_img = thumb.data(PluginName).vk_img;
-        var imgSrc = thC.getSelSizeUrl(vk_img, ['p', 'o', 'm', 's']);
-        var thumb_img = $("<img />");
-        thumb_img.on('load', function () {
-          --loadInProgressCnt;
-          thumb.removeClass('loading');
-          thumb.addClass('showphoto');
-          thumb.css('background-image', 'url(' + imgSrc + ')');
-          thumb_img.on('load', null);
-        });
-        thumb_img.attr("src", imgSrc);
-        //thumb_img = null;
+          ++loadInProgressCnt;
+          var vk_img = thumb.data(PluginName).vk_img;
+          var imgSrc = thC.fixHttpUrl(thC.getSelSizeUrl(vk_img, ['p', 'o', 'm', 's']));
+          var thumb_img = $("<img />");
+          thumb_img.on('load', function () {
+            --loadInProgressCnt;
+            thumb.removeClass('loading');
+            thumb.addClass('showphoto');
+            thumb.css('background-image', 'url(' + imgSrc + ')');
+            thumb_img.on('load', null);
+          }).on('error', function () {
+            if (!("loadAttempts" in thumb.data(PluginName))) {
+              thumb.data(PluginName).loadAttempts = 0;
+            }
+
+            if (++thumb.data(PluginName).loadAttempts < $data.LoadThumbRetries) {
+              loadImgQueue.push(thumb[0]);
+            }
+
+            console.warn(PluginName + "::loadImg__() failed to load '" + imgSrc + "', att=" + thumb.data(PluginName).loadAttempts);
+
+            thumb_img.on('error', null);
+            --loadInProgressCnt;
+          });
+          thumb_img.attr("src", imgSrc);
+        }
 
         //timeout depends on number of images being loaded
         var tmout = (loadInProgressCnt < $data.LoadThumbSldownThresh) ? $data.LoadThumbDelay : loadInProgressCnt * $data.LoadThumbDelay;
@@ -371,7 +393,7 @@
 
       var titleStr = thC.makeTitle_.call(this, vk_img);
       var captionStr = thC.makeCaption_.call(this, vk_img);
-      var zoomImgSrc = thC.getSelSizeUrl(vk_img, ['y', 'x']);
+      var zoomImgSrc = thC.fixHttpUrl(thC.getSelSizeUrl(vk_img, ['y', 'x']));
       var aa = $("<a />", {
         class: 'ThumbsViewer-hslink',
         href: zoomImgSrc,
@@ -384,7 +406,7 @@
       var zoomIcon = $('<div class="ThumbsViewer-zoomIco" />').append(aa);
 
       thumb_parent.append(zoomIcon);
-      thumb_parent.attr("title", "Выбрать");
+      thumb_parent.attr("title", "Выбрать фото");
       thumb_parent.data(PluginName, {
         vk_img: vk_img
       });
@@ -423,6 +445,11 @@
       caption = caption.replace("%3", vk_img.text);
 
       return caption;
+    },
+
+    //replace protocol prefix to fix insecure http://<...> links
+    fixHttpUrl: function (url) {
+      return url.replace("https:", "").replace("http:", "");
     },
 
     ///retreive from VK Api image object a link to image with desired size szLiterPrefs

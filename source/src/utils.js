@@ -25,7 +25,7 @@ var Utils = {
     //fixme using real sanitizer
     if (str) {
       //keep only alpha-numeric characters and "._"
-      return str.toString().replace(/[^0-9a-z_.]/gi, '');
+      return str.toString().replace(/[^0-9a-z_.\-]/gi, '');
     } else {
       return "";
     }
@@ -37,6 +37,30 @@ var Utils = {
       return s;
     };
     return html_sanitize(str, urlTransformer, nameIdClassTransformer);*/
+  },
+
+  //replace protocol prefix to fix insecure http://<...> links
+  fixHttpUrl: function (url) {
+    return url.replace("https:", "").replace("http:", "");
+  },
+
+  //convert html string to text, truncate to maxLen if necessary
+  //not safe to use on user input or untrusted data!
+  html2Text: function (str, maxLen) {
+    var str_ = $("<div>").html(str).text();
+    if (str_.length > maxLen) {
+      str_ = str_.substring(0, maxLen) + "...";
+    }
+    return str_;
+  },
+
+  date2Str: function (cD) {
+    //add leading zero
+    function lzn(num) {
+      return (num < 10) ? "0" + num : "" + num;
+    }
+
+    return lzn(cD.getDate()) + "." + lzn(cD.getMonth() + 1) + "." + cD.getFullYear() + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
   },
 
   showSpinner: function (opts) {

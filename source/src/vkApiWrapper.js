@@ -38,7 +38,7 @@ var VkApiWrapper = {
 
   //calls VK API method with specified parameters
   //returns Deferred.promise()
-  callVkApi: function (vkApiMethod, methodParams) {
+  callVkApi: function (vkApiMethod, methodParams, noTimeout) {
     var self = this;
     var d = $.Deferred();
     var retries = self.settings_.apiCallMaxRetries;
@@ -46,24 +46,26 @@ var VkApiWrapper = {
 
     function scheduleVkApiMethod() {
       self.rateLimiter_.schedule(function () {
-        setTimeout(function () {
-          //check if api call is still in progress
-          if (d.state() === "pending") {
-            if (retries-- > 0) {
-              console.log("VkApiWrapper: VK.API call timeout, rescheduling request");
-              timeout *= self.settings_.apiTmoutMultiplier;
-              scheduleVkApiMethod();
-            } else {
-              var e = {
-                error_msg: "VK.API call timeout, all retries failed"
-              };
-              console.log(e.error_msg);
-              d.reject(e);
+        if (!noTimeout) {
+          setTimeout(function () {
+            //check if api call is still in progress
+            if (d.state() === "pending") {
+              if (retries-- > 0) {
+                console.log("VkApiWrapper: VK.API call timeout, rescheduling request");
+                timeout *= self.settings_.apiTmoutMultiplier;
+                scheduleVkApiMethod();
+              } else {
+                var e = {
+                  error_msg: "VK.API call timeout, all retries failed"
+                };
+                console.log(e.error_msg);
+                d.reject(e);
+              }
             }
-          }
 
-          //else: no timeout, api call has finished
-        }, timeout);
+            //else: no timeout, api call has finished
+          }, timeout);
+        }
 
         VK.api(vkApiMethod, methodParams, function (data) {
           //don't resolve/reject again on duplicate request
@@ -96,7 +98,7 @@ var VkApiWrapper = {
     var self = this;
     var d = $.Deferred();
 
-    self.callVkApi("wall.post", options).fail(function (error) {
+    self.callVkApi("wall.post", options, true).fail(function (error) {
       error.error_msg = "Не удалось создать запись на стене!<br /><small>" + error.error_msg + "</small>";
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
@@ -121,6 +123,29 @@ var VkApiWrapper = {
       d.reject(error);
     }).done(function (resp) {
       d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
+  queryPhotosByIds: function (options, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    self.callVkApi("photos.getById", options).done(function (response) {
+      d.resolve(response);
+    }).fail(function (error) {
+      if (("error_code" in error) && ((error.error_code == self.ApiErrCodes.AccessDenied) ||
+          (error.error_code == self.ApiErrCodes.AlbumAccessDenied))) { //handle access denied error, return empty data
+        var resp = [];
+        d.resolve(resp);
+      } else {
+        error.error_msg = "Не удалось получить выбранные фотографий!<br /><small>" + error.error_msg + "</small>";
+        if (!silent) {
+          self.settings_.errorHandler(error.error_msg);
+        }
+        d.reject(error);
+      }
     });
 
     return d.promise();
@@ -174,14 +199,15 @@ var VkApiWrapper = {
     var d = $.Deferred();
 
     // jshint multistr:true
-    var code_ = "var tmp,rsp=[],i=0;\n\
+    var code_ = "var tmp,rsp=[],i=0,rtd=0;\n\
 tmp=API.photos.getAll({owner_id:%1,offset:%2,count:%3,extended:1,photo_sizes:1,no_service_albums:1});\n\
 if(tmp.error_code)return tmp;\n\
 while(i<tmp.items.length){\n\
 if(tmp.items[i].likes.count>=%4)rsp.push(tmp.items[i]);\n\
+if(tmp.items[i].likes.count>0)rtd=rtd+1;\n\
 i=i+1;\n\
 }\n\
-return {count: tmp.count, items: rsp};\n";
+return {count: tmp.count, items: rsp, rated: rtd};\n";
 
     var code = code_.replace(/%1/g, ownerId);
     code = code.replace(/%2/g, offset);
@@ -305,6 +331,23 @@ return {count: tmp.count, items: rsp};\n";
     return d.promise();
   },
 
+  copyPhoto: function (options, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    self.callVkApi("photos.copy", options).fail(function (error) {
+      error.error_msg = "Не удалось сохранить фотографию!<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
   movePhotoList: function (ownerId, targetAlbumId, photoIds, silent) {
     var self = this;
     var d = $.Deferred();
@@ -337,6 +380,40 @@ return {count: tmp.count, items: rsp};\n";
 
     self.callVkApi("utils.resolveScreenName", options).fail(function (error) {
       error.error_msg = "Не удалось получить информацию о пользователе/группе:<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
+  getUploadServer: function (options, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    self.callVkApi("photos.getUploadServer", options).fail(function (error) {
+      error.error_msg = "Не удалось получить адрес сервера для загрузки фотографий:<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
+  saveUploadPhotos: function (options, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    self.callVkApi("photos.save", options).fail(function (error) {
+      error.error_msg = "Не удалось cохранить фотографии после успешной загрузки:<br /><small>" + error.error_msg + "</small>";
       if (!silent) {
         self.settings_.errorHandler(error.error_msg);
       }

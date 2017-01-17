@@ -2,6 +2,7 @@
 FileList="\
  ../source/src/highslide-full.packed.js\
  ../source/src/highslide.config.js\
+ ../source/src/simi.js\
  ../source/src/spin.js\
  ../source/src/utils.js\
  ../source/src/thumbsContainer.js\
@@ -22,6 +23,7 @@ cp -R ../source/src/*.css ../prod/ >> log.txt 2>&1
 cp -R ../source/src/*.png ../prod/ >> log.txt 2>&1
 cp -R ../source/src/*.jpg ../prod/ >> log.txt 2>&1
 cp -R ../source/src/*.html ../prod/ >> log.txt 2>&1
+cp -R ../source/src/HackTimer*.js ../prod/ >> log.txt 2>&1
 
 #replace links separate scripts to a single minified script
 JSFILES="<!--JSFILES-->(.*)<!--EOF-JSFILES-->"
