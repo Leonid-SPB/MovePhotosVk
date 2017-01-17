@@ -76,6 +76,9 @@ var AMApi = {
   GoBtnLabelSave: "Сохранить",
   GoBtnLabelCancel: "Отмена",
 
+  ThumbClass: '.ThumbsViewer-thumb',
+  ThumbLiDivClass: '.ThumbsViewer-liDiv',
+
   albumMap: {},
   albumsCache: {},
   albumData: {
@@ -87,6 +90,7 @@ var AMApi = {
     page: 0
   },
   duplicatesCache: [],
+  rmDuplicatesCache: {},
 
   pageRefreshTimer: null,
   pageSlideTimer: null,
@@ -288,17 +292,26 @@ var AMApi = {
     }
 
     self.$goBtn.button(dstr);
-    self.$selToggleAllBtn.button(dstr);
-    self.$selToggleVisibleBtn.button(dstr);
+
     self.$reloadPageBtn.button("disable"); //always disable
     self.$showPrevBtn.button(dstr);
     self.$showNextBtn.button(dstr);
     self.$createAlbumBtn.button(dstr);
-    self.$dupSearchBtn.button(dstr);
-    self.revThumbSortChk.disabled = dval;
     self.srcAlbumOwnerList.disabled = dval;
     self.srcAlbumList.disabled = dval;
     self.dstAlbumList.disabled = dval;
+
+    if (self.srcAlbumList.value == self.DuplicatesAlbumId) {
+      self.$selToggleVisibleBtn.button("disable");
+      self.$selToggleAllBtn.button("disable");
+      self.$dupSearchBtn.button("disable");
+      self.revThumbSortChk.disabled = 1;
+    } else {
+      self.$selToggleAllBtn.button(dstr);
+      self.$selToggleVisibleBtn.button(dstr);
+      self.$dupSearchBtn.button(dstr);
+      self.revThumbSortChk.disabled = dval;
+    }
   },
 
   updateSrcAlbumsListBox: function (albums) {
@@ -538,6 +551,7 @@ var AMApi = {
 
         Utils.hideSpinner();
         self.disableControls(0);
+
         ddd.resolve();
       });
     }
@@ -708,6 +722,29 @@ var AMApi = {
 
     var prevPagePhotos = self.albumData.pages[self.albumData.page];
     var newPagePhotos$ = self.$thumbsContainer.ThumbsViewer("getThumbsData");
+
+    if (self.albumData.albumId == self.DuplicatesAlbumId) {
+      //clean-up current page
+      for (var j = 0; j < newPagePhotos$.length; ++j) {
+        var $thumb = newPagePhotos$[j].$thumb;
+        var $dupLi = $thumb.parent().parent().parent();
+
+        //only one image, remove <li> completely
+        if ($dupLi.find(self.ThumbClass).length < 2) {
+          $dupLi.detach();
+          self.$thumbsContainer.ThumbsViewer("removeThumb", $thumb);
+          self.rmDuplicatesCache[newPagePhotos$[j].data.vk_img.id] = 1;
+          $dupLi.remove();
+        }
+      }
+      newPagePhotos$ = self.$thumbsContainer.ThumbsViewer("getThumbsData");
+
+      //remove moved duplicates from the duplicates cache
+      self.duplicatesCache = self.duplicatesCache.filter(function (el) {
+        return !self.rmDuplicatesCache[el.id];
+      });
+      self.rmDuplicatesCache = {};
+    }
 
     self.albumData.photosCount -= (prevPagePhotos.length - newPagePhotos$.length);
     self.albumData.pagesCount = Math.ceil(self.albumData.photosCount / Settings.PhotosPerPage);
@@ -1193,15 +1230,26 @@ var AMApi = {
 
     var progress = 0;
 
-    function onProgressMove($thumb) {
+    function onProgressMove($thumbInfo) {
       self.$progressBar.progressbar("value", ++progress);
-      self.$thumbsContainer.ThumbsViewer("removeThumb", $thumb);
+      var $thumb = $thumbInfo.$thumb;
+
+      if (self.albumData.albumId == self.DuplicatesAlbumId) {
+        var $dupLiSubDiv = $thumb.parent().parent();
+        $dupLiSubDiv.detach();
+        self.$thumbsContainer.ThumbsViewer("removeThumb", $thumb);
+        self.rmDuplicatesCache[$thumbInfo.data.vk_img.id] = 1;
+        $dupLiSubDiv.remove();
+      } else {
+        self.$thumbsContainer.ThumbsViewer("removeThumb", $thumb);
+      }
+
       self.updSelectedNum();
     }
 
-    function onProgressSave($thumb) {
+    function onProgressSave($thumbInfo) {
       self.$progressBar.progressbar("value", ++progress);
-      self.$thumbsContainer.ThumbsViewer("selectToggle", $thumb);
+      self.$thumbsContainer.ThumbsViewer("selectToggle", $thumbInfo.$thumb);
       self.updSelectedNum();
     }
 
@@ -1237,6 +1285,8 @@ var AMApi = {
       //set new progress bar range
       self.$progressBar.progressbar("option", "max", $thumbListm.length);
       self.$progressBar.progressbar("value", 0);
+
+      self.rmDuplicatesCache = {};
 
       var ownerId = self.srcAlbumOwnerList.value;
       var albumID = self.dstAlbumList.value;
@@ -1284,7 +1334,7 @@ var AMApi = {
       htmlStr = htmlStr + "<img src=\"" + src + "\" alt=\"" + text + "\"/ ><br/ ><br/ >";
 
       $where.append(htmlStr);
-      d.notify(thumbInfo.$thumb);
+      d.notify(thumbInfo);
 
       setTimeout(function () {
         savePhoto($where, num + 1);
@@ -1349,7 +1399,7 @@ var AMApi = {
         --trInProgress;
         for (var i = 0; i < thumbGrp.length; ++i) {
           if (rsp[i]) {
-            d.notify(thumbGrp[i].$thumb);
+            d.notify(thumbGrp[i]);
           } else {
             errInfo = {
               error_msg: "Не удалось переместить некоторые фотографии, попробуйте еще раз."
@@ -1398,7 +1448,7 @@ var AMApi = {
       }).done(function () {
         --trInProgress;
         //report progress (caller will remove photo from container and update progress bar)
-        d.notify(thumbInfo.$thumb);
+        d.notify(thumbInfo);
       }).fail(function (error) {
         --trInProgress;
         //cancell any further tasks and set error information
@@ -1508,6 +1558,12 @@ var AMApi = {
 
   onSelToggleVisible: function () {
     var self = AMApi;
+
+    //do nothing for duplicates
+    if (self.albumData.albumId == self.DuplicatesAlbumId) {
+      return;
+    }
+
     self.$thumbsContainer.ThumbsViewer("selectToggleVisible");
     self.updSelectedNum();
   },
