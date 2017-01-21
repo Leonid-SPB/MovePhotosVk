@@ -94,7 +94,7 @@
         $data.abortTask__ = false;
         var thumbs = thumbsAr.slice();
         if ($data.revSortOrder) {
-          thumbs = thumbs.reverse();
+          thumbs.reverse();
         }
         addThumb__(thumbs);
       });

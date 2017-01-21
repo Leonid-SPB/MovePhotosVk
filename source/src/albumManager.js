@@ -758,6 +758,9 @@ var AMApi = {
     if (newPagePhotos$.length) {
       //don't refresh page automatically if there are some photos left
       var p = [];
+      if (self.revThumbSortChk.checked && (self.albumData.albumId != self.DuplicatesAlbumId)) {
+        newPagePhotos$.reverse();
+      }
       for (var i = 0; i < newPagePhotos$.length; ++i) {
         p.push(newPagePhotos$[i].data.vk_img);
       }
