@@ -1277,7 +1277,7 @@ var AMApi = {
       var $thumbListm = self.$thumbsContainer.ThumbsViewer("getThumbsData", true);
 
       //check album overflow
-      if ($thumbListm.length + self.dstAlbumSizeEdit.value > Settings.MaxAlbumPhotos) {
+      if ($thumbListm.length + Number(self.dstAlbumSizeEdit.value) > Settings.MaxAlbumPhotos) {
         self.displayError("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
         return;
       }
