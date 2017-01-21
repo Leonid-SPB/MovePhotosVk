@@ -92,7 +92,11 @@
       $.when($data.busy_dfrd__).done(function () {
         $data.busy_dfrd__ = $.Deferred();
         $data.abortTask__ = false;
-        addThumb__(thumbsAr.slice());
+        var thumbs = thumbsAr.slice();
+        if ($data.revSortOrder) {
+          thumbs = thumbs.reverse();
+        }
+        addThumb__(thumbs);
       });
 
       //start loading images when all thumbnais are added to the container
