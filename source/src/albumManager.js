@@ -973,6 +973,7 @@ var AMApi = {
               } else {
                 //console.warn("AMApi::loadImg__() failed to load '" + imgSrc + "', att=" + vk_img.loadAttempts);
                 failedImages.push(vk_img);
+                ddd.notify(null, vk_img);
               }
 
               --loadInProgressCnt;
@@ -1057,19 +1058,22 @@ var AMApi = {
       var simi = new ImgPercHash(16);
 
       function onImageLoaded(img, vk_img) {
-        var hash = simi.hash(img);
-        imgHashedList.push({
-          hash: hash,
-          id: vk_img.id
-        });
+        if (img) {
+          var hash = simi.hash(img);
+          imgHashedList.push({
+            hash: hash,
+            id: vk_img.id
+          });
 
-        //dispose unnecessary image
-        if (img._objectURL) {
-          loadImage.revokeObjectURL(img._objectURL);
-          delete img._objectURL;
+          //dispose unnecessary image
+          if (img._objectURL) {
+            loadImage.revokeObjectURL(img._objectURL);
+            delete img._objectURL;
+          }
         }
 
-        self.$progressBar.progressbar("value", imgHashedList.length);
+        var new_val = +self.$progressBar.progressbar("value") + 1;
+        self.$progressBar.progressbar("value", new_val);
       }
 
       //load images and calculate perceptual hashes
