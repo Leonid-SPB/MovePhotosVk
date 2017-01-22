@@ -35,8 +35,8 @@ var Settings = {
   SavedAlbumId: -15,
 
   LoadImgRetries: 2,
-  LoadImgSldownThresh: 10,
-  LoadImgDelay: 25,
+  LoadImgSldownThresh: 25,
+  LoadImgDelay: 10,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -923,7 +923,7 @@ var AMApi = {
 
     //open new window and wait when it's loaded
     var popUp = window.open("SaveAlbum.html", "_blank", "location=yes,menubar=yes,toolbar=yes,titlebar=yes,scrollbars=yes", false);
-    var title = "Failed photos";
+    var title = "Failed photos: " + images.length;
     var divPhotos = null;
     var WaitPageLoadTmout = 100;
     setTimeout(waitLoad, WaitPageLoadTmout);
@@ -952,13 +952,13 @@ var AMApi = {
       if (loadImgQueue.length) {
         ++loadInProgressCnt;
         var vk_img = loadImgQueue.shift();
-        //var imgSrc = Utils.fixHttpUrl(vk_img.photo_75);
-        var imgSrc = Utils.fixHttpUrl(vk_img.photo_130);
+        var imgSrc = Utils.fixHttpUrl(vk_img.photo_75);
+        //var imgSrc = Utils.fixHttpUrl(vk_img.photo_130);
 
         //slow down for retries
-        if (vk_img.loadAttempts) {
-          tmout = loadInProgressCnt * Settings.LoadImgDelay;
-        }
+        //if (vk_img.loadAttempts) {
+        //  tmout = loadInProgressCnt * Settings.LoadImgDelay;
+        //}
 
         loadImage(
           imgSrc,
@@ -971,13 +971,16 @@ var AMApi = {
               if (++vk_img.loadAttempts < Settings.LoadImgRetries) {
                 loadImgQueue.push(vk_img);
               } else {
-                console.warn("AMApi::loadImg__() failed to load '" + imgSrc + "', att=" + vk_img.loadAttempts);
+                //console.warn("AMApi::loadImg__() failed to load '" + imgSrc + "', att=" + vk_img.loadAttempts);
                 failedImages.push(vk_img);
               }
 
               --loadInProgressCnt;
             } else {
               --loadInProgressCnt;
+              if ("loadAttempts" in vk_img) {
+                console.warn("AMApi::loadImg__() successfully loaded '" + imgSrc + "', att=" + vk_img.loadAttempts);
+              }
               ddd.notify(result, vk_img);
             }
           }, {
@@ -1172,7 +1175,7 @@ var AMApi = {
 
       var imgHashedList = [];
 
-      var simi = new ImgPercHash(8);
+      var simi = new ImgPercHash(16);
 
       function onImageLoaded(img, vk_img) {
         var hash = simi.hash(img);
