@@ -3,7 +3,7 @@
 */
 
 //requires VkApiWrapper, jQuery, highslide, spin.js
-/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat, simi, loadImage */
+/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat, ImgPercHash, loadImage */
 
 var Settings = {
   VkAppLocation: "https://vk.com/movephotos3",
@@ -998,7 +998,7 @@ var AMApi = {
     return ddd.promise();
   },
 
-  onDupSearchBtnClick: function () {
+  /*onDupSearchBtnClick: function () {
     var self = AMApi;
 
     var srcSelIndex = self.srcAlbumList.selectedIndex;
@@ -1065,10 +1065,115 @@ var AMApi = {
 
         self.displayNote("Найдено групп дубликатов: " + dupInfo.dupHashCount + ", всего изображений: " + dupIdCount);
       }).fail(onFail);
+    }
 
-      /*
-      //Find duplicates using perceptual hash
+    function compareByHash(a, b) {
+      if (a.hash < b.hash) {
+        return -1;
+      } else if (a.hash > b.hash) {
+        return 1;
+      }
+      return 0;
+    }
+
+    function findDuplicatesByHash(idHashList_) {
+      var dupImgIdList_ = [];
+      var dupIdHashMap = {};
+      var dupHashCount = 0;
+
+      //sort by hash and collect duplicates to the dupImgIdList_
+      idHashList_ = idHashList_.sort(compareByHash);
+      for (var i = 0; i < idHashList_.length - 1;) {
+        if (idHashList_[i].hash == idHashList_[i + 1].hash) {
+          var h = idHashList_[i].hash;
+          ++dupHashCount;
+          while ((i < idHashList_.length) && (idHashList_[i].hash == h)) {
+            dupImgIdList_.push(idHashList_[i].id);
+            dupIdHashMap[idHashList_[i].id] = h;
+            ++i;
+          }
+        } else {
+          ++i;
+        }
+      }
+
+      return {
+        dupImgIdList: dupImgIdList_,
+        dupIdHashMap: dupIdHashMap,
+        dupHashCount: dupHashCount
+      };
+    }
+
+    function findDuplicatesByUrl(vkImgList) {
+      var idHashList_ = [];
+
+      for (var i = 0; i < vkImgList.length; ++i) {
+        var fname = vkImgList[i].photo_130;
+        idHashList_.push({
+          hash: fname.substring(fname.lastIndexOf('/') + 1), //use image file name as a hash
+          id: vkImgList[i].id
+        });
+      }
+
+      return findDuplicatesByHash(idHashList_);
+    }
+
+  },*/
+
+  onDupSearchBtnClick: function () {
+    var self = AMApi;
+
+    var srcSelIndex = self.srcAlbumList.selectedIndex;
+    var ownerId = self.srcAlbumOwnerList.value;
+    var albumId = self.srcAlbumList.value;
+    var atitle = self.srcAlbumList.item(srcSelIndex).text;
+
+    if (srcSelIndex == self.DuplicatesAlbumIndex) {
+      //nothing to do
+      return;
+    }
+
+    //show empty "duplicates" album while collecting data
+    self.duplicatesCache = [];
+    self.srcAlbumList.selectedIndex = self.DuplicatesAlbumIndex;
+    self.onSrcAlbumChanged().done(function () {
+      Utils.showSpinner();
+      self.disableControls(1);
+    });
+
+    if (!srcSelIndex) {
+      //album not selected, search duplicates in all photos
+      self.displayNote("Поиск дубликатов изображений по всем альбомам: загрузка списка изображений ...", 0);
+
+      self.collectAllPhotos(ownerId).done(onPhotosListLoaded).fail(onFail);
+    } else {
+      //search duplicates in selected album
+      self.displayNote("Поиск дубликатов изображений в альбоме &quot;" + atitle + "&quot;: загрузка списка изображений ...", 0);
+
+      self.collectAlbumPhotos(ownerId, albumId).done(onPhotosListLoaded).fail(onFail);
+    }
+
+    function onFail() {
+      Utils.hideSpinner();
+      self.disableControls(0);
+
+      //update button label
+      self.onDstAlbumChanged();
+    }
+
+    function onPhotosListLoaded(photosList) {
+      //enable "Cancel" button
+      self.$goBtn.button("option", "label", self.GoBtnLabelCancel);
+      self.$goBtn.button("enable");
+
+      self.displayNote("Поиск дубликатов изображений: загрузка изображений и вычисление хэшей ...", 0);
+      self.$progressBar.progressbar("option", "max", photosList.length);
+      self.$progressBar.progressbar("value", 0);
+
       var imgHashedList = [];
+
+      var simi = new ImgPercHash(8);
+
       function onImageLoaded(img, vk_img) {
         var hash = simi.hash(img);
         imgHashedList.push({
@@ -1085,13 +1190,9 @@ var AMApi = {
         self.$progressBar.progressbar("value", imgHashedList.length);
       }
 
-      var startTime = new Date();
-      self.displayNote("Поиск дубликатов изображений: загрузка изображений и вычисление хэшей ...", 0);
-      self.$progressBar.progressbar("option", "max", photosList.length);
-      self.$progressBar.progressbar("value", 0);
-
       //load images and calculate hashes
       self.taskInfo.abort = false;
+      var startTime = new Date();
       self.loadVkImages(photosList, self.taskInfo).done(function () {
         var endTime = new Date();
         var actualTime = endTime - startTime;
@@ -1099,26 +1200,28 @@ var AMApi = {
         console.log("Image load time was " + actualTimeHms);
 
         //images loaded, hashes calculated, sort images and get duplicates
-        var dupImgIdList = findDuplicatesByHash(imgHashedList);
+        var dupInfo = findDuplicatesByHash(imgHashedList);
+        var dupImgIdList = dupInfo.dupImgIdList;
+        var dupIdHashMap = dupInfo.dupIdHashMap;
+        var dupIdCount = dupImgIdList.length;
 
         //query photos by their ids in list of duplicates
-        var dupIdCount = dupImgIdList.length;
         VkAppUtils.queryPhotosById(ownerId, dupImgIdList).done(function (photosList) {
-          self.duplicatesCache = photosList; //save photos to the cache
-
-          //!!!DEBUG: replace likes with hash for debugging
+          //inject hashes, sort (just in case)
           for (var k = 0; k < photosList.length; ++k) {
-            photosList[k].likes.count = dupIdHashMap[photosList[k].id];
+            photosList[k].hash = dupIdHashMap[photosList[k].id];
           }
+          photosList = photosList.sort(compareByHash);
 
+          self.duplicatesCache = photosList; //save photos to the cache
           self.onSrcAlbumChanged();
 
           //update GO button label
           self.onDstAlbumChanged();
 
-          self.displayNote("Найдено " + dupIdCount + " возможных дубликатов изображений");
+          self.displayNote("Найдено групп дубликатов: " + dupInfo.dupHashCount + ", всего изображений: " + dupIdCount);
         }).fail(onFail);
-      }).progress(onImageLoaded);*/
+      }).progress(onImageLoaded);
     }
 
     function compareByHash(a, b) {
