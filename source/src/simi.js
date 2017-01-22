@@ -120,7 +120,7 @@ var ImgPercHash = (function () {
           num += callback(data[i * HASH_UNIT + j]) * bit;
           bit *= 2;
         }
-        result += decimalToHex(num);
+        result += decimalToHex(num, HASH_UNIT/4);
       }
       return result;
     };
