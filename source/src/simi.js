@@ -1,4 +1,4 @@
-/** bitlyfied/js-image-similarity/simi.js */
+/** See original code at GIT Hub: bitlyfied/js-image-similarity/simi.js */
 
 var ImgPercHash = (function () {
   var SIMILARITY_THRESHOLD = 0.15;
