@@ -396,7 +396,7 @@ var VkAppUtils = {
   //query photos from all public albums (except for service albums)
   //applies filterFn to each retreived chunk of photos
   //reports progress (photos retreived, photos left after filtering)
-  queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, filterFn, noExtended) {
+  queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, revOrd, filterFn, noExtended) {
     var self = this;
     var ddd = $.Deferred();
     var photos = [];
@@ -408,6 +408,7 @@ var VkAppUtils = {
         album_id: albumId,
         offset: offset,
         count: count,
+        rev: +revOrd,
         extended: +!noExtended,
         photo_sizes: +!noExtended
       }).done(
