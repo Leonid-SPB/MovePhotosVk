@@ -4,6 +4,7 @@ FileList="\
  ../source/src/highslide.config.js\
  ../source/src/simi.js\
  ../source/src/spin.js\
+ ../source/src/load-image.js\
  ../source/src/utils.js\
  ../source/src/thumbsContainer.js\
  ../source/src/vkApiWrapper.js\
@@ -32,5 +33,10 @@ awk -i inplace -v RS='' "{gsub(/$JSFILES/,\"$MINJSFILE\")}; { print }" ../prod/a
 
 #produce minified script
 uglifyjs $FileList --compress --mangle --verbose --output ../prod/albumManager_min.js >> log.txt 2>&1
+if [ $? -ne 0 ]; then
+	echo "Error, see log.txt for details"
+	exit 1
+fi
 
 echo Done!
+exit 0
