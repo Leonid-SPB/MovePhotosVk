@@ -38,6 +38,7 @@ var Settings = {
   LoadImgSldownThresh: 25,
   LoadImgDelay: 10,
 
+  RevSortOrderDefaults: true,
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
   vkUserId: null,
@@ -189,6 +190,7 @@ var AMApi = {
     });
 
     //
+    self.revThumbSortChk.checked = Settings.RevSortOrderDefaults;
     self.disableControls(1);
     self.busyFlag = true;
 
@@ -455,7 +457,7 @@ var AMApi = {
     Utils.showSpinner();
     self.disableControls(1);
 
-    self.queryAlbumPhotos(ownerId, albumId, 0, Settings.PhotosPerPage).done(function (photos, count) {
+    self.queryAlbumPhotos(ownerId, albumId, 0, Settings.PhotosPerPage, self.revThumbSortChk.checked).done(function (photos, count) {
       self.albumData.photosCount = count;
       self.albumData.pagesCount = Math.ceil(count / Settings.PhotosPerPage);
       self.albumData.pages[0] = photos;
@@ -619,7 +621,7 @@ var AMApi = {
       var ownerId = self.srcAlbumOwnerList.value;
       var offset = self.albumData.page * Settings.PhotosPerPage;
 
-      self.queryAlbumPhotos(ownerId, self.albumData.albumId, offset, Settings.PhotosPerPage).done(function (photos, count) {
+      self.queryAlbumPhotos(ownerId, self.albumData.albumId, offset, Settings.PhotosPerPage, self.revThumbSortChk.checked).done(function (photos, count) {
         self.albumData.pages[self.albumData.page] = photos;
         showThumbs();
       }).fail(self.onFatalError);
@@ -775,14 +777,14 @@ var AMApi = {
     }
   },
 
-  queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, filterFn, noExtended) {
+  queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, revOrd, filterFn, noExtended) {
     var self = AMApi;
     if (albumId == self.DuplicatesAlbumId) {
       var ddd = $.Deferred();
       ddd.resolve(self.duplicatesCache.slice(offset, offset + maxCount), self.duplicatesCache.length);
       return ddd.promise();
     }
-    return VkAppUtils.queryAlbumPhotos(ownerId, albumId, offset, maxCount, filterFn, noExtended);
+    return VkAppUtils.queryAlbumPhotos(ownerId, albumId, offset, maxCount, revOrd, filterFn, noExtended);
   },
 
   collectAllPhotos: function (ownerId) {
@@ -820,7 +822,7 @@ var AMApi = {
 
       //query photos from all albums and from service albums
       var d1 = VkAppUtils.queryAllPhotos(ownerId, 0, Settings.MaxTotalPhotos, false, true);
-      var d2 = VkAppUtils.queryAlbumPhotos(ownerId, 'saved', 0, Settings.MaxTotalPhotos, false, true);
+      var d2 = VkAppUtils.queryAlbumPhotos(ownerId, 'saved', 0, Settings.MaxTotalPhotos, false, false, true);
 
       d1.progress(onProgress).done(pushPhotos);
       d2.progress(onProgress).done(pushPhotos);
@@ -871,7 +873,7 @@ var AMApi = {
       self.$progressBar.progressbar("option", "max", photosCount);
       self.$progressBar.progressbar("value", 0);
 
-      VkAppUtils.queryAlbumPhotos(ownerId, albumId, 0, Settings.MaxTotalPhotos, false, true).progress(onProgress).done(function (photos) {
+      VkAppUtils.queryAlbumPhotos(ownerId, albumId, 0, Settings.MaxTotalPhotos, false, false, true).progress(onProgress).done(function (photos) {
         ddd.resolve(photos);
       }).fail(function (error) {
         ddd.reject(error);
@@ -1604,7 +1606,8 @@ var AMApi = {
     if (self.albumData.albumId == self.DuplicatesAlbumId) {
       self.revThumbSortChk.checked = !self.revThumbSortChk.checked;
     } else {
-      self.$thumbsContainer.ThumbsViewer("reorder", self.revThumbSortChk.checked);
+      //self.$thumbsContainer.ThumbsViewer("reorder", self.revThumbSortChk.checked);
+      self.onSrcAlbumChanged();
     }
   },
 
