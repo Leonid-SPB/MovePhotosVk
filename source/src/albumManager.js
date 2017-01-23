@@ -591,8 +591,8 @@ var AMApi = {
             $divInfo.append("<p><b>Альбом: " + self.albumMap[thumbsData[i].vk_img.album_id] + "</b></p>");
             $divInfo.append("<p>Лайки: " + likes + ", комментарии: " + comments + ", репосты: " + reposts + "</p>");
             $divInfo.append("<p>Дата добавления: " + dateStr + ". Размер: " + maxSzStr + "</p>");
-            $divInfo.append("<p>Хэш: " + thumbsData[i].vk_img.hash + "</p>");
-            $divInfo.append("<p>Описание:" + Utils.html2Text(thumbsData[i].vk_img.text, MaxDescrLen) + "</p>");
+            //$divInfo.append("<p>Хэш: " + thumbsData[i].vk_img.hash + "</p>");
+            $divInfo.append("<p>Описание: " + Utils.html2Text(thumbsData[i].vk_img.text, MaxDescrLen) + "</p>");
 
             $divImg.append($thumbs[i]);
             $divSubLi.append($divImg).append($divInfo);
