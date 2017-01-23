@@ -1,9 +1,9 @@
-/** Copyright (c) 2013-2016 Leonid Azarenkov
+/** Copyright (c) 2013-2017 Leonid Azarenkov
 	Licensed under the MIT license
 */
 
 //requires VkApiWrapper, jQuery, highslide, spin.js
-/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat, simi, loadImage */
+/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat, ImgPercHash, loadImage */
 
 var Settings = {
   VkAppLocation: "https://vk.com/movephotos3",
@@ -35,8 +35,8 @@ var Settings = {
   SavedAlbumId: -15,
 
   LoadImgRetries: 2,
-  LoadImgSldownThresh: 10,
-  LoadImgDelay: 25,
+  LoadImgSldownThresh: 25,
+  LoadImgDelay: 10,
 
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
@@ -591,6 +591,7 @@ var AMApi = {
             $divInfo.append("<p><b>Альбом: " + self.albumMap[thumbsData[i].vk_img.album_id] + "</b></p>");
             $divInfo.append("<p>Лайки: " + likes + ", комментарии: " + comments + ", репосты: " + reposts + "</p>");
             $divInfo.append("<p>Дата добавления: " + dateStr + ". Размер: " + maxSzStr + "</p>");
+            $divInfo.append("<p>Хэш: " + thumbsData[i].vk_img.hash + "</p>");
             $divInfo.append("<p>Описание:" + Utils.html2Text(thumbsData[i].vk_img.text, MaxDescrLen) + "</p>");
 
             $divImg.append($thumbs[i]);
@@ -923,7 +924,7 @@ var AMApi = {
 
     //open new window and wait when it's loaded
     var popUp = window.open("SaveAlbum.html", "_blank", "location=yes,menubar=yes,toolbar=yes,titlebar=yes,scrollbars=yes", false);
-    var title = "Failed photos";
+    var title = "Failed photos: " + images.length;
     var divPhotos = null;
     var WaitPageLoadTmout = 100;
     setTimeout(waitLoad, WaitPageLoadTmout);
@@ -941,8 +942,8 @@ var AMApi = {
     function loadImg__() {
       //stop if no more images left and all loaded or the task was aborted
       if (abortFlagRef.abort || (!loadImgQueue.length && !loadInProgressCnt)) {
-        ddd.resolve();
-        self.reportFailedImages(failedImages);
+        ddd.resolve(failedImages);
+        //self.reportFailedImages(failedImages);
         return;
       }
 
@@ -952,13 +953,13 @@ var AMApi = {
       if (loadImgQueue.length) {
         ++loadInProgressCnt;
         var vk_img = loadImgQueue.shift();
-        //var imgSrc = Utils.fixHttpUrl(vk_img.photo_75);
-        var imgSrc = Utils.fixHttpUrl(vk_img.photo_130);
+        var imgSrc = Utils.fixHttpUrl(vk_img.photo_75);
+        //var imgSrc = Utils.fixHttpUrl(vk_img.photo_130);
 
         //slow down for retries
-        if (vk_img.loadAttempts) {
-          tmout = loadInProgressCnt * Settings.LoadImgDelay;
-        }
+        //if (vk_img.loadAttempts) {
+        //  tmout = loadInProgressCnt * Settings.LoadImgDelay;
+        //}
 
         loadImage(
           imgSrc,
@@ -971,13 +972,17 @@ var AMApi = {
               if (++vk_img.loadAttempts < Settings.LoadImgRetries) {
                 loadImgQueue.push(vk_img);
               } else {
-                console.warn("AMApi::loadImg__() failed to load '" + imgSrc + "', att=" + vk_img.loadAttempts);
+                //console.warn("AMApi::loadImg__() failed to load '" + imgSrc + "', att=" + vk_img.loadAttempts);
                 failedImages.push(vk_img);
+                ddd.notify(null, vk_img);
               }
 
               --loadInProgressCnt;
             } else {
               --loadInProgressCnt;
+              //if ("loadAttempts" in vk_img) {
+              //  console.warn("AMApi::loadImg__() successfull load retry '" + imgSrc + "', att=" + vk_img.loadAttempts);
+              //}
               ddd.notify(result, vk_img);
             }
           }, {
@@ -1044,81 +1049,141 @@ var AMApi = {
       self.$goBtn.button("option", "label", self.GoBtnLabelCancel);
       self.$goBtn.button("enable");
 
-      var dupInfo = findDuplicatesByUrl(photosList);
-      var dupImgIdList = dupInfo.dupImgIdList;
-      var dupIdHashMap = dupInfo.dupIdHashMap;
-      var dupIdCount = dupImgIdList.length;
-
-      //query photos by their ids in list of duplicates
-      VkAppUtils.queryPhotosById(ownerId, dupImgIdList).done(function (photosList) {
-        //inject hashes, sort (just in case)
-        for (var k = 0; k < photosList.length; ++k) {
-          photosList[k].hash = dupIdHashMap[photosList[k].id];
-        }
-        photosList = photosList.sort(compareByHash);
-
-        self.duplicatesCache = photosList; //save photos to the cache
-        self.onSrcAlbumChanged();
-
-        //update GO button label
-        self.onDstAlbumChanged();
-
-        self.displayNote("Найдено групп дубликатов: " + dupInfo.dupHashCount + ", всего изображений: " + dupIdCount);
-      }).fail(onFail);
-
-      /*
-      //Find duplicates using perceptual hash
-      var imgHashedList = [];
-      function onImageLoaded(img, vk_img) {
-        var hash = simi.hash(img);
-        imgHashedList.push({
-          hash: hash,
-          id: vk_img.id
-        });
-
-        //dispose unnecessary image
-        if (img._objectURL) {
-          loadImage.revokeObjectURL(img._objectURL);
-          delete img._objectURL;
-        }
-
-        self.$progressBar.progressbar("value", imgHashedList.length);
-      }
-
-      var startTime = new Date();
       self.displayNote("Поиск дубликатов изображений: загрузка изображений и вычисление хэшей ...", 0);
       self.$progressBar.progressbar("option", "max", photosList.length);
       self.$progressBar.progressbar("value", 0);
 
-      //load images and calculate hashes
+      var dupInfoByUrl = findDuplicatesByUrl(photosList);
+
+      var imgHashedList = [];
+      var simi = new ImgPercHash(16);
+
+      function onImageLoaded(img, vk_img) {
+        if (img) {
+          var hash = simi.hash(img);
+          vk_img.hash = hash;
+          imgHashedList.push(vk_img);
+
+          //dispose unnecessary image
+          if (img._objectURL) {
+            loadImage.revokeObjectURL(img._objectURL);
+            delete img._objectURL;
+          }
+        }
+
+        var new_val = +self.$progressBar.progressbar("value") + 1;
+        self.$progressBar.progressbar("value", new_val);
+      }
+
+      //load images and calculate perceptual hashes
       self.taskInfo.abort = false;
-      self.loadVkImages(photosList, self.taskInfo).done(function () {
+      var startTime = new Date();
+      self.loadVkImages(photosList, self.taskInfo).done(function (failedImages) {
+        photosList = null;
         var endTime = new Date();
         var actualTime = endTime - startTime;
         var actualTimeHms = new Date(actualTime).toISOString().substr(11, 8);
         console.log("Image load time was " + actualTimeHms);
 
         //images loaded, hashes calculated, sort images and get duplicates
-        var dupImgIdList = findDuplicatesByHash(imgHashedList);
+        var dupInfoPercHash = findDuplicatesByHash(imgHashedList);
+
+        //merge dupInfoPercHash and dupInfoByUrl
+        //combining two methods (URL/PercHash), as it's not always possible to load all images and calculate hash
+        var dupInfo = mergeDupInfo(dupInfoPercHash, dupInfoByUrl);
+        var dupImgIdList = dupInfo2IdList(dupInfo);
+        var dupIdHashMap = dupInfo.id2HashMap;
+        var dupGroupsCount = Object.keys(dupInfo.hash2ImgLstMap).length;
+        var dupImagesCount = dupImgIdList.length;
+        dupInfoPercHash = null;
+        dupInfoByUrl = null;
+        dupInfo = null;
 
         //query photos by their ids in list of duplicates
-        var dupIdCount = dupImgIdList.length;
-        VkAppUtils.queryPhotosById(ownerId, dupImgIdList).done(function (photosList) {
-          self.duplicatesCache = photosList; //save photos to the cache
-
-          //!!!DEBUG: replace likes with hash for debugging
-          for (var k = 0; k < photosList.length; ++k) {
-            photosList[k].likes.count = dupIdHashMap[photosList[k].id];
+        VkAppUtils.queryPhotosById(ownerId, dupImgIdList).done(function (photosList_) {
+          //inject hashes
+          for (var k = 0; k < photosList_.length; ++k) {
+            photosList_[k].hash = dupIdHashMap[photosList_[k].id];
           }
+          //photosList_ = photosList_.sort(compareByHash);
 
+          self.duplicatesCache = photosList_; //save photos to the cache
           self.onSrcAlbumChanged();
 
           //update GO button label
           self.onDstAlbumChanged();
 
-          self.displayNote("Найдено " + dupIdCount + " возможных дубликатов изображений");
+          self.displayNote("Найдено групп дубликатов: " + dupGroupsCount + ", всего изображений: " + dupImagesCount);
         }).fail(onFail);
-      }).progress(onImageLoaded);*/
+      }).progress(onImageLoaded);
+    }
+
+    function dupInfo2IdList(dupInfo) {
+      var dupIdList = [];
+      var keys = Object.keys(dupInfo.hash2ImgLstMap);
+
+      function getIds(obj) {
+        return obj.id;
+      }
+
+      function compareByAid(a, b) {
+        if (a.album_id < b.album_id) {
+          return -1;
+        } else if (a.album_id > b.album_id) {
+          return 1;
+        }
+        return 0;
+      }
+
+      for (var i = 0; i < keys.length; ++i) {
+        var idGrp = dupInfo.hash2ImgLstMap[keys[i]];
+
+        //sort by album ID
+        idGrp = idGrp.sort(compareByAid);
+
+        var ids = idGrp.map(getIds);
+        dupIdList = dupIdList.concat(ids);
+      }
+      return dupIdList;
+    }
+
+    //merge dupInfoB to dupInfoA
+    function mergeDupInfo(dupInfoA, dupInfoB) {
+      var hashesB = Object.keys(dupInfoB.hash2ImgLstMap);
+
+      for (var i = 0; i < hashesB.length; ++i) {
+        var hB = hashesB[i];
+        var dupGrpB = dupInfoB.hash2ImgLstMap[hB];
+        var merged = false;
+
+        //if groups have intersection -> merge, otherwise group is unique -> add to map as is
+        for (var j = 0; j < dupGrpB.length; ++j) {
+          //if at least one common elemet -> merge two groups
+          if (dupGrpB[j].id in dupInfoA.id2HashMap) {
+            var hA = dupInfoA.id2HashMap[dupGrpB[j].id];
+            for (var p = 0; p < dupGrpB.length; ++p) {
+              //add only unique elements
+              if (!(dupGrpB[p].id in dupInfoA.id2HashMap)) {
+                dupInfoA.id2HashMap[dupGrpB[p].id] = hA;
+                dupInfoA.hash2ImgLstMap[hA].push(dupGrpB[p]);
+              }
+            }
+
+            merged = true;
+            break;
+          }
+        }
+
+        //unique group -> add to hash2ImgLstMap and update id2HashMap
+        if (!merged) {
+          dupInfoA.hash2ImgLstMap[hB] = dupGrpB;
+          for (var k = 0; k < dupGrpB.length; ++k) {
+            dupInfoA.id2HashMap[dupGrpB[k].id] = hB;
+          }
+        }
+      }
+
+      return dupInfoA;
     }
 
     function compareByHash(a, b) {
@@ -1130,20 +1195,19 @@ var AMApi = {
       return 0;
     }
 
-    function findDuplicatesByHash(idHashList_) {
-      var dupImgIdList_ = [];
-      var dupIdHashMap = {};
-      var dupHashCount = 0;
+    function findDuplicatesByHash(vkImgList) {
+      var hash2ImgLstMap = {};
+      var id2HashMap = {};
 
       //sort by hash and collect duplicates to the dupImgIdList_
-      idHashList_ = idHashList_.sort(compareByHash);
-      for (var i = 0; i < idHashList_.length - 1;) {
-        if (idHashList_[i].hash == idHashList_[i + 1].hash) {
-          var h = idHashList_[i].hash;
-          ++dupHashCount;
-          while ((i < idHashList_.length) && (idHashList_[i].hash == h)) {
-            dupImgIdList_.push(idHashList_[i].id);
-            dupIdHashMap[idHashList_[i].id] = h;
+      vkImgList = vkImgList.sort(compareByHash);
+      for (var i = 0; i < vkImgList.length - 1;) {
+        if (vkImgList[i].hash == vkImgList[i + 1].hash) {
+          var h = vkImgList[i].hash;
+          hash2ImgLstMap[h] = [];
+          while ((i < vkImgList.length) && (vkImgList[i].hash == h)) {
+            hash2ImgLstMap[h].push(vkImgList[i]);
+            id2HashMap[vkImgList[i].id] = h;
             ++i;
           }
         } else {
@@ -1152,24 +1216,20 @@ var AMApi = {
       }
 
       return {
-        dupImgIdList: dupImgIdList_,
-        dupIdHashMap: dupIdHashMap,
-        dupHashCount: dupHashCount
+        hash2ImgLstMap: hash2ImgLstMap,
+        id2HashMap: id2HashMap
       };
     }
 
     function findDuplicatesByUrl(vkImgList) {
-      var idHashList_ = [];
-
       for (var i = 0; i < vkImgList.length; ++i) {
-        var fname = vkImgList[i].photo_130;
-        idHashList_.push({
-          hash: fname.substring(fname.lastIndexOf('/') + 1), //use image file name as a hash
-          id: vkImgList[i].id
-        });
+        //use image file name as a hash
+        var fname = vkImgList[i].photo_75;
+        var hash = fname.substring(fname.lastIndexOf('/') + 1);
+        vkImgList[i].hash = hash;
       }
 
-      return findDuplicatesByHash(idHashList_);
+      return findDuplicatesByHash(vkImgList);
     }
 
   },

@@ -1,4 +1,4 @@
-/** Copyright (c) 2012-2016 Leonid Azarenkov
+/** Copyright (c) 2012-2017 Leonid Azarenkov
 	Licensed under the MIT license
 */
 
@@ -61,6 +61,15 @@ var Utils = {
     }
 
     return lzn(cD.getDate()) + "." + lzn(cD.getMonth() + 1) + "." + cD.getFullYear() + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
+  },
+
+  //convert 2d array of arrays [[1 2],[3],[4 5]] to 1d array [1 2 3 4 5]
+  array2d_to_1d: function (arr2d) {
+    var arr1d = [];
+    for (var i = 0; i < arr2d.length; i++) {
+      arr1d = arr1d.concat(arr2d[i]);
+    }
+    return arr1d;
   },
 
   showSpinner: function (opts) {
