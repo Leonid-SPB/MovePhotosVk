@@ -468,6 +468,7 @@
         return vk_img.photo_75;
       } else {
         console.log(PluginName + ":getSelSizeUrl() - can't find vk image urls!");
+        return src_alt;
       }
 
       for (var j = 0; j < szLiterPrefs.length; ++j) {

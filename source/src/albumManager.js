@@ -418,6 +418,7 @@ var AMApi = {
     var self = AMApi;
     var ddd = $.Deferred();
 
+    self.displayNote(); //hide advice
     self.$thumbsContainer.ThumbsViewer("empty");
     self.updSelectedNum();
 
@@ -543,9 +544,10 @@ var AMApi = {
 
     function showThumbs() {
       self.$thumbsContainer.ThumbsViewer("empty");
-      self.$thumbsContainer.ThumbsViewer("updateAlbumMap", self.albumMap);
       self.$thumbsContainer.ThumbsViewer("addThumbList", self.albumData.pages[self.albumData.page]).done(function () {
         self.updSelectedNum();
+
+        self.$thumbsContainer.ThumbsViewer("updateAlbumMap", self.albumMap);
 
         if (self.albumData.albumId == self.DuplicatesAlbumId) {
           showDuplicates();
@@ -1340,6 +1342,11 @@ var AMApi = {
 
       //collect list of selected photos
       var $thumbListm = self.$thumbsContainer.ThumbsViewer("getThumbsData", true);
+
+      //reverse list when moving if self.revThumbSortChk.checked, to keep valid order
+      if (self.revThumbSortChk.checked) {
+        $thumbListm.reverse();
+      }
 
       //check album overflow
       if ($thumbListm.length + Number(self.dstAlbumSizeEdit.value) > Settings.MaxAlbumPhotos) {

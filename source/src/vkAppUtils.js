@@ -138,7 +138,7 @@ var VkAppUtils = {
 
   ///retreive from VK Api image object a link to image with desired size szLiterPrefs
   getSelSizeUrl: function (vk_img, szLiterPrefs) {
-    var src_alt = "";
+    var src_alt = "logo150.png";
 
     if (("sizes" in vk_img) && vk_img.sizes.length) {
       src_alt = vk_img.sizes[0].src;
@@ -148,6 +148,7 @@ var VkAppUtils = {
       return vk_img.photo_75;
     } else {
       console.error("VkAppUtils::getSelSizeUrl() - can't find vk image urls!");
+      return src_alt;
     }
 
     for (var j = 0; j < szLiterPrefs.length; ++j) {
