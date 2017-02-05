@@ -3,7 +3,7 @@
 */
 
 //requires VkApiWrapper, jQuery, highslide, spin.js
-/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat, ImgPercHash, loadImage */
+/* globals $, Utils, VkApiWrapper, VkAppUtils, VK, VKAdman, admanStat, ImgPercHash, loadImage, Cookies */
 
 var Settings = {
   VkAppLocation: "https://vk.com/movephotos3",
@@ -100,6 +100,7 @@ var AMApi = {
   SaveTipDisplayedKey: "saveTipDisplayed",
   savedAlbumTipDisplayed: 0,
   SavedAlbumTipDisplayedKey: "savedAlbumTipDisplayed",
+  RevSortCheckedKey: "RevSortChecked",
 
   DuplicatesAlbumId: "duplicates",
   DuplicatesAlbumIndex: 1,
@@ -190,7 +191,13 @@ var AMApi = {
     });
 
     //
-    self.revThumbSortChk.checked = Settings.RevSortOrderDefaults;
+    var revSrtCookie = Cookies.get(self.RevSortCheckedKey);
+    if (revSrtCookie === undefined) {
+      self.revThumbSortChk.checked = Settings.RevSortOrderDefaults;
+    } else {
+      self.revThumbSortChk.checked = +revSrtCookie;
+    }
+
     self.disableControls(1);
     self.busyFlag = true;
 
@@ -1614,6 +1621,7 @@ var AMApi = {
       self.revThumbSortChk.checked = !self.revThumbSortChk.checked;
     } else {
       //self.$thumbsContainer.ThumbsViewer("reorder", self.revThumbSortChk.checked);
+      Cookies.set(self.RevSortCheckedKey, +self.revThumbSortChk.checked);
       self.onSrcAlbumChanged();
     }
   },

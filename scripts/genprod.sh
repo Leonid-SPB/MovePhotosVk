@@ -6,6 +6,7 @@ FileList="\
  ../source/src/spin.js\
  ../source/src/load-image.js\
  ../source/src/utils.js\
+ ../source/src/js.cookie.js\
  ../source/src/thumbsContainer.js\
  ../source/src/vkApiWrapper.js\
  ../source/src/vkAppUtils.js\
