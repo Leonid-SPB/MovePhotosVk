@@ -1621,7 +1621,9 @@ var AMApi = {
       self.revThumbSortChk.checked = !self.revThumbSortChk.checked;
     } else {
       //self.$thumbsContainer.ThumbsViewer("reorder", self.revThumbSortChk.checked);
-      Cookies.set(self.RevSortCheckedKey, +self.revThumbSortChk.checked);
+      Cookies.set(self.RevSortCheckedKey, +self.revThumbSortChk.checked, {
+        expires: 1000
+      });
       self.onSrcAlbumChanged();
     }
   },

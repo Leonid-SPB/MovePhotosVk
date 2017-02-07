@@ -42,6 +42,6 @@
 * „асто задаваемые вопросы и ответы [[topic-45558877_28290621|„а¬о/FAQ]] 
 
 ===Acknowledgements===
-jQuery and jQuery UI by The jQuery Foundation, spin.js by Felix Gnass, Highslide JS by Highsoft Solutions AS, JavaScript Canvas-to-Blob and Load Image by Sebastian Tschan, HackTimer by Ruslan Tushov, simi.js by Valentino Aluigi, RateLimit by Matteo Agosti, graphics by [http://www.elegantthemes.com], [http://plainicon.com]
+jQuery and jQuery UI by The jQuery Foundation, spin.js by Felix Gnass, Highslide JS by Highsoft Solutions AS, JavaScript Canvas-to-Blob and Load Image by Sebastian Tschan, HackTimer by Ruslan Tushov, simi.js by Valentino Aluigi, RateLimit by Matteo Agosti, JavaScript Cookie by Klaus Hartl and Fagner Brack, graphics by [http://www.elegantthemes.com], [http://plainicon.com]
 
 <center>Copyright 2012-2017 [https://vk.com/id105876|Leonid Azarenkov]</center>
