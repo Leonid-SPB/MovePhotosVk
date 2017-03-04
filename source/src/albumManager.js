@@ -15,7 +15,8 @@ var Settings = {
   RedirectDelay: 3000,
   RateRequestDelay: 1000,
   ErrorHideAfter: 6000,
-  NoteHideAfter: 30000,
+  AdviceHideAfter: 30000,
+  NoteHideAfter: 10000,
   BlinkDelay: 500,
   BlinkCount: 12,
   SavedAlbumTipTimes: 3,
@@ -258,12 +259,10 @@ var AMApi = {
   },
 
   displayNote: function (noteMsg, hideDelay) {
-    if (!hideDelay && (hideDelay !== 0)) {
-      VkAppUtils.displayNote(noteMsg, "NoteBox", Settings.NoteHideAfter);
-    } else {
-      VkAppUtils.displayNote(noteMsg, "NoteBox", hideDelay);
-    }
-
+    //noteMsg == ""  => hide note immediately
+    //hideDelay == 0 => persistent note (don't hide by timer)
+    //else           => show message and hide by timeout
+    VkAppUtils.displayNote(noteMsg, "NoteBox", hideDelay);
   },
 
   onFatalError: function (error) {
@@ -445,7 +444,7 @@ var AMApi = {
     if (albumId == Settings.SavedAlbumId) {
       var savedAlbumTipDisplayedTimes = +Utils.getCookieParam(self.SavedAlbumTipDisplayedKey, 0);
       if (!self.savedAlbumTipDisplayed && (savedAlbumTipDisplayedTimes < Settings.SavedAlbumTipTimes)) {
-        self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя!", Settings.NoteHideAfter / 2);
+        self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя!", Settings.NoteHideAfter);
         self.savedAlbumTipDisplayed = true;
         Utils.setCookieParam(self.SavedAlbumTipDisplayedKey, savedAlbumTipDisplayedTimes + 1);
       }
@@ -454,7 +453,7 @@ var AMApi = {
     } else if (albumId == Settings.DuplicatesAlbumId) {
       var duplicatesAlbumTipDisplayedTimes = +Utils.getCookieParam(self.DuplicatesAlbumTipDisplayedKey, 0);
       if (!self.duplicatesAlbumTipDisplayed && (duplicatesAlbumTipDisplayedTimes < Settings.DuplicatesAlbumTipTimes)) {
-        self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Найденные дубликаты&quot; хранит результат поиска повторяющихся изображений.", Settings.NoteHideAfter / 2);
+        self.displayNote("<strong>Совет:</sctrong><ul><li>Альбом &quot;Найденные дубликаты&quot; хранит результат поиска повторяющихся изображений.</li><li>Поиск возможен по всем альбомам (если альбом не выбран) или только по выбранному альбому.</li><li>Кнопка  &quot;Поиск дубликатов &quot; (внизу страницы) запускает процесс поиска.</li></ul>", Settings.AdviceHideAfter);
         self.duplicatesAlbumTipDisplayed = true;
         Utils.setCookieParam(self.DuplicatesAlbumTipDisplayedKey, duplicatesAlbumTipDisplayedTimes + 1);
       }
@@ -490,7 +489,7 @@ var AMApi = {
     if (selIndex == 1) { //save album
       self.$goBtn.button("option", "label", self.GoBtnLabelSave);
       if (!self.saveTipDisplayed) {
-        self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks' target='_blank'><u>Яндекс Диск</u></a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>");
+        self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks' target='_blank'><u>Яндекс Диск</u></a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>", Settings.AdviceHideAfter);
         self.saveTipDisplayed = true;
         //VkApiWrapper.storageSet(self.SaveTipDisplayedKey, "1");
       }
@@ -1127,7 +1126,7 @@ var AMApi = {
           //update GO button label
           self.onDstAlbumChanged();
 
-          self.displayNote("Найдено групп дубликатов: " + dupGroupsCount + ", всего изображений: " + dupImagesCount);
+          self.displayNote("Найдено групп дубликатов: " + dupGroupsCount + ", всего изображений: " + dupImagesCount, Settings.NoteHideAfter);
         }).fail(onFail);
       }).progress(onImageLoaded);
     }
