@@ -19,6 +19,7 @@ var Settings = {
   BlinkDelay: 500,
   BlinkCount: 12,
   SavedAlbumTipTimes: 3,
+  DuplicatesAlbumTipTimes: 3,
 
   PhotosPageRefreshDelay: 700,
   PageSlideDelay: 1400,
@@ -33,12 +34,15 @@ var Settings = {
   WallAlbumId: -7,
   ProfileAlbumId: -6,
   SavedAlbumId: -15,
+  DuplicatesAlbumId: "duplicates",
+  DuplicatesAlbumIndex: 1,
 
   LoadImgRetries: 2,
   LoadImgSldownThresh: 25,
   LoadImgDelay: 10,
 
-  RevSortOrderDefaults: true,
+  RevSortOrderDefaultsSaved: true,
+  RevSortOrderDefaultsAll: false,
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
   vkUserId: null,
@@ -97,13 +101,13 @@ var AMApi = {
   pageSlideTimer: null,
 
   saveTipDisplayed: false,
-  SaveTipDisplayedKey: "saveTipDisplayed",
-  savedAlbumTipDisplayed: 0,
+  //SaveTipDisplayedKey: "saveTipDisplayed",
+  savedAlbumTipDisplayed: false,
   SavedAlbumTipDisplayedKey: "savedAlbumTipDisplayed",
-  RevSortCheckedKey: "RevSortChecked",
-
-  DuplicatesAlbumId: "duplicates",
-  DuplicatesAlbumIndex: 1,
+  duplicatesAlbumTipDisplayed: false,
+  DuplicatesAlbumTipDisplayedKey: "duplicatesAlbumTipDisplayed",
+  RevSortCheckedKeySaved: "RevSortChecked-saved",
+  RevSortCheckedKeyAll: "RevSortChecked-all",
 
   taskInfo: {
     abort: false,
@@ -190,14 +194,6 @@ var AMApi = {
       self.doCreateAlbum();
     });
 
-    //
-    var revSrtCookie = Cookies.get(self.RevSortCheckedKey);
-    if (revSrtCookie === undefined) {
-      self.revThumbSortChk.checked = Settings.RevSortOrderDefaults;
-    } else {
-      self.revThumbSortChk.checked = +revSrtCookie;
-    }
-
     self.disableControls(1);
     self.busyFlag = true;
 
@@ -228,16 +224,6 @@ var AMApi = {
         self.dstAlbumOwnerList.add(opt, null);
       }
     }).fail(self.onFatalError);
-
-    //query notifications info
-    VkApiWrapper.storageGet(self.SaveTipDisplayedKey + "," + self.SavedAlbumTipDisplayedKey).done(function (data) {
-      if (data[self.SavedAlbumTipDisplayedKey]) {
-        self.savedAlbumTipDisplayed = +data[self.SavedAlbumTipDisplayedKey];
-      }
-      if (data[self.SaveTipDisplayedKey]) {
-        self.saveTipDisplayed = true;
-      }
-    });
 
     //query albums
     var d2 = VkAppUtils.queryAlbumList({
@@ -310,7 +296,7 @@ var AMApi = {
     self.srcAlbumList.disabled = dval;
     self.dstAlbumList.disabled = dval;
 
-    if (self.srcAlbumList.value == self.DuplicatesAlbumId) {
+    if (self.srcAlbumList.value == Settings.DuplicatesAlbumId) {
       self.$selToggleVisibleBtn.button("disable");
       self.$selToggleAllBtn.button("disable");
       self.$dupSearchBtn.button("disable");
@@ -456,9 +442,25 @@ var AMApi = {
       ddd.resolve();
     }
 
-    if ((self.savedAlbumTipDisplayed < Settings.SavedAlbumTipTimes) && (albumId == Settings.SavedAlbumId)) {
-      self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя!", Settings.NoteHideAfter / 2);
-      VkApiWrapper.storageSet(self.SavedAlbumTipDisplayedKey, ++self.savedAlbumTipDisplayed);
+    if (albumId == Settings.SavedAlbumId) {
+      var savedAlbumTipDisplayedTimes = +Utils.getCookieParam(self.SavedAlbumTipDisplayedKey, 0);
+      if (!self.savedAlbumTipDisplayed && (savedAlbumTipDisplayedTimes < Settings.SavedAlbumTipTimes)) {
+        self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Сохранённые фотографии&quot; является служебным, вернуть перемещённые фотографии в этот альбом нельзя!", Settings.NoteHideAfter / 2);
+        self.savedAlbumTipDisplayed = true;
+        Utils.setCookieParam(self.SavedAlbumTipDisplayedKey, savedAlbumTipDisplayedTimes + 1);
+      }
+
+      self.revThumbSortChk.checked = +Utils.getCookieParam(self.RevSortCheckedKeySaved, Settings.RevSortOrderDefaultsSaved);
+    } else if (albumId == Settings.DuplicatesAlbumId) {
+      var duplicatesAlbumTipDisplayedTimes = +Utils.getCookieParam(self.DuplicatesAlbumTipDisplayedKey, 0);
+      if (!self.duplicatesAlbumTipDisplayed && (duplicatesAlbumTipDisplayedTimes < Settings.DuplicatesAlbumTipTimes)) {
+        self.displayNote("<strong>Совет:</sctrong> Альбом &quot;Найденные дубликаты&quot; хранит результат поиска повторяющихся изображений.", Settings.NoteHideAfter / 2);
+        self.duplicatesAlbumTipDisplayed = true;
+        Utils.setCookieParam(self.DuplicatesAlbumTipDisplayedKey, duplicatesAlbumTipDisplayedTimes + 1);
+      }
+      self.revThumbSortChk.checked = +Utils.getCookieParam(self.RevSortCheckedKeyAll, Settings.RevSortOrderDefaultsAll);
+    } else {
+      self.revThumbSortChk.checked = +Utils.getCookieParam(self.RevSortCheckedKeyAll, Settings.RevSortOrderDefaultsAll);
     }
 
     //update album data
@@ -556,7 +558,7 @@ var AMApi = {
 
         self.$thumbsContainer.ThumbsViewer("updateAlbumMap", self.albumMap);
 
-        if (self.albumData.albumId == self.DuplicatesAlbumId) {
+        if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
           showDuplicates();
         }
 
@@ -735,7 +737,7 @@ var AMApi = {
     var prevPagePhotos = self.albumData.pages[self.albumData.page];
     var newPagePhotos$ = self.$thumbsContainer.ThumbsViewer("getThumbsData");
 
-    if (self.albumData.albumId == self.DuplicatesAlbumId) {
+    if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
       //clean-up current page
       for (var j = 0; j < newPagePhotos$.length; ++j) {
         var $thumb = newPagePhotos$[j].$thumb;
@@ -770,7 +772,7 @@ var AMApi = {
     if (newPagePhotos$.length) {
       //don't refresh page automatically if there are some photos left
       var p = [];
-      if (self.revThumbSortChk.checked && (self.albumData.albumId != self.DuplicatesAlbumId)) {
+      if (self.revThumbSortChk.checked && (self.albumData.albumId != Settings.DuplicatesAlbumId)) {
         newPagePhotos$.reverse();
       }
       for (var i = 0; i < newPagePhotos$.length; ++i) {
@@ -788,7 +790,7 @@ var AMApi = {
 
   queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, revOrd, filterFn, noExtended) {
     var self = AMApi;
-    if (albumId == self.DuplicatesAlbumId) {
+    if (albumId == Settings.DuplicatesAlbumId) {
       var ddd = $.Deferred();
       ddd.resolve(self.duplicatesCache.slice(offset, offset + maxCount), self.duplicatesCache.length);
       return ddd.promise();
@@ -1022,14 +1024,15 @@ var AMApi = {
     var albumId = self.srcAlbumList.value;
     var atitle = self.srcAlbumList.item(srcSelIndex).text;
 
-    if (srcSelIndex == self.DuplicatesAlbumIndex) {
+    if (albumId == Settings.DuplicatesAlbumId) {
       //nothing to do
       return;
     }
 
     //show empty "duplicates" album while collecting data
+    self.duplicatesAlbumTipDisplayed = true;
     self.duplicatesCache = [];
-    self.srcAlbumList.selectedIndex = self.DuplicatesAlbumIndex;
+    self.srcAlbumList.selectedIndex = Settings.DuplicatesAlbumIndex;
     self.onSrcAlbumChanged().done(function () {
       Utils.showSpinner();
       self.disableControls(1);
@@ -1308,7 +1311,7 @@ var AMApi = {
       self.$progressBar.progressbar("value", ++progress);
       var $thumb = $thumbInfo.$thumb;
 
-      if (self.albumData.albumId == self.DuplicatesAlbumId) {
+      if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
         var $dupLiSubDiv = $thumb.parent().parent();
         $dupLiSubDiv.detach();
         self.$thumbsContainer.ThumbsViewer("removeThumb", $thumb);
@@ -1617,13 +1620,13 @@ var AMApi = {
   onRevThumbSortChkClick: function () {
     var self = AMApi;
 
-    if (self.albumData.albumId == self.DuplicatesAlbumId) {
+    if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
       self.revThumbSortChk.checked = !self.revThumbSortChk.checked;
+    } else if (self.albumData.albumId == Settings.SavedAlbumId) {
+      Utils.setCookieParam(self.RevSortCheckedKeySaved, +self.revThumbSortChk.checked);
+      self.onSrcAlbumChanged();
     } else {
-      //self.$thumbsContainer.ThumbsViewer("reorder", self.revThumbSortChk.checked);
-      Cookies.set(self.RevSortCheckedKey, +self.revThumbSortChk.checked, {
-        expires: 1000
-      });
+      Utils.setCookieParam(self.RevSortCheckedKeyAll, +self.revThumbSortChk.checked);
       self.onSrcAlbumChanged();
     }
   },
@@ -1638,7 +1641,7 @@ var AMApi = {
     var self = AMApi;
 
     //do nothing for duplicates
-    if (self.albumData.albumId == self.DuplicatesAlbumId) {
+    if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
       return;
     }
 
