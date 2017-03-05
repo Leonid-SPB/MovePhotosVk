@@ -63,6 +63,20 @@ var Utils = {
     return lzn(cD.getDate()) + "." + lzn(cD.getMonth() + 1) + "." + cD.getFullYear() + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
   },
 
+  /**
+   * Shuffles array in place.
+   * @param {Array} a items The array containing the items.
+   */
+  shuffle: function (a) {
+    var j, x, i;
+    for (i = a.length; i; i--) {
+      j = Math.floor(Math.random() * i);
+      x = a[i - 1];
+      a[i - 1] = a[j];
+      a[j] = x;
+    }
+  },
+
   getCookieParam: function (paramName, defaultVal) {
     var val = Cookies.get(paramName);
     if (val === undefined) {

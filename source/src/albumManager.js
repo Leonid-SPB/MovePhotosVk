@@ -58,6 +58,7 @@ var AMApi = {
   dstAlbumOwnerList: null,
   dstAlbumList: null,
   dstAlbumSizeEdit: null,
+  sortingRuleList: null,
 
   $progressBar: null,
   $goBtn: null,
@@ -82,6 +83,11 @@ var AMApi = {
   GoBtnLabelSave: "Сохранить",
   GoBtnLabelCancel: "Отмена",
 
+  SortingRuleOrder: "byOrder",
+  SortingRuleDate: "byDate",
+  SortingRuleLikes: "byLikes",
+  SortingRuleRandom: "byRandom",
+
   ThumbClass: '.ThumbsViewer-thumb',
   ThumbLiDivClass: '.ThumbsViewer-liDiv',
 
@@ -95,8 +101,9 @@ var AMApi = {
     pages: {},
     page: 0
   },
+  albumPhotosCache: [],
   duplicatesCache: [],
-  rmDuplicatesCache: {},
+  movedPhotosList: {},
 
   pageRefreshTimer: null,
   pageSlideTimer: null,
@@ -139,6 +146,7 @@ var AMApi = {
     self.$selToggleAllBtn = $("#Form1_SelToggleAll");
     self.$selToggleVisibleBtn = $("#Form1_SelToggleVisible");
 
+    self.sortingRuleList = document.getElementById("Form1_ThumbSortRule");
     self.revThumbSortChk = document.getElementById("Form1_RevThumbSort");
     self.$thumbsContainer = $("#ThumbsViewer");
 
@@ -146,6 +154,7 @@ var AMApi = {
     self.dstAlbumOwnerList.item(0).value = Settings.vkUserId;
 
     //assign event handlers
+    $(self.sortingRuleList).change(self.onSortingRuleChanged);
     $(self.srcAlbumOwnerList).change(self.onSrcOwnerChanged);
     $(self.dstAlbumOwnerList).change(self.onDstOwnerChanged);
     $(self.srcAlbumList).change(self.onSrcAlbumChanged);
@@ -300,11 +309,13 @@ var AMApi = {
       self.$selToggleAllBtn.button("disable");
       self.$dupSearchBtn.button("disable");
       self.revThumbSortChk.disabled = 1;
+      self.sortingRuleList.disabled = 1;
     } else {
       self.$selToggleAllBtn.button(dstr);
       self.$selToggleVisibleBtn.button(dstr);
       self.$dupSearchBtn.button(dstr);
       self.revThumbSortChk.disabled = dval;
+      self.sortingRuleList.disabled = dval;
     }
   },
 
@@ -406,13 +417,18 @@ var AMApi = {
     }
   },
 
-  onSrcAlbumChanged: function () {
+  onSrcAlbumChanged: function (keepSortingRule) {
     var self = AMApi;
     var ddd = $.Deferred();
 
     self.displayNote(); //hide advice
     self.$thumbsContainer.ThumbsViewer("empty");
     self.updSelectedNum();
+
+    if (keepSortingRule !== true) {
+      self.sortingRuleList.selectedIndex = 0;
+      self.albumPhotosCache = [];
+    }
 
     //clean album data
     self.albumData.photosCount = 0;
@@ -746,7 +762,7 @@ var AMApi = {
         if ($dupLi.find(self.ThumbClass).length < 2) {
           $dupLi.detach();
           self.$thumbsContainer.ThumbsViewer("removeThumb", $thumb);
-          self.rmDuplicatesCache[newPagePhotos$[j].data.vk_img.id] = 1;
+          self.movedPhotosList[newPagePhotos$[j].data.vk_img.id] = 1;
           $dupLi.remove();
         }
       }
@@ -754,9 +770,15 @@ var AMApi = {
 
       //remove moved duplicates from the duplicates cache
       self.duplicatesCache = self.duplicatesCache.filter(function (el) {
-        return !self.rmDuplicatesCache[el.id];
+        return !self.movedPhotosList[el.id];
       });
-      self.rmDuplicatesCache = {};
+      self.movedPhotosList = {};
+    } else {
+      //remove moved photos from the cache
+      self.albumPhotosCache = self.albumPhotosCache.filter(function (el) {
+        return !self.movedPhotosList[el.id];
+      });
+      self.movedPhotosList = {};
     }
 
     self.albumData.photosCount -= (prevPagePhotos.length - newPagePhotos$.length);
@@ -771,9 +793,6 @@ var AMApi = {
     if (newPagePhotos$.length) {
       //don't refresh page automatically if there are some photos left
       var p = [];
-      if (self.revThumbSortChk.checked && (self.albumData.albumId != Settings.DuplicatesAlbumId)) {
-        newPagePhotos$.reverse();
-      }
       for (var i = 0; i < newPagePhotos$.length; ++i) {
         p.push(newPagePhotos$[i].data.vk_img);
       }
@@ -790,9 +809,18 @@ var AMApi = {
   queryAlbumPhotos: function (ownerId, albumId, offset, maxCount, revOrd, filterFn, noExtended) {
     var self = AMApi;
     if (albumId == Settings.DuplicatesAlbumId) {
-      var ddd = $.Deferred();
-      ddd.resolve(self.duplicatesCache.slice(offset, offset + maxCount), self.duplicatesCache.length);
-      return ddd.promise();
+      var ddd1 = $.Deferred();
+      ddd1.resolve(self.duplicatesCache.slice(offset, offset + maxCount), self.duplicatesCache.length);
+      return ddd1.promise();
+    } else if (self.albumPhotosCache.length) {
+      var ddd2 = $.Deferred();
+      if (revOrd) {
+        var tmp = self.albumPhotosCache.slice().reverse();
+        ddd2.resolve(tmp.slice(offset, offset + maxCount), tmp.length);
+      } else {
+        ddd2.resolve(self.albumPhotosCache.slice(offset, offset + maxCount), self.albumPhotosCache.length);
+      }
+      return ddd2.promise();
     }
     return VkAppUtils.queryAlbumPhotos(ownerId, albumId, offset, maxCount, revOrd, filterFn, noExtended);
   },
@@ -850,7 +878,7 @@ var AMApi = {
     return ddd.promise();
   },
 
-  collectAlbumPhotos: function (ownerId, albumId) {
+  collectAlbumPhotos: function (ownerId, albumId, noExtended) {
     var self = AMApi;
     var ddd = $.Deferred();
 
@@ -883,7 +911,7 @@ var AMApi = {
       self.$progressBar.progressbar("option", "max", photosCount);
       self.$progressBar.progressbar("value", 0);
 
-      VkAppUtils.queryAlbumPhotos(ownerId, albumId, 0, Settings.MaxTotalPhotos, false, false, true).progress(onProgress).done(function (photos) {
+      VkAppUtils.queryAlbumPhotos(ownerId, albumId, 0, Settings.MaxTotalPhotos, false, false, noExtended).progress(onProgress).done(function (photos) {
         ddd.resolve(photos);
       }).fail(function (error) {
         ddd.reject(error);
@@ -1046,7 +1074,7 @@ var AMApi = {
       //search duplicates in selected album
       self.displayNote("Поиск дубликатов изображений в альбоме &quot;" + atitle + "&quot;: загрузка списка изображений ...", 0);
 
-      self.collectAlbumPhotos(ownerId, albumId).done(onPhotosListLoaded).fail(onFail);
+      self.collectAlbumPhotos(ownerId, albumId, true).done(onPhotosListLoaded).fail(onFail);
     }
 
     function onFail() {
@@ -1309,12 +1337,12 @@ var AMApi = {
     function onProgressMove($thumbInfo) {
       self.$progressBar.progressbar("value", ++progress);
       var $thumb = $thumbInfo.$thumb;
+      self.movedPhotosList[$thumbInfo.data.vk_img.id] = 1;
 
       if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
         var $dupLiSubDiv = $thumb.parent().parent();
         $dupLiSubDiv.detach();
         self.$thumbsContainer.ThumbsViewer("removeThumb", $thumb);
-        self.rmDuplicatesCache[$thumbInfo.data.vk_img.id] = 1;
         $dupLiSubDiv.remove();
       } else {
         self.$thumbsContainer.ThumbsViewer("removeThumb", $thumb);
@@ -1353,9 +1381,9 @@ var AMApi = {
       var $thumbListm = self.$thumbsContainer.ThumbsViewer("getThumbsData", true);
 
       //reverse list when moving if self.revThumbSortChk.checked, to keep valid order
-      if (self.revThumbSortChk.checked) {
-        $thumbListm.reverse();
-      }
+      //if (self.revThumbSortChk.checked) {
+      //  $thumbListm.reverse();
+      //}
 
       //check album overflow
       if ($thumbListm.length + Number(self.dstAlbumSizeEdit.value) > Settings.MaxAlbumPhotos) {
@@ -1367,7 +1395,7 @@ var AMApi = {
       self.$progressBar.progressbar("option", "max", $thumbListm.length);
       self.$progressBar.progressbar("value", 0);
 
-      self.rmDuplicatesCache = {};
+      self.movedPhotosList = {};
 
       var ownerId = self.srcAlbumOwnerList.value;
       var albumID = self.dstAlbumList.value;
@@ -1616,18 +1644,62 @@ var AMApi = {
     $("#createAlbumDialog").dialog("open");
   },
 
+  onSortingRuleChanged: function () {
+    var self = AMApi;
+
+    function doUpdate() {
+      //do sorting, update view
+      if (self.sortingRuleList.value == self.SortingRuleDate) {
+        VkAppUtils.sortVkImgByDate(self.albumPhotosCache);
+      } else if (self.sortingRuleList.value == self.SortingRuleLikes) {
+        VkAppUtils.sortVkImgByLikes(self.albumPhotosCache);
+      } else if (self.sortingRuleList.value == self.SortingRuleRandom) {
+        Utils.shuffle(self.albumPhotosCache);
+      } else {
+        VkAppUtils.sortVkImgByIndex(self.albumPhotosCache);
+      }
+
+      self.onSrcAlbumChanged(true);
+    }
+
+    if (!self.albumPhotosCache.length && self.albumData.photosCount) {
+      //query all album photos to the second level cache and do sorting
+
+      Utils.showSpinner();
+      self.disableControls(1);
+      self.displayNote("Загрузка списка изображений для сортировки...", 0);
+
+      var ownerId = self.srcAlbumOwnerList.value;
+      var albumId = self.srcAlbumList.value;
+      self.collectAlbumPhotos(ownerId, albumId, false).done(function (albumPhotos) {
+        Utils.hideSpinner();
+        self.disableControls(0);
+        self.displayNote();
+
+        //push original index to the list
+        for (var j = 0; j < albumPhotos.length; ++j) {
+          albumPhotos[j].idx = j;
+        }
+        self.albumPhotosCache = albumPhotos;
+
+        doUpdate();
+      }).fail(self.onFatalError);
+    } else {
+      //already cached, do sorting only
+      doUpdate();
+    }
+  },
+
   onRevThumbSortChkClick: function () {
     var self = AMApi;
 
-    if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
-      self.revThumbSortChk.checked = !self.revThumbSortChk.checked;
-    } else if (self.albumData.albumId == Settings.SavedAlbumId) {
+    if (self.albumData.albumId == Settings.SavedAlbumId) {
       Utils.setCookieParam(self.RevSortCheckedKeySaved, +self.revThumbSortChk.checked);
-      self.onSrcAlbumChanged();
     } else {
       Utils.setCookieParam(self.RevSortCheckedKeyAll, +self.revThumbSortChk.checked);
-      self.onSrcAlbumChanged();
     }
+
+    self.onSrcAlbumChanged(true);
   },
 
   onSelToggleAll: function () {

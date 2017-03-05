@@ -217,6 +217,45 @@ var VkAppUtils = {
     return liDD.promise();
   },
 
+  sortVkImgByDate: function (vkImgList) {
+    vkImgList.sort(function (a, b) {
+      if (a.date < b.date) {
+        return -1;
+      } else if (a.date > b.date) {
+        return 1;
+      }
+      return 0;
+    });
+
+    return vkImgList;
+  },
+
+  sortVkImgByLikes: function (vkImgList) {
+    vkImgList.sort(function (a, b) {
+      if (a.likes.count < b.likes.count) {
+        return -1;
+      } else if (a.likes.count > b.likes.count) {
+        return 1;
+      }
+      return 0;
+    });
+
+    return vkImgList;
+  },
+
+  sortVkImgByIndex: function (vkImgList) {
+    vkImgList.sort(function (a, b) {
+      if (a.idx < b.idx) {
+        return -1;
+      } else if (a.idx > b.idx) {
+        return 1;
+      }
+      return 0;
+    });
+
+    return vkImgList;
+  },
+
   //query total number of photos in all albums
   getTotalPhotosCount: function (ownerId, noWallProfile) {
     var ddd = $.Deferred();

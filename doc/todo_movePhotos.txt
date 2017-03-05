@@ -1,8 +1,8 @@
 New features:
 ) move all photos (buttons to select "all", "current page", "visible on screen")
-) sorting (by order, by date, by likes, shuffle)
-) by default "inverse order" enabled for "Saved" album only
-) more tooltips (duplicates album)
+x) sorting (by order, by date, by likes, shuffle)
+x) by default "inverse order" enabled for "Saved" album only
+x) more tooltips (duplicates album)
 ) progress bar label?
 
 Etc:

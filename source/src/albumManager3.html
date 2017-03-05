@@ -245,8 +245,15 @@
           <button id="Form1_DupSearch" class="MainForm-button-small" type="button" title="Поиск дубликатов изображений">Поиск дубликатов</button>
         </div>
         <div class="MainForm-body-div-col" style="text-align: right">
-          <label for="Form1_RevThumbSort">Обратная сортировка</label>
-          <input id="Form1_RevThumbSort" type="checkbox" title="Обратная сортировка изображений на текущей странице">
+          <label for="Form1_ThumbSortRule">Сортировка: </label>
+          <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_ThumbSortRule" style="margin-right: 1em">
+              <option value="byOrder">по порядку</option>
+              <option value="byDate">по дате</option>
+              <option value="byLikes">по лайкам</option>
+              <option value="byRandom">перемешать</option>
+          </select>
+          <label for="Form1_RevThumbSort">Обратный порядок </label>
+          <input id="Form1_RevThumbSort" type="checkbox" title="Обратный порядок сортировки">
         </div>
       </div>
     </div>
