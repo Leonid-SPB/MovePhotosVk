@@ -1364,6 +1364,11 @@ var AMApi = {
       }
     }
 
+    function onAlwaysMoveAll() {
+      self.onSrcAlbumChanged();
+      self.onDstAlbumChanged();
+    }
+
     var progress = 0;
 
     function onProgressMove($thumbInfo) {
@@ -1381,6 +1386,11 @@ var AMApi = {
       }
 
       self.updSelectedNum();
+    }
+
+    function onProgressMoveAll(movedCnt) {
+      progress += +movedCnt;
+      self.$progressBar.progressbar("value", progress);
     }
 
     function onProgressSave($thumbInfo) {
@@ -1403,10 +1413,14 @@ var AMApi = {
       self.$progressBar.progressbar("option", "max", $thumbLists.length);
       self.$progressBar.progressbar("value", 0);
 
+      if (self.allSelected && (self.albumData.pagesCount > 1)) {
+        self.displayNote("Альбом слишком большой. Сохраняем только текущую страницу альбома...", Settings.AdviceHideAfter);
+      }
+
       self.taskInfo.abort = false;
       var selIdx = self.srcAlbumList.selectedIndex;
       self.doSaveAlbum(self.srcAlbumList.item(selIdx).text, $thumbLists, self.taskInfo).progress(onProgressSave).always(onAlwaysSave);
-    } else if (self.$goBtn.button("option", "label") == self.GoBtnLabelMove) {
+    } else if (!self.allSelected && (self.$goBtn.button("option", "label") == self.GoBtnLabelMove)) {
       //move
 
       //collect list of selected photos
@@ -1429,6 +1443,21 @@ var AMApi = {
       self.taskInfo.abort = false;
 
       self.doMovePhotosFast(ownerId, albumID, $thumbListm, self.taskInfo).done(onDoneMove).fail(onFailMove).always(onAlwaysMove).progress(onProgressMove);
+    } else if (self.allSelected && (self.$goBtn.button("option", "label") == self.GoBtnLabelMove)) {
+      //move ALL
+
+      //check album overflow
+      if (self.albumData.photosCount + Number(self.dstAlbumSizeEdit.value) > Settings.MaxAlbumPhotos) {
+        self.displayError("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
+        return;
+      }
+
+      //set new progress bar range
+      self.$progressBar.progressbar("option", "max", self.albumData.photosCount);
+      self.$progressBar.progressbar("value", 0);
+
+      self.taskInfo.abort = false;
+      self.doMovePhotosAll(self.srcAlbumOwnerList.value, self.srcAlbumList.value, self.dstAlbumList.value, self.taskInfo).done(onDoneMove).fail(onFailMove).always(onAlwaysMoveAll).progress(onProgressMoveAll);
     }
 
     //enable "Cancel" button
@@ -1491,13 +1520,58 @@ var AMApi = {
     return d.promise();
   },
 
+  doMovePhotosAll: function (ownerId, srcAid, targetAid, abortFlagRef) {
+    var self = AMApi;
+    var d = $.Deferred();
+
+    var errInfo = null;
+    var skipCnt = 0;
+
+    function movePhotoGroup() {
+      //stop if no more images left or the task was aborted
+      if (abortFlagRef.abort) {
+        if (!errInfo) { //no errors
+          d.resolve();
+        } else { //error info is not empty, something happened
+          d.reject(errInfo.error_msg);
+        }
+
+        return;
+      }
+
+      VkApiWrapper.moveAllPhotos(ownerId, srcAid, targetAid, skipCnt).fail(function (err) {
+        abortFlagRef.abort = true;
+        d.reject(err.error_msg);
+      }).done(function (rsp) {
+        if (+rsp.ph_cnt == 0) {
+          //no more photos in album
+          abortFlagRef.abort = true;
+        } else {
+          d.notify(+rsp.ph_cnt);
+        }
+
+        if (+rsp.err_cnt) {
+          errInfo = {
+            error_msg: "Не удалось переместить некоторые фотографии, попробуйте еще раз."
+          };
+          skipCnt += +rsp.err_cnt; //skip not movable photos
+        }
+
+        movePhotoGroup();
+      });
+    }
+
+    movePhotoGroup();
+
+    return d.promise();
+  },
+
   doMovePhotosFast: function (ownerId, targetAid, $thumbList, abortFlagRef) {
     var self = AMApi;
     var d = $.Deferred();
 
     var GroupSize = 25;
     var errInfo = null;
-    var trInProgress = 0;
 
     function getIds(obj) {
       return obj.data.vk_img.id;
@@ -1506,28 +1580,21 @@ var AMApi = {
     function movePhotoGroup() {
       //stop if no more images left or the task was aborted
       if (abortFlagRef.abort || !$thumbList.length) {
-        if (trInProgress) {
-          //some transactions have not finished yet, waiting...
-          setTimeout(movePhotoGroup, Settings.MovePhotoDelay);
-        } else {
-          if (!errInfo) { //no errors
-            d.resolve();
-          } else { //error info is not empty, something happened
-            d.reject(errInfo.error_msg);
-          }
+        if (!errInfo) { //no errors
+          d.resolve();
+        } else { //error info is not empty, something happened
+          d.reject(errInfo.error_msg);
         }
+
         return;
       }
 
       var thumbGrp = $thumbList.splice(0, GroupSize);
       var ids = thumbGrp.map(getIds);
-      ++trInProgress;
       VkApiWrapper.movePhotoList(ownerId, targetAid, ids).fail(function (err) {
         abortFlagRef.abort = true;
-        --trInProgress;
         d.reject(err.error_msg);
       }).done(function (rsp) {
-        --trInProgress;
         for (var i = 0; i < thumbGrp.length; ++i) {
           if (+rsp[i]) {
             d.notify(thumbGrp[i]);
@@ -1542,58 +1609,6 @@ var AMApi = {
     }
 
     movePhotoGroup();
-
-    return d.promise();
-  },
-
-  doMovePhotos: function (ownerId, targetAid, $thumbList, abortFlagRef) {
-    var self = AMApi;
-    var d = $.Deferred();
-
-    var trInProgress = 0;
-    var errInfo = null;
-
-    function movePhotoSingle() {
-      //stop if no more images left or the task was aborted
-      if (abortFlagRef.abort || !$thumbList.length) {
-        if (trInProgress) {
-          //some transactions have not finished yet, waiting...
-          setTimeout(movePhotoSingle, Settings.MovePhotoDelay);
-        } else {
-          if (!errInfo) { //no errors
-            d.resolve();
-          } else { //error info is not empty, something happened
-            d.reject(errInfo.error_msg, errInfo.thumbInfo);
-          }
-        }
-
-        return;
-      }
-
-      ++trInProgress;
-      var thumbInfo = $thumbList.shift();
-      VkApiWrapper.movePhoto({
-        owner_id: ownerId,
-        target_album_id: targetAid,
-        photo_id: thumbInfo.data.vk_img.id
-      }).done(function () {
-        --trInProgress;
-        //report progress (caller will remove photo from container and update progress bar)
-        d.notify(thumbInfo);
-      }).fail(function (error) {
-        --trInProgress;
-        //cancell any further tasks and set error information
-        abortFlagRef.abort = true;
-        errInfo = {
-          error_msg: error.error_msg,
-          thumbInfo: thumbInfo
-        };
-      });
-
-      setTimeout(movePhotoSingle, Settings.MovePhotoDelay);
-    }
-
-    movePhotoSingle();
 
     return d.promise();
   },

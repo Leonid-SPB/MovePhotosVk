@@ -353,11 +353,47 @@ return {count: tmp.count, items: rsp, rated: rtd};\n";
     var d = $.Deferred();
 
     // jshint multistr:true
-    var code_ = "var oid=%1,tid=%2,phl=[%3],rsp=[],i=0;while(i<phl.length){rsp.push(API.photos.move({owner_id:oid,target_album_id:tid,photo_id:phl[i]}));i=i+1;}return rsp;";
+    var code_ = "var oid=%1,tid=%2,phl=[%3],rsp=[],i=0;while(i<phl.length){rsp.push(!API.photos.move({owner_id:oid,target_album_id:tid,photo_id:phl[i]}).error_code);i=i+1;}return rsp;";
 
     var code = code_.replace("%1", ownerId);
     code = code.replace("%2", targetAlbumId);
     code = code.replace("%3", photoIds.join());
+
+    self.callVkApi("execute", {
+      code: code
+    }).fail(function (error) {
+      error.error_msg = "Не удалось переместить фотографии!<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
+
+  moveAllPhotos: function (ownerId, srcAlbumId, targetAlbumId, skipCnt, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    // jshint multistr:true
+    var code_ = "var oid=%1,sid=%2,tid=%3,skp=%4;\n\
+var phl,i=0,err_cnt=0;\n\
+phl = API.photos.get({owner_id:oid,album_id:sid,offset:skp,count:24});\n\
+if(phl.error_code)return phl;\n\
+while(i<phl.items.length){\n\
+  if (API.photos.move({owner_id:oid,target_album_id:tid,photo_id:phl.items[i].id}).error_code)\n\
+    err_cnt = err_cnt + 1;\n\
+  i=i+1;\n\
+}\n\
+return {ph_cnt:phl.items.length,err_cnt:err_cnt};";
+
+    var code = code_.replace("%1", ownerId);
+    code = code.replace("%2", srcAlbumId);
+    code = code.replace("%3", targetAlbumId);
+    code = code.replace("%4", skipCnt);
 
     self.callVkApi("execute", {
       code: code
