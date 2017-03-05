@@ -71,6 +71,7 @@ var AMApi = {
 
   selectedPhotosEdit: null,
   $selToggleAllBtn: null,
+  $selTogglePageBtn: null,
   $selToggleVisibleBtn: null,
 
   $dupSearchBtn: null,
@@ -108,6 +109,8 @@ var AMApi = {
   pageRefreshTimer: null,
   pageSlideTimer: null,
 
+  allSelected: false,
+
   saveTipDisplayed: false,
   //SaveTipDisplayedKey: "saveTipDisplayed",
   savedAlbumTipDisplayed: false,
@@ -144,6 +147,7 @@ var AMApi = {
 
     self.selectedPhotosEdit = document.getElementById("Form1_SelectedPhotos");
     self.$selToggleAllBtn = $("#Form1_SelToggleAll");
+    self.$selTogglePageBtn = $("#Form1_SelTogglePage");
     self.$selToggleVisibleBtn = $("#Form1_SelToggleVisible");
 
     self.sortingRuleList = document.getElementById("Form1_ThumbSortRule");
@@ -171,6 +175,7 @@ var AMApi = {
     self.$reloadPageBtn.click(self.onReloadPageClick);
     self.$createAlbumBtn.click(self.onCreateAlbumClick);
     self.$selToggleAllBtn.click(self.onSelToggleAll);
+    self.$selTogglePageBtn.click(self.onSelTogglePage);
     self.$selToggleVisibleBtn.click(self.onSelToggleVisible);
     $(self.revThumbSortChk).click(self.onRevThumbSortChkClick);
 
@@ -295,7 +300,6 @@ var AMApi = {
     }
 
     self.$goBtn.button(dstr);
-
     self.$reloadPageBtn.button("disable"); //always disable
     self.$showPrevBtn.button(dstr);
     self.$showNextBtn.button(dstr);
@@ -307,16 +311,33 @@ var AMApi = {
     if (self.srcAlbumList.value == Settings.DuplicatesAlbumId) {
       self.$selToggleVisibleBtn.button("disable");
       self.$selToggleAllBtn.button("disable");
+      self.$selTogglePageBtn.button("disable");
       self.$dupSearchBtn.button("disable");
       self.revThumbSortChk.disabled = 1;
       self.sortingRuleList.disabled = 1;
     } else {
       self.$selToggleAllBtn.button(dstr);
       self.$selToggleVisibleBtn.button(dstr);
+      self.$selTogglePageBtn.button(dstr);
       self.$dupSearchBtn.button(dstr);
       self.revThumbSortChk.disabled = dval;
       self.sortingRuleList.disabled = dval;
     }
+
+    if (self.allSelected) {
+      self.$showPrevBtn.button("disable");
+      self.$showNextBtn.button("disable");
+      self.$dupSearchBtn.button("disable");
+      self.revThumbSortChk.disabled = 1;
+      self.sortingRuleList.disabled = 1;
+    } else {
+      self.$showPrevBtn.button(dstr);
+      self.$showNextBtn.button(dstr);
+      self.$dupSearchBtn.button(dstr);
+      self.revThumbSortChk.disabled = dval;
+      self.sortingRuleList.disabled = dval;
+    }
+
   },
 
   updateSrcAlbumsListBox: function (albums) {
@@ -421,6 +442,7 @@ var AMApi = {
     var self = AMApi;
     var ddd = $.Deferred();
 
+    self.doSelectAll(false);
     self.displayNote(); //hide advice
     self.$thumbsContainer.ThumbsViewer("empty");
     self.updSelectedNum();
@@ -1312,24 +1334,34 @@ var AMApi = {
 
     function onAlwaysSave() {
       Utils.hideSpinner();
-      self.disableControls(0);
-      self.updSelectedNum();
 
       //update button label
       self.onDstAlbumChanged();
+
+      if (self.allSelected) {
+        self.doSelectAll(false);
+      } else {
+        self.disableControls(0);
+        self.updSelectedNum();
+      }
     }
 
     function onAlwaysMove() {
       Utils.hideSpinner();
-      self.disableControls(0);
-
-      self.invalidateAlbumPageCache();
 
       //update button label
       self.onDstAlbumChanged();
 
-      self.updSelectedNum();
+      self.invalidateAlbumPageCache();
+
       self.updateAlbumPageField();
+
+      if (self.allSelected) {
+        self.doSelectAll(false);
+      } else {
+        self.disableControls(0);
+        self.updSelectedNum();
+      }
     }
 
     var progress = 0;
@@ -1497,7 +1529,7 @@ var AMApi = {
       }).done(function (rsp) {
         --trInProgress;
         for (var i = 0; i < thumbGrp.length; ++i) {
-          if (rsp[i]) {
+          if (+rsp[i]) {
             d.notify(thumbGrp[i]);
           } else {
             errInfo = {
@@ -1700,8 +1732,35 @@ var AMApi = {
     self.onSrcAlbumChanged(true);
   },
 
+  doSelectAll: function (enable) {
+    var self = AMApi;
+
+    self.allSelected = !!enable;
+    if (self.allSelected) {
+      self.$selToggleAllBtn.addClass("ui-button-active");
+      self.$thumbsContainer.ThumbsViewer("selectAll");
+      self.$thumbsContainer.ThumbsViewer("selectionDisable", true);
+    } else {
+      self.$thumbsContainer.ThumbsViewer("selectionDisable", false);
+      self.$thumbsContainer.ThumbsViewer("selectNone");
+      self.$selToggleAllBtn.removeClass("ui-button-active");
+    }
+
+    self.disableControls(0);
+    self.updSelectedNum();
+  },
+
   onSelToggleAll: function () {
     var self = AMApi;
+    self.doSelectAll(!self.allSelected);
+  },
+
+  onSelTogglePage: function () {
+    var self = AMApi;
+
+    if (self.allSelected) {
+      self.doSelectAll(false);
+    }
     self.$thumbsContainer.ThumbsViewer("selectToggleAll");
     self.updSelectedNum();
   },
@@ -1709,19 +1768,23 @@ var AMApi = {
   onSelToggleVisible: function () {
     var self = AMApi;
 
-    //do nothing for duplicates
-    if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
-      return;
+    if (self.allSelected) {
+      self.doSelectAll(false);
     }
-
     self.$thumbsContainer.ThumbsViewer("selectToggleVisible");
     self.updSelectedNum();
   },
 
   updSelectedNum: function () {
     var self = AMApi;
-    var cnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount");
-    self.selectedPhotosEdit.value = cnt.selected + "/" + cnt.total;
+
+    if (self.allSelected) {
+      self.selectedPhotosEdit.value = " * / * ";
+    } else {
+      var cnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount");
+      self.selectedPhotosEdit.value = cnt.selected + "/" + cnt.total;
+    }
+
   }
 };
 
@@ -1740,6 +1803,7 @@ $(function () {
   });
 
   $("#Form1_SelToggleAll").button();
+  $("#Form1_SelTogglePage").button();
   $("#Form1_SelToggleVisible").button();
   $("#Form1_CreateAlbum").button();
   $("#Form1_ShowPrev").button({
