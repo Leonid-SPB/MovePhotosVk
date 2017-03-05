@@ -1380,11 +1380,6 @@ var AMApi = {
       //collect list of selected photos
       var $thumbListm = self.$thumbsContainer.ThumbsViewer("getThumbsData", true);
 
-      //reverse list when moving if self.revThumbSortChk.checked, to keep valid order
-      //if (self.revThumbSortChk.checked) {
-      //  $thumbListm.reverse();
-      //}
-
       //check album overflow
       if ($thumbListm.length + Number(self.dstAlbumSizeEdit.value) > Settings.MaxAlbumPhotos) {
         self.displayError("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
@@ -1693,7 +1688,10 @@ var AMApi = {
   onRevThumbSortChkClick: function () {
     var self = AMApi;
 
-    if (self.albumData.albumId == Settings.SavedAlbumId) {
+    if (!self.albumData.albumId) {
+      //not selected, nothing to do
+      return;
+    } else if (self.albumData.albumId == Settings.SavedAlbumId) {
       Utils.setCookieParam(self.RevSortCheckedKeySaved, +self.revThumbSortChk.checked);
     } else {
       Utils.setCookieParam(self.RevSortCheckedKeyAll, +self.revThumbSortChk.checked);

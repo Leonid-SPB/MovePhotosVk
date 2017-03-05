@@ -232,9 +232,9 @@ var VkAppUtils = {
 
   sortVkImgByLikes: function (vkImgList) {
     vkImgList.sort(function (a, b) {
-      if (a.likes.count < b.likes.count) {
+      if (a.likes.count > b.likes.count) {
         return -1;
-      } else if (a.likes.count > b.likes.count) {
+      } else if (a.likes.count < b.likes.count) {
         return 1;
       }
       return 0;
