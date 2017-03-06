@@ -68,6 +68,7 @@ var AMApi = {
   $albumPageField: null,
   $reloadPageBtn: null,
   $createAlbumBtn: null,
+  $reorderAlbumBtn: null,
 
   selectedPhotosEdit: null,
   $selToggleAllBtn: null,
@@ -138,6 +139,7 @@ var AMApi = {
     self.$progressBar = $("#Progressbar");
     self.$goBtn = $("#Form1_goBtn");
 
+    self.$reorderAlbumBtn = $("#Form1_ReorderAlbum");
     self.$showPrevBtn = $("#Form1_ShowPrev");
     self.$showNextBtn = $("#Form1_ShowNext");
     self.$albumPageField = $("#Form1_albumPageField");
@@ -165,6 +167,7 @@ var AMApi = {
     $(self.dstAlbumList).change(self.onDstAlbumChanged);
     self.$goBtn.click(self.onGoBtnClick);
     self.$dupSearchBtn.click(self.onDupSearchBtnClick);
+    self.$reorderAlbumBtn.click(self.onReorderAlbumBtnClick);
     self.$goBtn.button("option", "label", self.GoBtnLabelMove);
     self.$showNextBtn.mouseup(self.onSlideBtnUp).mousedown(function (event) {
       self.onSlideBtnDown(true);
@@ -313,6 +316,7 @@ var AMApi = {
       self.$selToggleAllBtn.button("disable");
       self.$selTogglePageBtn.button("disable");
       self.$dupSearchBtn.button("disable");
+      self.$reorderAlbumBtn.button("disable");
       self.revThumbSortChk.disabled = 1;
       self.sortingRuleList.disabled = 1;
     } else {
@@ -320,6 +324,7 @@ var AMApi = {
       self.$selToggleVisibleBtn.button(dstr);
       self.$selTogglePageBtn.button(dstr);
       self.$dupSearchBtn.button(dstr);
+      self.$reorderAlbumBtn.button(dstr);
       self.revThumbSortChk.disabled = dval;
       self.sortingRuleList.disabled = dval;
     }
@@ -1296,6 +1301,10 @@ var AMApi = {
     }
 
   },
+  
+  onReorderAlbumBtnClick: function() {
+    var self = AMApi;
+  },
 
   onGoBtnClick: function () {
     var self = AMApi;
@@ -1543,7 +1552,7 @@ var AMApi = {
         abortFlagRef.abort = true;
         d.reject(err.error_msg);
       }).done(function (rsp) {
-        if (+rsp.ph_cnt == 0) {
+        if (+rsp.ph_cnt === 0) {
           //no more photos in album
           abortFlagRef.abort = true;
         } else {
@@ -1817,6 +1826,7 @@ $(function () {
     value: 0
   });
 
+  $("#Form1_ReorderAlbum").button();
   $("#Form1_SelToggleAll").button();
   $("#Form1_SelTogglePage").button();
   $("#Form1_SelToggleVisible").button();

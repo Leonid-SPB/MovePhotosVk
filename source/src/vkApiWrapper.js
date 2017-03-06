@@ -347,6 +347,32 @@ return {count: tmp.count, items: rsp, rated: rtd};\n";
 
     return d.promise();
   },
+  
+  reorderPhotoList: function (ownerId,  photoIdAfter, photoIds, silent) {
+    var self = this;
+    var d = $.Deferred();
+
+    // jshint multistr:true
+    var code_ = "var oid=%1,pida=%2,phl=[%3],rsp=[],i=0;while(i<phl.length){rsp.push(!API.photos.reorderPhotos({owner_id:oid,after:pida,photo_id:phl[i]}).error_code);i=i+1;}return rsp;";
+
+    var code = code_.replace("%1", ownerId);
+    code = code.replace("%2", photoIdAfter);
+    code = code.replace("%3", photoIds.join());
+
+    self.callVkApi("execute", {
+      code: code
+    }).fail(function (error) {
+      error.error_msg = "Не удалось переупорядочить фотографии!<br /><small>" + error.error_msg + "</small>";
+      if (!silent) {
+        self.settings_.errorHandler(error.error_msg);
+      }
+      d.reject(error);
+    }).done(function (resp) {
+      d.resolve(resp);
+    });
+
+    return d.promise();
+  },
 
   movePhotoList: function (ownerId, targetAlbumId, photoIds, silent) {
     var self = this;
