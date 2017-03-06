@@ -68,7 +68,6 @@ var AMApi = {
   $albumPageField: null,
   $reloadPageBtn: null,
   $createAlbumBtn: null,
-  $reorderAlbumBtn: null,
 
   selectedPhotosEdit: null,
   $selToggleAllBtn: null,
@@ -84,6 +83,7 @@ var AMApi = {
   GoBtnLabelMove: "Переместить",
   GoBtnLabelSave: "Сохранить",
   GoBtnLabelCancel: "Отмена",
+  GoBtnLabelReorder: "Переупорядочить",
 
   SortingRuleOrder: "byOrder",
   SortingRuleDate: "byDate",
@@ -139,7 +139,6 @@ var AMApi = {
     self.$progressBar = $("#Progressbar");
     self.$goBtn = $("#Form1_goBtn");
 
-    self.$reorderAlbumBtn = $("#Form1_ReorderAlbum");
     self.$showPrevBtn = $("#Form1_ShowPrev");
     self.$showNextBtn = $("#Form1_ShowNext");
     self.$albumPageField = $("#Form1_albumPageField");
@@ -167,7 +166,6 @@ var AMApi = {
     $(self.dstAlbumList).change(self.onDstAlbumChanged);
     self.$goBtn.click(self.onGoBtnClick);
     self.$dupSearchBtn.click(self.onDupSearchBtnClick);
-    self.$reorderAlbumBtn.click(self.onReorderAlbumBtnClick);
     self.$goBtn.button("option", "label", self.GoBtnLabelMove);
     self.$showNextBtn.mouseup(self.onSlideBtnUp).mousedown(function (event) {
       self.onSlideBtnDown(true);
@@ -316,7 +314,6 @@ var AMApi = {
       self.$selToggleAllBtn.button("disable");
       self.$selTogglePageBtn.button("disable");
       self.$dupSearchBtn.button("disable");
-      self.$reorderAlbumBtn.button("disable");
       self.revThumbSortChk.disabled = 1;
       self.sortingRuleList.disabled = 1;
     } else {
@@ -324,7 +321,6 @@ var AMApi = {
       self.$selToggleVisibleBtn.button(dstr);
       self.$selTogglePageBtn.button(dstr);
       self.$dupSearchBtn.button(dstr);
-      self.$reorderAlbumBtn.button(dstr);
       self.revThumbSortChk.disabled = dval;
       self.sortingRuleList.disabled = dval;
     }
@@ -537,6 +533,10 @@ var AMApi = {
         //VkApiWrapper.storageSet(self.SaveTipDisplayedKey, "1");
       }
       self.dstAlbumSizeEdit.value = "0";
+    } else if (selIndex && (self.dstAlbumList.value == self.srcAlbumList.value)) {
+      self.displayNote(); //hide advice
+      self.dstAlbumSizeEdit.value = self.albumData.photosCount;
+      self.$goBtn.button("option", "label", self.GoBtnLabelReorder);
     } else if (selIndex > 1) {
       self.displayNote(); //hide advice
 
@@ -1301,10 +1301,6 @@ var AMApi = {
     }
 
   },
-  
-  onReorderAlbumBtnClick: function() {
-    var self = AMApi;
-  },
 
   onGoBtnClick: function () {
     var self = AMApi;
@@ -1320,15 +1316,12 @@ var AMApi = {
       return;
     }
 
-    if (self.dstAlbumList.value == self.srcAlbumList.value) {
-      self.displayWarn("Нельзя переместить фотографии в тот же самый альбом!");
-      return;
-    }
-
-    var selThumbsCnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount").selected;
-    if (!selThumbsCnt) { //no images selected
-      self.displayWarn("Не выбраны фотографии для перемещения/сохранения");
-      return;
+    if (self.$goBtn.button("option", "label") != self.GoBtnLabelReorder) {
+      var selThumbsCnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount").selected;
+      if (!selThumbsCnt) { //no images selected
+        self.displayWarn("Не выбраны фотографии для перемещения/сохранения");
+        return;
+      }
     }
 
     function onDoneMove() {
@@ -1467,6 +1460,14 @@ var AMApi = {
 
       self.taskInfo.abort = false;
       self.doMovePhotosAll(self.srcAlbumOwnerList.value, self.srcAlbumList.value, self.dstAlbumList.value, self.taskInfo).done(onDoneMove).fail(onFailMove).always(onAlwaysMoveAll).progress(onProgressMoveAll);
+    } else if (self.$goBtn.button("option", "label") == self.GoBtnLabelReorder) {
+      //set new progress bar range
+      self.$progressBar.progressbar("option", "max", self.albumData.photosCount);
+      self.$progressBar.progressbar("value", 0);
+
+      self.taskInfo.abort = false;
+      self.doSelectAll(true);
+      //self.doReorderPhotosAll(self.srcAlbumOwnerList.value, self.srcAlbumList.value, self.dstAlbumList.value, self.taskInfo).done(onDoneMove).fail(onFailMove).always(onAlwaysMoveAll).progress(onProgressMoveAll);
     }
 
     //enable "Cancel" button
@@ -1525,6 +1526,25 @@ var AMApi = {
     var title = "Фотографии из альбома \"" + albumTitle + "\"";
     var divPhotos = null;
     setTimeout(waitLoad, WaitPageLoadTmout);
+
+    return d.promise();
+  },
+
+  doReorderPhotosAll: function (ownerId, photoIds, abortFlagRef) {
+    var self = AMApi;
+    var d = $.Deferred();
+
+    function doReorder() {
+      //reorder
+      //.....WIP.....
+      d.resolve();
+    }
+
+    if (!self.albumPhotosCache) {
+      self.doLoadAlbumPhotosCache().done(doReorder);
+    } else {
+      doReorder();
+    }
 
     return d.promise();
   },
@@ -1695,6 +1715,32 @@ var AMApi = {
     $("#createAlbumDialog").dialog("open");
   },
 
+  doLoadAlbumPhotosCache: function () {
+    var self = AMApi;
+    var d = $.Deferred();
+
+    Utils.showSpinner();
+    self.disableControls(1);
+    self.displayNote("Загрузка списка изображений для сортировки...", 0);
+
+    var ownerId = self.srcAlbumOwnerList.value;
+    var albumId = self.srcAlbumList.value;
+    self.collectAlbumPhotos(ownerId, albumId, false).done(function (albumPhotos) {
+      Utils.hideSpinner();
+      self.disableControls(0);
+      self.displayNote();
+
+      //push original index to the list
+      for (var j = 0; j < albumPhotos.length; ++j) {
+        albumPhotos[j].idx = j;
+      }
+      self.albumPhotosCache = albumPhotos;
+      d.resolve();
+    }).fail(self.onFatalError);
+
+    return d.promise();
+  },
+
   onSortingRuleChanged: function () {
     var self = AMApi;
 
@@ -1715,26 +1761,7 @@ var AMApi = {
 
     if (!self.albumPhotosCache.length && self.albumData.photosCount) {
       //query all album photos to the second level cache and do sorting
-
-      Utils.showSpinner();
-      self.disableControls(1);
-      self.displayNote("Загрузка списка изображений для сортировки...", 0);
-
-      var ownerId = self.srcAlbumOwnerList.value;
-      var albumId = self.srcAlbumList.value;
-      self.collectAlbumPhotos(ownerId, albumId, false).done(function (albumPhotos) {
-        Utils.hideSpinner();
-        self.disableControls(0);
-        self.displayNote();
-
-        //push original index to the list
-        for (var j = 0; j < albumPhotos.length; ++j) {
-          albumPhotos[j].idx = j;
-        }
-        self.albumPhotosCache = albumPhotos;
-
-        doUpdate();
-      }).fail(self.onFatalError);
+      self.doLoadAlbumPhotosCache().done(doUpdate);
     } else {
       //already cached, do sorting only
       doUpdate();
@@ -1833,7 +1860,6 @@ $(function () {
     value: 0
   });
 
-  $("#Form1_ReorderAlbum").button();
   $("#Form1_SelToggleAll").button();
   $("#Form1_SelTogglePage").button();
   $("#Form1_SelToggleVisible").button();
