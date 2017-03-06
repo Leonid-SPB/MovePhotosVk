@@ -1817,6 +1817,13 @@ $(function () {
   Settings.vkUserId = Utils.sanitizeParameter(Utils.getParameterByName("viewer_id"));
   Settings.vkSid = Utils.sanitizeParameter(Utils.getParameterByName("sid"));
 
+  function isSubscribedToMe() {
+    var apiResult = Utils.sanitizeParameter(Utils.getParameterByName("api_result"));
+    var friendSts = apiResult.substr(-1);
+
+    return (friendSts == "1") || (friendSts == "3");
+  }
+
   VkAppUtils.validateApp(Settings.vkSid, Settings.VkAppLocation, Settings.RedirectDelay);
 
   $("#ThumbsViewer").ThumbsViewer({
@@ -1889,12 +1896,17 @@ $(function () {
         errorHandler: AMApi.displayError
       });
 
-      //preloader AD
-      if (typeof VKAdman !== 'undefined') {
-        var app_id = 3231070; //release: 3231070, beta: 3294304
-        var a = new VKAdman();
-        a.setupPreroll(app_id);
-        admanStat(app_id, Settings.vkUserId);
+      if (!isSubscribedToMe()) {
+        //preloader AD
+        if (typeof VKAdman !== 'undefined') {
+          var app_id = 3231070; //release: 3231070, beta: 3294304
+          var a = new VKAdman();
+          a.setupPreroll(app_id);
+          admanStat(app_id, Settings.vkUserId);
+        }
+      } else {
+        //remove ads container
+        $("#vk_ads_5443").remove();
       }
 
       VK.Widgets.Like("vk_like", {
@@ -1909,7 +1921,7 @@ $(function () {
       VkAppUtils.displayError("Не удалось инициализировать VK JS API! Попробуйте перезагрузить приложение.", "GlobalErrorBox");
       d.reject();
     },
-    '5.53'
+    '5.62'
   );
 
   //VK API init finished: query user data
