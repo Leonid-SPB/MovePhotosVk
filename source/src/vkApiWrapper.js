@@ -348,12 +348,21 @@ return {count: tmp.count, items: rsp, rated: rtd};\n";
     return d.promise();
   },
   
-  reorderPhotoList: function (ownerId,  photoIdAfter, photoIds, silent) {
+  reorderPhotoList: function (ownerId, photoIdAfter, photoIds, silent) {
     var self = this;
     var d = $.Deferred();
 
     // jshint multistr:true
-    var code_ = "var oid=%1,pida=%2,phl=[%3],rsp=[],i=0;while(i<phl.length){rsp.push(!API.photos.reorderPhotos({owner_id:oid,after:pida,photo_id:phl[i]}).error_code);i=i+1;}return rsp;";
+    var code_ = "\
+var oid=%1,pida=%2,phl=[%3],rsp,i=0;\
+while(i<phl.length){\
+  rsp = API.photos.reorderPhotos({owner_id:oid,after:pida,photo_id:phl[i]});\
+  pida = phl[i];\
+  if(rsp.error_code)\
+    return rsp;\
+  i=i+1;\
+}\
+return {count: phl.length};";
 
     var code = code_.replace("%1", ownerId);
     code = code.replace("%2", photoIdAfter);

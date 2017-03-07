@@ -43,7 +43,6 @@ var Settings = {
   LoadImgDelay: 10,
 
   RevSortOrderDefaultsSaved: true,
-  RevSortOrderDefaultsAll: false,
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
   vkUserId: null,
@@ -496,9 +495,12 @@ var AMApi = {
         self.duplicatesAlbumTipDisplayed = true;
         Utils.setCookieParam(self.DuplicatesAlbumTipDisplayedKey, duplicatesAlbumTipDisplayedTimes + 1);
       }
-      self.revThumbSortChk.checked = +Utils.getCookieParam(self.RevSortCheckedKeyAll, Settings.RevSortOrderDefaultsAll);
+
+      self.revThumbSortChk.checked = false;
     } else {
-      self.revThumbSortChk.checked = +Utils.getCookieParam(self.RevSortCheckedKeyAll, Settings.RevSortOrderDefaultsAll);
+      if (keepSortingRule !== true) {
+        self.revThumbSortChk.checked = false;
+      }
     }
 
     //update album data
@@ -513,6 +515,7 @@ var AMApi = {
 
       self.updateAlbumPageField();
       self.showPhotosPage().always(function () {
+        self.onDstAlbumChanged();
         ddd.resolve();
       });
     }).fail(onFail);
@@ -1431,6 +1434,8 @@ var AMApi = {
       //check album overflow
       if ($thumbListm.length + Number(self.dstAlbumSizeEdit.value) > Settings.MaxAlbumPhotos) {
         self.displayError("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
+        Utils.hideSpinner();
+        self.disableControls(0);
         return;
       }
 
@@ -1451,6 +1456,8 @@ var AMApi = {
       //check album overflow
       if (self.albumData.photosCount + Number(self.dstAlbumSizeEdit.value) > Settings.MaxAlbumPhotos) {
         self.displayError("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
+        Utils.hideSpinner();
+        self.disableControls(0);
         return;
       }
 
@@ -1463,11 +1470,20 @@ var AMApi = {
     } else if (self.$goBtn.button("option", "label") == self.GoBtnLabelReorder) {
       //set new progress bar range
       self.$progressBar.progressbar("option", "max", self.albumData.photosCount);
-      self.$progressBar.progressbar("value", 0);
+      self.$progressBar.progressbar("value", 1);
+      progress = 1;
+
+      if (!self.albumPhotosCache.length && !self.revThumbSortChk.checked || (self.albumData.photosCount < 2)) {
+        self.displayNote("Переупорядочивание не требуется (параметры сортировки не изменены).", Settings.NoteHideAfter);
+        self.$progressBar.progressbar("value", self.albumData.photosCount);
+        Utils.hideSpinner();
+        self.disableControls(0);
+        return;
+      }
 
       self.taskInfo.abort = false;
       self.doSelectAll(true);
-      //self.doReorderPhotosAll(self.srcAlbumOwnerList.value, self.srcAlbumList.value, self.dstAlbumList.value, self.taskInfo).done(onDoneMove).fail(onFailMove).always(onAlwaysMoveAll).progress(onProgressMoveAll);
+      self.doReorderPhotosAll(self.taskInfo).done(onDoneMove).fail(onFailMove).always(onAlwaysMoveAll).progress(onProgressMoveAll);
     }
 
     //enable "Cancel" button
@@ -1530,20 +1546,56 @@ var AMApi = {
     return d.promise();
   },
 
-  doReorderPhotosAll: function (ownerId, photoIds, abortFlagRef) {
+  doReorderPhotosAll: function (abortFlagRef) {
     var self = AMApi;
     var d = $.Deferred();
 
-    function doReorder() {
-      //reorder
-      //.....WIP.....
-      d.resolve();
+    var GroupSize = 25;
+    var errInfo = null;
+    var ownerId = self.srcAlbumOwnerList.value;
+
+    function getIds(obj) {
+      return obj.id;
     }
 
-    if (!self.albumPhotosCache) {
-      self.doLoadAlbumPhotosCache().done(doReorder);
+    function reorderPhotoGroup(idAfter, photoIdsList) {
+      //stop if no more images left or the task was aborted
+      if (abortFlagRef.abort || !photoIdsList.length) {
+        if (!errInfo) { //no errors
+          d.resolve();
+        } else { //error info is not empty, something happened
+          d.reject(errInfo.error_msg);
+        }
+        return;
+      }
+
+      var photosGrp = photoIdsList.splice(0, GroupSize);
+      VkApiWrapper.reorderPhotoList(ownerId, idAfter, photosGrp).fail(function (err) {
+        abortFlagRef.abort = true;
+        d.reject(err.error_msg);
+      }).done(function (rsp) {
+        d.notify(rsp.count);
+        reorderPhotoGroup(photosGrp.pop(), photoIdsList);
+      });
+    }
+
+    if (!self.albumPhotosCache.length) {
+      self.doLoadAlbumPhotosCache().done(function () {
+        //show spinner and disable controls again, as they enabled by doLoadAlbumPhotosCache()
+        Utils.showSpinner();
+        self.disableControls(1);
+        var plst = self.albumPhotosCache.map(getIds);
+        if (+self.revThumbSortChk.checked) {
+          plst.reverse();
+        }
+        reorderPhotoGroup(plst.shift(), plst);
+      });
     } else {
-      doReorder();
+      var plstx = self.albumPhotosCache.map(getIds);
+      if (+self.revThumbSortChk.checked) {
+        plstx.reverse();
+      }
+      reorderPhotoGroup(plstx.shift(), plstx);
     }
 
     return d.promise();
@@ -1776,8 +1828,6 @@ var AMApi = {
       return;
     } else if (self.albumData.albumId == Settings.SavedAlbumId) {
       Utils.setCookieParam(self.RevSortCheckedKeySaved, +self.revThumbSortChk.checked);
-    } else {
-      Utils.setCookieParam(self.RevSortCheckedKeyAll, +self.revThumbSortChk.checked);
     }
 
     self.onSrcAlbumChanged(true);
