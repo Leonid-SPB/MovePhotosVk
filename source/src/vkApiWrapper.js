@@ -347,7 +347,7 @@ return {count: tmp.count, items: rsp, rated: rtd};\n";
 
     return d.promise();
   },
-  
+
   reorderPhotoList: function (ownerId, photoIdAfter, photoIds, silent) {
     var self = this;
     var d = $.Deferred();
@@ -414,7 +414,8 @@ return {count: phl.length};";
     var d = $.Deferred();
 
     // jshint multistr:true
-    var code_ = "var oid=%1,sid=%2,tid=%3,skp=%4;\n\
+    var code_ = "\
+var oid=%1,sid=%2,tid=%3,skp=%4;\n\
 var phl,i=0,err_cnt=0;\n\
 phl = API.photos.get({owner_id:oid,album_id:sid,offset:skp,count:24});\n\
 if(phl.error_code)return phl;\n\
