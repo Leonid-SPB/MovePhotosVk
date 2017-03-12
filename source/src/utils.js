@@ -2,7 +2,7 @@
 	Licensed under the MIT license
 */
 
-/* globals $, Spinner, html_sanitize */
+/* globals $, Spinner, html_sanitize, Cookies */
 
 var Utils = {
   getParameterByName: function (name, rfr) {
@@ -61,6 +61,35 @@ var Utils = {
     }
 
     return lzn(cD.getDate()) + "." + lzn(cD.getMonth() + 1) + "." + cD.getFullYear() + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
+  },
+
+  /**
+   * Shuffles array in place.
+   * @param {Array} a items The array containing the items.
+   */
+  shuffle: function (a) {
+    var j, x, i;
+    for (i = a.length; i; i--) {
+      j = Math.floor(Math.random() * i);
+      x = a[i - 1];
+      a[i - 1] = a[j];
+      a[j] = x;
+    }
+  },
+
+  getCookieParam: function (paramName, defaultVal) {
+    var val = Cookies.get(paramName);
+    if (val === undefined) {
+      return defaultVal;
+    } else {
+      return val;
+    }
+  },
+
+  setCookieParam: function (paramName, val) {
+    Cookies.set(paramName, val, {
+      expires: 1000
+    });
   },
 
   //convert 2d array of arrays [[1 2],[3],[4 5]] to 1d array [1 2 3 4 5]

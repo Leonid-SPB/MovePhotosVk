@@ -131,7 +131,7 @@
             <div style="display: table-cell; text-align: center; vertical-align: middle;">
               <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_SrcAlbumList">
                 <option value="not selected">Альбом не выбран</option>
-                <option value="duplicates" class="italic_bold">Поиск дубликатов</option>
+                <option value="duplicates" class="italic_bold">Найденные дубликаты</option>
               </select>
               <input id="Form1_SrcAlbumSize" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="5" value="" title="Количество фотографий в альбоме">
             </div>
@@ -192,17 +192,19 @@
         </div>
         <div class="MainForm-body-div-col" style="text-align: left">
           <label>Выделить/убрать:&nbsp;</label>
-          <button id="Form1_SelToggleAll" class="MainForm-button-small" type="button" title="Выделить/убрать выделение для всех фотографий">все</button>
+          <button id="Form1_SelToggleAll" class="MainForm-button-small" type="button" title="Выделить/убрать выделение для всех фотографий альбома">все</button>
+          <button id="Form1_SelTogglePage" class="MainForm-button-small" type="button" title="Выделить/убрать выделение для фотографий на текущей странице">страница</button>
           <button id="Form1_SelToggleVisible" class="MainForm-button-small" type="button" title="Выделить/убрать выделение для текущих фотографий (16  фото)">текущие</button>
         </div>
         <div class="MainForm-body-div-col" style="text-align: right">
           <label for="Form1_SelectedPhotos">Выбрано:&nbsp;</label>
-          <input id="Form1_SelectedPhotos" class="ui-widget ui-widget-content ui-corner-all" readonly="readonly" type="text" size="9" value="0/0" title="Количество выбранных фотографий/всего фотографий на странице">
+          <input id="Form1_SelectedPhotos" class="ui-widget ui-widget-content ui-corner-all" style="text-align: center" readonly="readonly" type="text" size="9" value="0/0" title="Количество выбранных фотографий/всего фотографий на странице">
         </div>
       </div>
 
     </div>
 
+    <div id="SubscribeBox"></div>
     <div id="NoteBox"></div>
     <div id="GlobalErrorBox"></div>
 
@@ -217,8 +219,15 @@
           <button id="Form1_DupSearch" class="MainForm-button-small" type="button" title="Поиск дубликатов изображений">Поиск дубликатов</button>
         </div>
         <div class="MainForm-body-div-col" style="text-align: right">
-          <label for="Form1_RevThumbSort">Обратная сортировка</label>
-          <input id="Form1_RevThumbSort" type="checkbox" title="Обратная сортировка изображений на текущей странице">
+          <label for="Form1_ThumbSortRule">Сортировка: </label>
+          <select class="ui-corner-tl ui-corner-bl ui-widget ui-widget-content" size="1" id="Form1_ThumbSortRule" style="margin-right: 1em">
+            <option value="byOrder">по порядку</option>
+            <option value="byDate">по дате</option>
+            <option value="byLikes">по лайкам</option>
+            <option value="byRandom">перемешать</option>
+          </select>
+          <label for="Form1_RevThumbSort">Обратный порядок </label>
+          <input id="Form1_RevThumbSort" type="checkbox" title="Обратный порядок сортировки">
         </div>
       </div>
     </div>
@@ -232,7 +241,7 @@
       </div>
       <div class="footer-table-cell" style="padding-left: 10px; padding-right: 40px">
         <a style="color: #2a5885; cursor: pointer" href="//vk.com/id105876" target="_top">
-          <img src="//pp.vk.me/c636121/v636121876/137aa/b2tWvvFINR8.jpg" height="25px" width="25px">
+          <img src="https://pp.userapi.com/c636121/v636121876/137aa/b2tWvvFINR8.jpg" height="25px" width="25px">
         </a>
       </div>
       <div class="footer-table-cell" style="width: 180px" id="vk_like"></div>

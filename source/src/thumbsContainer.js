@@ -288,6 +288,8 @@
       //when job aborted, clean container
       $.when($data.busy_dfrd__).done(function () {
         $this.empty();
+        $data.disableSel = false;
+        $data.revSortOrder = false;
         $data.thumbsSelCnt__ = 0;
         $data.thumbsCnt__ = 0;
         $data.albumMap = {};
