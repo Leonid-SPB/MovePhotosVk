@@ -1,6 +1,6 @@
 New features:
-) reorder album photos
 ) select multiple photos using shift+click
+x) reorder album photos
 x) disable ads for subscribers
 x) move all photos (buttons to select "all", "current page", "visible on screen")
 x) sorting (by order, by date, by likes, shuffle)

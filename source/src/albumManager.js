@@ -297,19 +297,34 @@ var AMApi = {
   showSubscribeTooltip: function () {
     var self = AMApi;
     var divId = "SubscribeBox";
+    var showDelay = 20000;
     var hideAfter = Settings.AdviceHideAfter;
-    var noteEntity = "<div class='ui-corner-all' style='display: table; background: #f6f6fb; text-align: center; width: 98%; margin-left: auto ;margin-right: auto;'><div style='display: table-cell; vertical-align: middle; padding-right: 3em;'><p class='italic_bold'>Подпишись на автора, чтобы отключить рекламу в приложении!</p></div> <div style='display: table-cell; vertical-align: middle'><div id='vk_subscribe'></div></div></div>";
 
-    $("#" + divId).empty().hide(0).html(noteEntity).show("highlight");
-    if (hideAfter) {
-      var tm_ = setTimeout(function () {
-        $("#" + divId).hide("fade");
-      }, hideAfter);
-    }
+    // jshint multistr:true
+    var noteEntity = "\
+    <div class='ui-corner-all' style='display: table; background: #f6f6fb; text-align: center; width: 98%; margin-left: auto ;margin-right: auto;'>\
+      <div style='display: table-cell; vertical-align: middle; padding-right: 3em;'>\
+        <p class='italic_bold'>Подпишись на автора, чтобы отключить рекламу в приложении!</p>\
+      </div>\
+      <div style='display: table-cell; vertical-align: middle'>\
+        <div id='vk_subscribe'></div>\
+      </div>\
+      <div style='display: table-cell; vertical-align: top; text-align: right'>\
+      <div class='tooltip-close' onclick='$(\"#SubscribeBox\").hide(\"fade\");' title='Закрыть'>\
+      </div>\
+    </div>";
 
-    VK.Widgets.Subscribe("vk_subscribe", {
-      soft: 1
-    }, 105876);
+    setTimeout(function () {
+      $("#" + divId).empty().hide(0).html(noteEntity).show("highlight");
+      if (hideAfter) {
+        setTimeout(function () {
+          $("#" + divId).hide("fade");
+        }, hideAfter);
+      }
+      VK.Widgets.Subscribe("vk_subscribe", {
+        soft: 1
+      }, 105876);
+    }, showDelay);
   },
 
   disableControls: function (disable) {
