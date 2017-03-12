@@ -609,24 +609,37 @@ var VkAppUtils = {
     }, delay);
   },
 
+  isSubscribedToMe: function () {
+    var apiResult = Utils.sanitizeParameter(Utils.getParameterByName("api_result"));
+    var friendSts = apiResult.substr(-1);
+
+    return (friendSts == "1") || (friendSts == "3");
+  },
+
   IsWelcomedKey: "isWelcomed3",
   IsRatedKey: "isRated3",
+  IsWelcomed: "1",
+  IsSubscribeTtDisplayed: "2",
 
   welcomeCheck: function () {
     var d = $.Deferred();
 
     //request isWelcomed var
     VkApiWrapper.storageGet(VkAppUtils.IsWelcomedKey).done(function (data) {
-      if (data[VkAppUtils.IsWelcomedKey] == "1") { //already welcomed
-        d.resolve();
-        return;
+      if (data[VkAppUtils.IsWelcomedKey] === "") {
+        //if not welcomed yet -> show welcome dialog
+        $("#welcome_dialog").dialog("open").on("dialogclose", function (event, ui) {
+          VkApiWrapper.storageSet(VkAppUtils.IsWelcomedKey, VkAppUtils.IsWelcomed);
+          d.resolve(0);
+        });
+      } else if (data[VkAppUtils.IsWelcomedKey] == VkAppUtils.IsWelcomed) {
+        //already welcomed, display subscribe tooltip
+        d.resolve(VkAppUtils.IsWelcomed);
+        VkApiWrapper.storageSet(VkAppUtils.IsWelcomedKey, VkAppUtils.IsSubscribeTtDisplayed);
+      } else {
+        //already welcomed and subscribe tooltip displayed
+        d.resolve(VkAppUtils.IsSubscribeTtDisplayed);
       }
-
-      //if not welcomed yet -> show welcome dialog
-      $("#welcome_dialog").dialog("open").on("dialogclose", function (event, ui) {
-        VkApiWrapper.storageSet(VkAppUtils.IsWelcomedKey, "1");
-        d.resolve();
-      });
     });
 
     return d.promise();

@@ -212,10 +212,14 @@ var AMApi = {
     self.disableControls(1);
     self.busyFlag = true;
 
-    VkAppUtils.welcomeCheck().done(function () {
+    VkAppUtils.welcomeCheck().done(function (state) {
       //show spinner if still busy when dialog is closed
       if (self.busyFlag) {
         Utils.showSpinner();
+      }
+
+      if ((state == VkAppUtils.IsWelcomed) && (!VkAppUtils.isSubscribedToMe())) {
+        self.showSubscribeTooltip();
       }
     });
 
@@ -288,6 +292,24 @@ var AMApi = {
       VkAppUtils.displayError("Неизвестная ошибка, попробуйте перезагрузить приложение.", "GlobalErrorBox");
     }
     self.disableControls(1);
+  },
+
+  showSubscribeTooltip: function () {
+    var self = AMApi;
+    var divId = "SubscribeBox";
+    var hideAfter = Settings.AdviceHideAfter;
+    var noteEntity = "<div class='ui-corner-all' style='display: table; background: #f6f6fb; text-align: center; width: 98%; margin-left: auto ;margin-right: auto;'><div style='display: table-cell; vertical-align: middle; padding-right: 3em;'><p class='italic_bold'>Подпишись на автора, чтобы отключить рекламу в приложении!</p></div> <div style='display: table-cell; vertical-align: middle'><div id='vk_subscribe'></div></div></div>";
+
+    $("#" + divId).empty().hide(0).html(noteEntity).show("highlight");
+    if (hideAfter) {
+      var tm_ = setTimeout(function () {
+        $("#" + divId).hide("fade");
+      }, hideAfter);
+    }
+
+    VK.Widgets.Subscribe("vk_subscribe", {
+      soft: 1
+    }, 105876);
   },
 
   disableControls: function (disable) {
@@ -437,6 +459,7 @@ var AMApi = {
 
     self.doSelectAll(false);
     self.displayNote(); //hide advice
+    self.displayWarn(); //hide warn
     self.$thumbsContainer.ThumbsViewer("empty");
     self.updSelectedNum();
 
@@ -520,7 +543,7 @@ var AMApi = {
     var self = AMApi;
 
     var selIndex = self.dstAlbumList.selectedIndex;
-
+    self.displayWarn(); //hide warn
     if (selIndex == 1) { //save album
       self.$goBtn.button("option", "label", self.GoBtnLabelSave);
       if (!self.saveTipDisplayed) {
@@ -1021,6 +1044,10 @@ var AMApi = {
   onDupSearchBtnClick: function () {
     var self = AMApi;
 
+    //hide previous warnings and errors
+    self.displayWarn();
+    self.displayError();
+
     var srcSelIndex = self.srcAlbumList.selectedIndex;
     var ownerId = self.srcAlbumOwnerList.value;
     var albumId = self.srcAlbumList.value;
@@ -1253,6 +1280,10 @@ var AMApi = {
   onGoBtnClick: function () {
     var self = AMApi;
 
+    //hide previous warnings and errors
+    self.displayWarn();
+    self.displayError();
+
     if (self.$goBtn.button("option", "label") == self.GoBtnLabelCancel) {
       //abort current task
       self.taskInfo.abort = true;
@@ -1378,7 +1409,7 @@ var AMApi = {
 
       //check album overflow
       if ($thumbListm.length + Number(self.dstAlbumSizeEdit.value) > Settings.MaxAlbumPhotos) {
-        self.displayError("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
+        self.displayWarn("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
         Utils.hideSpinner();
         self.disableControls(0);
         return;
@@ -1400,7 +1431,7 @@ var AMApi = {
 
       //check album overflow
       if (self.albumData.photosCount + Number(self.dstAlbumSizeEdit.value) > Settings.MaxAlbumPhotos) {
-        self.displayError("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
+        self.displayWarn("Переполнение альбома, невозможно поместить в один альбом больше " + Settings.MaxAlbumPhotos + " фотографий.");
         Utils.hideSpinner();
         self.disableControls(0);
         return;
@@ -1840,7 +1871,6 @@ var AMApi = {
       var cnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount");
       self.selectedPhotosEdit.value = cnt.selected + "/" + cnt.total;
     }
-
   }
 };
 
@@ -1848,13 +1878,6 @@ var AMApi = {
 $(function () {
   Settings.vkUserId = Utils.sanitizeParameter(Utils.getParameterByName("viewer_id"));
   Settings.vkSid = Utils.sanitizeParameter(Utils.getParameterByName("sid"));
-
-  function isSubscribedToMe() {
-    var apiResult = Utils.sanitizeParameter(Utils.getParameterByName("api_result"));
-    var friendSts = apiResult.substr(-1);
-
-    return (friendSts == "1") || (friendSts == "3");
-  }
 
   VkAppUtils.validateApp(Settings.vkSid, Settings.VkAppLocation, Settings.RedirectDelay);
 
@@ -1927,7 +1950,7 @@ $(function () {
         errorHandler: AMApi.displayError
       });
 
-      if (!isSubscribedToMe()) {
+      if (!VkAppUtils.isSubscribedToMe()) {
         //preloader AD
         if (typeof VKAdman !== 'undefined') {
           var app_id = 3231070; //release: 3231070, beta: 3294304
