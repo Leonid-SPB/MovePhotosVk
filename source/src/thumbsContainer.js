@@ -394,7 +394,7 @@
     ///expects VK API image object
     createThumb_: function (vk_img) {
       var $this = $(this);
-      var $data = $(this).data(PluginName);
+      //var $data = $(this).data(PluginName);
       var thumb_parent = $("<div class='ThumbsViewer-thumb loading' />");
 
       var titleStr = thC.makeTitle_.call(this, vk_img);
