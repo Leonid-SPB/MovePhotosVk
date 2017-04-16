@@ -78,6 +78,10 @@ var AMApi = {
   revThumbSortChk: null,
   $thumbsContainer: null,
 
+  //number of hardcoded options in album lists 
+  srcAlbumListHardcodedOpts: 2, //(not selected, duplicates)
+  dstAlbumListHardcodedOpts: 2, //(not selected, save)
+
   busyFlag: true,
   GoBtnLabelMove: "Переместить",
   GoBtnLabelSave: "Сохранить",
@@ -375,7 +379,7 @@ var AMApi = {
     self.srcAlbumList.selectedIndex = 0;
 
     //remove old options, skip "not selected" and "duplicates" options
-    for (var i = self.srcAlbumList.length - 1; i >= 2; --i) {
+    for (var i = self.srcAlbumList.length - 1; i >= self.srcAlbumListHardcodedOpts; --i) {
       self.srcAlbumList.remove(i);
     }
     self.albumMap = {};
@@ -388,7 +392,7 @@ var AMApi = {
       if ((albums[i].owner_id > 0) && (albums[i].id == Settings.ProfileAlbumId)) {
         continue;
       } else if (albums[i].id < 0) {
-        index = 2;
+        index = self.srcAlbumListHardcodedOpts;
       }
       var opt = new Option(albums[i].title, albums[i].id, false, false);
       $(opt).data("AMApi", albums[i]);
@@ -402,7 +406,7 @@ var AMApi = {
 
     //remove old options
     //i >= 2 to skip "not selected" and "save locally" options
-    for (var i = self.dstAlbumList.length - 1; i >= 2; --i) {
+    for (var i = self.dstAlbumList.length - 1; i >= self.dstAlbumListHardcodedOpts; --i) {
       self.dstAlbumList.remove(i);
     }
 
@@ -410,7 +414,7 @@ var AMApi = {
     for (i = 0; i < albums.length; i++) {
       var index = null;
       if ((albums[i].owner_id > 0) && (albums[i].id == Settings.WallAlbumId)) {
-        index = 2;
+        index = self.dstAlbumListHardcodedOpts;
       } else if (albums[i].id < 0) {
         continue;
       }
@@ -1736,11 +1740,17 @@ var AMApi = {
       //push new album to list boxes
       self.albumsCache[ownerId].push(album);
 
+      var index;
       var opt = new Option(album.title, album.id, false, false);
       $(opt).data("AMApi", album);
-      self.srcAlbumList.add(opt, 1);
+      index = self.srcAlbumList.selectedIndex;
+      self.srcAlbumList.add(opt, self.srcAlbumListHardcodedOpts);
+      if (index >= self.srcAlbumListHardcodedOpts) {
+        //fix selected index after new option inserted
+        self.srcAlbumList.selectedIndex = index + 1;
+      }
 
-      var index = 2;
+      index = self.dstAlbumListHardcodedOpts;
       opt = new Option(album.title, album.id, false, false);
       self.dstAlbumList.add(opt, index);
       self.dstAlbumList.selectedIndex = index;
