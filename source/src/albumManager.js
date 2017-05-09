@@ -354,7 +354,11 @@ var AMApi = {
     self.$selToggleVisibleBtn.button(dstr);
     self.$selTogglePageBtn.button(dstr);
 
-    self.$reloadPageBtn.button("disable"); //always disable
+    if (self.albumData.dirty) {
+      self.$reloadPageBtn.button(dstr);
+    } else {
+      self.$reloadPageBtn.button("disable");
+    }
 
     if (self.srcAlbumList.value == Settings.DuplicatesAlbumId) {
       self.$selToggleVisibleBtn.button("disable");
@@ -756,7 +760,17 @@ var AMApi = {
       self.pageSlideTimer = null;
     }
 
-    self.refreshPhotosPage();
+    //cancell previously schedulled refresh
+    if (self.pageRefreshTimer) {
+      clearTimeout(self.pageRefreshTimer);
+      self.pageRefreshTimer = null;
+    }
+
+    //schedule/reschedule refreshRating()
+    self.pageRefreshTimer = setTimeout(function () {
+      self.pageRefreshTimer = null;
+      self.showPhotosPage();
+    }, Settings.PhotosPageRefreshDelay);
   },
 
   slideNextPage: function () {
@@ -766,6 +780,7 @@ var AMApi = {
     if (self.albumData.dirty) {
       self.albumData.dirty = false;
       self.$reloadPageBtn.button("disable");
+      delete self.albumData.pages[self.albumData.page];
       return false;
     }
 
@@ -784,6 +799,7 @@ var AMApi = {
     if (self.albumData.dirty) {
       self.albumData.dirty = false;
       self.$reloadPageBtn.button("disable");
+      delete self.albumData.pages[self.albumData.page];
       return false;
     }
 
@@ -793,22 +809,6 @@ var AMApi = {
       return true;
     }
     return false;
-  },
-
-  refreshPhotosPage: function () {
-    var self = AMApi;
-
-    //cancell previously schedulled refresh
-    if (self.pageRefreshTimer) {
-      clearTimeout(self.pageRefreshTimer);
-      self.pageRefreshTimer = null;
-    }
-
-    //schedule/reschedule refreshRating()
-    self.pageRefreshTimer = setTimeout(function () {
-      self.pageRefreshTimer = null;
-      self.showPhotosPage();
-    }, Settings.PhotosPageRefreshDelay);
   },
 
   invalidateAlbumPageCache: function () {
@@ -1356,13 +1356,6 @@ var AMApi = {
       self.invalidateAlbumPageCache();
 
       self.updateAlbumPageField();
-
-      if (self.allSelected) {
-        self.doSelectAll(false);
-      } else {
-        self.disableControls(0);
-        self.updSelectedNum();
-      }
     }
 
     function onAlwaysMoveAll() {
