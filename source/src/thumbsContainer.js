@@ -422,7 +422,7 @@
 
     ///used by createThumb_ to create title for the photo
     makeTitle_: function (vk_img) {
-      return 'Фото %1/%2:&nbsp; &#10084; ' + vk_img.likes.count;
+      return 'Фото %1/%2:&nbsp; &#10084; ' + vk_img.likes.count + ", &#x1f5e8; " + vk_img.comments.count + ", &#x1F56B; " + vk_img.reposts.count;
     },
 
     ///used by createThumb_ to create caption for the photo
