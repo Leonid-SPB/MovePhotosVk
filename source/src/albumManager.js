@@ -91,6 +91,7 @@ var AMApi = {
   SortingRuleOrder: "byOrder",
   SortingRuleDate: "byDate",
   SortingRuleLikes: "byLikes",
+  SortingRuleCommentsCnt: "byCommentsCnt",
   SortingRuleRandom: "byRandom",
 
   ThumbClass: '.ThumbsViewer-thumb',
@@ -362,7 +363,6 @@ var AMApi = {
 
     if (self.srcAlbumList.value == Settings.DuplicatesAlbumId) {
       self.$selToggleVisibleBtn.button("disable");
-      self.$selToggleAllBtn.button("disable");
       self.$selTogglePageBtn.button("disable");
       self.$dupSearchBtn.button("disable");
       self.revThumbSortChk.disabled = 1;
@@ -654,11 +654,10 @@ var AMApi = {
     }
 
     function showDuplicates() {
-      var ThumbClass = '.ThumbsViewer-thumb';
       var PluginName = 'ThumbsViewer';
       var MaxDescrLen = 200;
 
-      var $thumbs = self.$thumbsContainer.find(ThumbClass);
+      var $thumbs = self.$thumbsContainer.find(self.ThumbClass);
       var thumbsData = [];
       $thumbs.each(function () {
         thumbsData.push($(this).data(PluginName));
@@ -1806,6 +1805,8 @@ var AMApi = {
         VkAppUtils.sortVkImgByDate(self.albumPhotosCache);
       } else if (self.sortingRuleList.value == self.SortingRuleLikes) {
         VkAppUtils.sortVkImgByLikes(self.albumPhotosCache);
+      } else if (self.sortingRuleList.value == self.SortingRuleCommentsCnt) {
+        VkAppUtils.sortVkImgByCommentsCnt(self.albumPhotosCache);
       } else if (self.sortingRuleList.value == self.SortingRuleRandom) {
         Utils.shuffle(self.albumPhotosCache);
       } else {
@@ -1857,7 +1858,12 @@ var AMApi = {
 
   onSelToggleAll: function () {
     var self = AMApi;
-    self.doSelectAll(!self.allSelected);
+
+    if (self.srcAlbumList.value == Settings.DuplicatesAlbumId) {
+      self.selectToggleDuplicates();
+    } else {
+      self.doSelectAll(!self.allSelected);
+    }
   },
 
   onSelTogglePage: function () {
@@ -1877,6 +1883,27 @@ var AMApi = {
       self.doSelectAll(false);
     }
     self.$thumbsContainer.ThumbsViewer("selectToggleVisible");
+    self.updSelectedNum();
+  },
+
+  selectToggleDuplicates: function () {
+    var self = AMApi;
+
+    var cnt = self.$thumbsContainer.ThumbsViewer("getThumbsCount");
+    if (cnt.selected > 0) {
+      self.$thumbsContainer.ThumbsViewer("selectNone");
+    } else {
+      self.$thumbsContainer.ThumbsViewer("selectAll");
+
+      //deselect the first thumb in each duplicate group
+      var $dupGrps = self.$thumbsContainer.children("li");
+      
+      $dupGrps.each(function (index) {
+        var $childThumbs = $(this).find(self.ThumbClass);
+        self.$thumbsContainer.ThumbsViewer("selectToggle", $($childThumbs[0]));
+      });
+    }
+
     self.updSelectedNum();
   },
 

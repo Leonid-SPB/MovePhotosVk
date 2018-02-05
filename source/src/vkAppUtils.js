@@ -243,6 +243,19 @@ var VkAppUtils = {
     return vkImgList;
   },
 
+  sortVkImgByCommentsCnt: function (vkImgList) {
+    vkImgList.sort(function (a, b) {
+      if (a.comments.count > b.comments.count) {
+        return -1;
+      } else if (a.comments.count < b.comments.count) {
+        return 1;
+      }
+      return 0;
+    });
+
+    return vkImgList;
+  },
+
   sortVkImgByIndex: function (vkImgList) {
     vkImgList.sort(function (a, b) {
       if (a.idx < b.idx) {
