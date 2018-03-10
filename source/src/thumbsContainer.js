@@ -3,7 +3,7 @@
 */
 
 /* Thumbs Container */
-/* globals $, hs*/
+/* globals $, hs, Utils*/
 
 (function ($, hs) {
   var defaults = {
@@ -12,6 +12,7 @@
     LoadThumbDelay: 100,
     LoadThumbSldownThresh: 10,
     LoadThumbRetries: 3,
+    ThumgTitleTooltipLen: 100,
 
     VkPhotoPopupSettings: 'toolbar=yes,scrollbars=yes,resizable=yes,width=1024,height=600'
   };
@@ -394,7 +395,7 @@
     ///expects VK API image object
     createThumb_: function (vk_img) {
       var $this = $(this);
-      //var $data = $(this).data(PluginName);
+      var $data = $(this).data(PluginName);
       var thumb_parent = $("<div class='ThumbsViewer-thumb loading' />");
 
       var titleStr = thC.makeTitle_.call(this, vk_img);
@@ -412,7 +413,7 @@
       var zoomIcon = $('<div class="ThumbsViewer-zoomIco" />').append(aa);
 
       thumb_parent.append(zoomIcon);
-      thumb_parent.attr("title", "Выбрать фото");
+      thumb_parent.attr("title", Utils.html2Text(vk_img.text, $data.ThumgTitleTooltipLen));
       thumb_parent.data(PluginName, {
         vk_img: vk_img
       });
@@ -514,6 +515,8 @@
       return thC.getThumbsCount.apply(this, Array.prototype.slice.call(args, 1));
     } else if (method == "addThumbList") {
       return thC.addThumbList.apply(this, Array.prototype.slice.call(args, 1));
+    } else if (method == "empty") {
+      return thC.empty.apply(this, Array.prototype.slice.call(args, 1));
     }
 
     return this.each(function () {

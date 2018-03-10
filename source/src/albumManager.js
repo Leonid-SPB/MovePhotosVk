@@ -224,7 +224,7 @@ var AMApi = {
       }
 
       if ((state == VkAppUtils.IsWelcomed) && (!VkAppUtils.isSubscribedToMe())) {
-        self.showSubscribeTooltip();
+        //self.showSubscribeTooltip();
       }
     });
 
@@ -636,21 +636,25 @@ var AMApi = {
     }
 
     function showThumbs() {
-      self.$thumbsContainer.ThumbsViewer("empty");
-      self.$thumbsContainer.ThumbsViewer("addThumbList", self.albumData.pages[self.albumData.page]).done(function () {
-        self.updSelectedNum();
-
+      self.$thumbsContainer.ThumbsViewer("empty").done(function () {
         self.$thumbsContainer.ThumbsViewer("updateAlbumMap", self.albumMap);
+        self.$thumbsContainer.ThumbsViewer("addThumbList", self.albumData.pages[self.albumData.page]).done(function () {
+          self.updSelectedNum();
 
-        if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
-          showDuplicates();
-        }
+          if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
+            showDuplicates();
+          } else {
+            //add dividers with dates/likes/reposts
+            //collect all thumbs, go through all and add dividers before first in group
+          }
 
-        Utils.hideSpinner();
-        self.disableControls(0);
+          Utils.hideSpinner();
+          self.disableControls(0);
 
-        ddd.resolve();
+          ddd.resolve();
+        });
       });
+
     }
 
     function showDuplicates() {
@@ -1897,7 +1901,7 @@ var AMApi = {
 
       //deselect the first thumb in each duplicate group
       var $dupGrps = self.$thumbsContainer.children("li");
-      
+
       $dupGrps.each(function (index) {
         var $childThumbs = $(this).find(self.ThumbClass);
         self.$thumbsContainer.ThumbsViewer("selectToggle", $($childThumbs[0]));
