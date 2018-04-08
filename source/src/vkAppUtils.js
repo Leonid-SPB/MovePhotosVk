@@ -136,7 +136,7 @@ var VkAppUtils = {
     return groups;
   },
 
-  ///retreive from VK Api image object a link to image with desired size szLiterPrefs
+  ///retreive from VK Api image object a link to an image with desired size szLiterPrefs
   getSelSizeUrl: function (vk_img, szLiterPrefs) {
     var src_alt = "logo150.png";
 
@@ -160,6 +160,20 @@ var VkAppUtils = {
     }
 
     return src_alt;
+  },
+
+  ///retreive from VK Api image object a link to an image with smallest size
+  getVkImgSmallUrl: function (vk_img, alt_url) {
+    var src_alt = alt_url;
+
+    if ("photo_75" in vk_img) {
+      return vk_img.photo_75;
+    } else if ("photo_130" in vk_img) {
+      return vk_img.photo_130;
+    } else {
+      console.error("VkAppUtils::getVkImgSmallUrl() - can't find vk image urls, ids = " + vk_img.id + ", " + vk_img.album_id + ", " + vk_img.owner_id);
+      return src_alt;
+    }
   },
 
   getVkImgMaxSizeSrc: function (vk_img) {

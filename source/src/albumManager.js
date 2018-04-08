@@ -1013,8 +1013,7 @@ var AMApi = {
       if (loadImgQueue.length) {
         ++loadInProgressCnt;
         var vk_img = loadImgQueue.shift();
-        var imgSrc = Utils.fixHttpUrl(vk_img.photo_75);
-        //var imgSrc = Utils.fixHttpUrl(vk_img.photo_130);
+        var imgSrc = Utils.fixHttpUrl(vk_img.url);
 
         //slow down for retries
         //if (vk_img.loadAttempts) {
@@ -1109,12 +1108,24 @@ var AMApi = {
       self.onDstAlbumChanged();
     }
 
-    function onPhotosListLoaded(photosList) {
+    function onPhotosListLoaded(photosList_) {
       //enable "Cancel" button
       self.$goBtn.button("option", "label", self.GoBtnLabelCancel);
       self.$goBtn.button("enable");
 
       self.displayNote("Поиск дубликатов изображений: загрузка изображений и вычисление хэшей ...", 0);
+
+      //fix vk_img urls
+      var photosList = photosList_.filter(function (vk_img) {
+        var url = VkAppUtils.getVkImgSmallUrl(vk_img, "invalidURL");
+        if (url != "invalidURL") {
+          vk_img.url = url + "";
+          return true;
+        } else {
+          return false;
+        }
+      });
+
       self.$progressBar.progressbar("option", "max", photosList.length);
       self.$progressBar.progressbar("value", 0);
 
@@ -1289,7 +1300,7 @@ var AMApi = {
     function findDuplicatesByUrl(vkImgList) {
       for (var i = 0; i < vkImgList.length; ++i) {
         //use image file name as a hash
-        var fname = vkImgList[i].photo_75;
+        var fname = vkImgList[i].url;
         var hash = fname.substring(fname.lastIndexOf('/') + 1);
         vkImgList[i].hash = hash;
       }
