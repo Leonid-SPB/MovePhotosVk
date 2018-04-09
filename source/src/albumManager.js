@@ -554,7 +554,7 @@ var AMApi = {
 
       self.updateAlbumPageField();
       self.showPhotosPage().always(function () {
-        self.onDstAlbumChanged();
+        self.updateGoBtnLabel();
         ddd.resolve();
       });
     }).fail(onFail);
@@ -568,7 +568,6 @@ var AMApi = {
     var selIndex = self.dstAlbumList.selectedIndex;
     self.displayWarn(); //hide warn
     if (selIndex == 1) { //save album
-      self.$goBtn.button("option", "label", self.GoBtnLabelSave);
       if (!self.saveTipDisplayed) {
         self.displayNote("<strong>Совет:</sctrong><br /><ul><li>Открывшуюся страницу с фотографиями можно сохранить, используя сочетание клавиш CTRL+S.</li><li>Также, удобно загружать фотографии с помощью сервиса <a href='https://yandex.ru/support/disk/uploading.html#uploading__social-networks' target='_blank'><u>Яндекс Диск</u></a>.</li><li>&quot;Сохранение&quot; работает корректно только с браузерами Google Chrome и Mozilla Firefox!</li></ul>", Settings.AdviceHideAfter);
         self.saveTipDisplayed = true;
@@ -578,7 +577,6 @@ var AMApi = {
     } else if (selIndex && (self.dstAlbumList.value == self.srcAlbumList.value)) {
       self.displayNote(); //hide advice
       self.dstAlbumSizeEdit.value = self.albumData.photosCount;
-      self.$goBtn.button("option", "label", self.GoBtnLabelReorder);
     } else if (selIndex > 1) {
       self.displayNote(); //hide advice
 
@@ -603,10 +601,21 @@ var AMApi = {
         self.disableControls(0);
         self.dstAlbumSizeEdit.value = response.count;
       });
-      self.$goBtn.button("option", "label", self.GoBtnLabelMove);
     } else { //not selected
       self.displayNote(); //hide advice
       self.dstAlbumSizeEdit.value = "0";
+    }
+    self.updateGoBtnLabel();
+  },
+
+  updateGoBtnLabel: function () {
+    var self = AMApi;
+    var dstSelIndex = self.dstAlbumList.selectedIndex;
+    if (dstSelIndex == 1) { //save album
+      self.$goBtn.button("option", "label", self.GoBtnLabelSave);
+    } else if (dstSelIndex && (self.dstAlbumList.value == self.srcAlbumList.value)) {
+      self.$goBtn.button("option", "label", self.GoBtnLabelReorder);
+    } else {
       self.$goBtn.button("option", "label", self.GoBtnLabelMove);
     }
   },
