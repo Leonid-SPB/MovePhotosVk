@@ -652,9 +652,8 @@ var AMApi = {
 
           if (self.albumData.albumId == Settings.DuplicatesAlbumId) {
             showDuplicates();
-          } else {
-            //add dividers with dates/likes/reposts
-            //collect all thumbs, go through all and add dividers before first in group
+          } else if (self.sortingRuleList.value == self.SortingRuleDate) {
+            showDividers();
           }
 
           Utils.hideSpinner();
@@ -691,9 +690,7 @@ var AMApi = {
             var comments = (thumbsData[i].vk_img.comments.count) ? "<b>" + thumbsData[i].vk_img.comments.count + "</b>" : thumbsData[i].vk_img.comments.count;
             var reposts = (thumbsData[i].vk_img.reposts.count) ? "<b>" + thumbsData[i].vk_img.reposts.count + "</b>" : thumbsData[i].vk_img.reposts.count;
 
-            var cD = new Date(thumbsData[i].vk_img.date * 1000);
-            var dateStr = Utils.date2Str(cD);
-
+            var dateStr = VkAppUtils.getVkImgDateStr(thumbsData[i].vk_img);
             var maxSz = VkAppUtils.getVkImgMaxSizeDim(thumbsData[i].vk_img);
             var maxSzStr = maxSz.width + "x" + maxSz.height;
 
@@ -713,6 +710,33 @@ var AMApi = {
         } else {
           ++i;
         }
+      }
+    }
+
+    function showDividers() {
+      var PluginName = 'ThumbsViewer';
+
+      var $thumbs = self.$thumbsContainer.find(self.ThumbClass);
+      var thumbsData = [];
+      $thumbs.each(function () {
+        thumbsData.push($(this).data(PluginName));
+      });
+      $thumbs.detach();
+
+      var dateStr = "";
+      for (var i = 0; i < thumbsData.length;) {
+        var $li = $("<li />");
+        dateStr = VkAppUtils.getVkImgDateStr_yyyymmdd(thumbsData[i].vk_img);
+        
+        var $div_date = $("<div class='ThumbsViewer-date'>" + dateStr + "</div>");
+        
+        $li.append($div_date);
+        
+        while ((i < thumbsData.length) && (VkAppUtils.getVkImgDateStr_yyyymmdd(thumbsData[i].vk_img) == dateStr)) {
+          $li.append($thumbs[i]);
+          ++i;
+        }
+        self.$thumbsContainer.append($li);
       }
     }
 
@@ -1518,8 +1542,7 @@ var AMApi = {
       var vk_img = thumbInfo.data.vk_img;
       var src = VkAppUtils.getVkImgMaxSizeSrc(vk_img);
 
-      var cD = new Date(vk_img.date * 1000);
-      var createdStr = Utils.date2Str(cD);
+      var createdStr = VkAppUtils.getVkImgDateStr(vk_img);
       var text = vk_img.text ? $("<div>").text(vk_img.text).html() : "";
 
       var htmlStr = "";

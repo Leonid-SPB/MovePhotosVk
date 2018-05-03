@@ -183,6 +183,23 @@ hr {
   cursor: pointer;
 }
 
+.ThumbsViewer-date {
+  height: 127px;
+  width: 185px;
+  background-color: #fffeee;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 127px;
+  font-weight: bolder;
+  text-decoration: underline;
+  font-size: 2em;
+  border: none;
+  display: inline-block;
+  margin: 5px 5px 5px 5px;
+  position: relative;
+  cursor: pointer;
+}
+
 .ThumbsViewer-thumb.loading {
   /*background-image: url(graphics/loader.big.white.gif);*/
   background-size: 64px 64px;
