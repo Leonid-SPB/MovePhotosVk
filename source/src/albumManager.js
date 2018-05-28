@@ -1880,6 +1880,7 @@ var AMApi = {
       return;
     } else if (self.albumData.albumId == Settings.SavedAlbumId) {
       Utils.setCookieParam(self.RevSortCheckedKeySaved, +self.revThumbSortChk.checked);
+      Settings.RevSortOrderDefaultsSaved = self.revThumbSortChk.checked;
     }
 
     self.onSrcAlbumChanged(true);
