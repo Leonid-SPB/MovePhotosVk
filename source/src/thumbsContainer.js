@@ -3,7 +3,7 @@
 */
 
 /* Thumbs Container */
-/* globals $, hs, Utils*/
+/* globals $, hs, Utils, VkAppUtils*/
 
 (function ($, hs) {
   var defaults = {
@@ -12,7 +12,7 @@
     LoadThumbDelay: 100,
     LoadThumbSldownThresh: 10,
     LoadThumbRetries: 3,
-    ThumgTitleTooltipLen: 100,
+    ThumbTitleTooltipLen: 100,
 
     VkPhotoPopupSettings: 'toolbar=yes,scrollbars=yes,resizable=yes,width=1024,height=600'
   };
@@ -201,8 +201,21 @@
       }
     },
 
+    //checks if thumbnail is currently visible
+    isThumbVisible: function (thumb) {
+      var $this = $(this);
+      var $thumb = $(thumb);
+      var $parentDiv = $this.parent().first();
+      var viewportTop = $parentDiv.offset().top;
+      var viewportBottom = viewportTop + $parentDiv.height();
+      var elementTop = $thumb.offset().top;
+      var elementBottom = elementTop + $thumb.outerHeight();
+      return (elementBottom > viewportTop) && (elementTop < viewportBottom);
+    },
+
     ///for currently visible on screen: select all if any one is selected, deselect all if all are selected
     selectToggleVisible: function () {
+      var self = this;
       var $this = $(this);
       var $data = $this.data(PluginName);
 
@@ -211,11 +224,15 @@
       }
 
       var $thumbs = $this.find(ThumbClass);
+      $thumbs = $thumbs.filter(function (idx, el) {
+        return thC.isThumbVisible.call(self, el);
+      });
+
       if (!$thumbs.length) { //no thumbs in container
         return;
       }
 
-      //calculate which thumbs are currently visible based on 
+      /*//calculate which thumbs are currently visible based on 
       //scroll position and container/image geometry
       var $parentDiv = $this.parent().first();
       var divHeight = $parentDiv.height();
@@ -228,7 +245,7 @@
 
       var selFirstIndex = rowsScrolled * thumbsInRow;
       var selLastIndex = Math.min(selFirstIndex + rowsOnScreen * thumbsInRow, $thumbs.length);
-      $thumbs = $thumbs.slice(selFirstIndex, selLastIndex);
+      $thumbs = $thumbs.slice(selFirstIndex, selLastIndex);*/
 
       var thumbsSelCnt__ = 0;
       var thumbsTotal = 0;
@@ -413,7 +430,7 @@
       var zoomIcon = $('<div class="ThumbsViewer-zoomIco" />').append(aa);
 
       thumb_parent.append(zoomIcon);
-      thumb_parent.attr("title", Utils.html2Text(vk_img.text, $data.ThumgTitleTooltipLen));
+      thumb_parent.attr("title", Utils.html2Text(vk_img.text, $data.ThumbTitleTooltipLen));
       thumb_parent.data(PluginName, {
         vk_img: vk_img
       });
@@ -443,13 +460,14 @@
       // jshint multistr:true
       var caption = '\
 <div>\
-  <div class="highslide-caption-divinfo" style="text-align: left"><b>Альбом</b>:<i> %1</i></div><div class="highslide-caption-divinfo" style="text-align: right"><a onclick="%2">Оригинал фото</a></div>\
+  <div class="highslide-caption-divinfo" style="text-align: left"><b>Альбом</b>:<i> %1</i><br /><b>Дата</b>:<i> %2</i></div><div class="highslide-caption-divinfo" style="text-align: right"><a onclick="%3">Оригинал фото</a></div>\
 </div>\
-<div class="highslide-caption-descr">%3</div>';
+<div class="highslide-caption-descr">%4</div>';
 
       caption = caption.replace("%1", album);
-      caption = caption.replace("%2", onClickOrigUrl);
-      caption = caption.replace("%3", vk_img.text);
+      caption = caption.replace("%2", VkAppUtils.getVkImgDateStr(vk_img));
+      caption = caption.replace("%3", onClickOrigUrl);
+      caption = caption.replace("%4", vk_img.text);
 
       return caption;
     },

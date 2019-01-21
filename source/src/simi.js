@@ -1,7 +1,7 @@
 /** See original code at GIT Hub: bitlyfied/js-image-similarity/simi.js */
 
 var ImgPercHash = (function () {
-  var SIMILARITY_THRESHOLD = 0.15;
+  var SIMILARITY_THRESHOLD = 0.13;
   var HASH_UNIT = 32; //bits
 
   // Returns an array with averaged colors (shades of gray)

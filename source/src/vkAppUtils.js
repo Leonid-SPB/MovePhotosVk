@@ -162,6 +162,27 @@ var VkAppUtils = {
     return src_alt;
   },
 
+  ///retreive from VK Api image object a date, format string as "yyyy.mm.dd hh:mm:ss"
+  getVkImgDateStr: function (vk_img) {
+    //add leading zero
+    function lzn(num) {
+      return (num < 10) ? "0" + num : "" + num;
+    }
+    var cD = new Date(vk_img.date * 1000);
+    return cD.getFullYear() + "." + lzn(cD.getMonth() + 1) + "." + lzn(cD.getDate()) + " " + lzn(cD.getHours()) + ":" + lzn(cD.getMinutes()) + ":" + lzn(cD.getSeconds());
+  },
+
+  ///retreive from VK Api image object a date, format string as "yyyy.mm.dd"
+  getVkImgDateStr_yyyymmdd: function (vk_img) {
+    //add leading zero
+    function lzn(num) {
+      return (num < 10) ? "0" + num : "" + num;
+    }
+    
+    var cD = new Date(vk_img.date * 1000);
+    return cD.getFullYear() + "." + lzn(cD.getMonth() + 1) + "." + lzn(cD.getDate());
+  },
+
   ///retreive from VK Api image object a link to an image with smallest size
   getVkImgSmallUrl: function (vk_img, alt_url) {
     var src_alt = alt_url;
