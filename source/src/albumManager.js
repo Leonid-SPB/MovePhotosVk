@@ -2068,7 +2068,7 @@ $(function () {
       VkAppUtils.displayError("Не удалось инициализировать VK JS API! Попробуйте перезагрузить приложение.", "GlobalErrorBox");
       d.reject();
     },
-    '5.62'
+    '5.60'
   );
 
   //VK API init finished: query user data
