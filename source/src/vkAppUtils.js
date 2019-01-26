@@ -406,7 +406,7 @@ var VkAppUtils = {
           ddd.notify(response.items.length, photosFiltered.length);
 
           offset = offset + response.items.length;
-          if ((offset < response.count) && (countLeft > 0)) {
+          if ((offset < response.count) && (countLeft > 0) && response.items.length) {
             //request next chunk
             getNextChunk__(offset, countLeft - response.items.length);
           } else {
@@ -518,7 +518,7 @@ var VkAppUtils = {
           ddd.notify(response.items.length, photosFiltered.length);
 
           offset = offset + response.items.length;
-          if ((offset < response.count) && (countLeft > 0)) {
+          if ((offset < response.count) && (countLeft > 0) && response.items.length) {
             //request next chunk
             getNextChunk__(offset, countLeft - response.items.length);
           } else {
