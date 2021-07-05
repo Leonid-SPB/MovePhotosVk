@@ -14,17 +14,17 @@
   <title>Перенос Фото 3.7</title>
 
   <link href="normalize.css" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/cupertino/jquery-ui.min.css">
+  <link href="jquery-ui.min.css" rel="stylesheet" type="text/css" />
   <link href="jquery-ui.theme.css" rel="stylesheet" type="text/css" />
   <link href="albumManager.css" rel="stylesheet" type="text/css" />
   <link href="highslide.css" rel="stylesheet" type="text/css" />
 
-  <script src="HackTimer.min.js" type="text/javascript" charset="utf-8"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
-  <script src="//ad.mail.ru/static/vkadman.min.js"></script>
-  <script src="//js.appscentrum.com/scr/preroll.js"></script>
-  <script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
+  <script type="text/javascript" src="HackTimer.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="jquery.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="jquery-ui.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="//vk.com/js/api/xd_connection.js?2" charset="utf-8"></script>
+  <script type="text/javascript" src="//ad.mail.ru/static/admanhtml/rbadman-html5.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="//vk.com/js/api/adman_init.js" charset="utf-8"></script>
 
   <!--JSFILES-->
   <script src="spin.js" type="text/javascript" charset="utf-8"></script>
@@ -40,6 +40,28 @@
   <script src="albumManager.js" type="text/javascript" charset="utf-8"></script>
   <!--EOF-JSFILES-->
 </head>
+
+<!-- Release ADs -->
+<script>
+  window.addEventListener('load', function() {
+    var user_id = Utils.getParameterByName("viewer_id");   // user's id
+    var app_id = 3231070; // your app's id
+    admanInit({
+      user_id: user_id,
+      app_id: app_id,
+      type: 'preloader'         // 'preloader' or 'rewarded' (default - 'preloader')
+      // params: {preview: 1}   // to verify the correct operation of advertising
+    }, onAdsReady, onNoAds);
+    function onAdsReady(adman) {
+      adman.onStarted(function () {});
+      adman.onCompleted(function() {});
+      adman.onSkipped(function() {});
+      adman.onClicked(function() {});
+      adman.start('preroll');
+    };
+    function onNoAds() {};
+  });
+</script>
 
 <body>
   <div id="vk_ads_5443"></div>
@@ -64,7 +86,7 @@
         var scriptElem = document.createElement('script');
         scriptElem.type = 'text/javascript';
         scriptElem.async = true;
-        scriptElem.src = protocol + '//vk.com/js/api/openapi.js?130';
+        scriptElem.src = protocol + '//vk.com/js/api/openapi.js?168';
         adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
       }
     }, 0);
@@ -88,7 +110,7 @@
 		  var scriptElem = document.createElement('script');
 		  scriptElem.type = 'text/javascript';
 		  scriptElem.async = true;
-		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?130';
+		  scriptElem.src = protocol + '//vk.com/js/api/openapi.js?168';
 		  adsElem.parentNode.insertBefore(scriptElem, adsElem.nextSibling);
 		}
 	  }, 0);

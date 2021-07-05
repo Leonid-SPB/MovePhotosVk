@@ -2043,19 +2043,6 @@ $(function () {
         errorHandler: AMApi.displayError
       });
 
-      if (!VkAppUtils.isSubscribedToMe()) {
-        //preloader AD
-        if (typeof VKAdman !== 'undefined') {
-          var app_id = 3231070; //release: 3231070, beta: 3294304
-          var a = new VKAdman();
-          a.setupPreroll(app_id);
-          admanStat(app_id, Settings.vkUserId);
-        }
-      } else {
-        //remove ads container
-        $("#vk_ads_5443").remove();
-      }
-
       VK.Widgets.Like("vk_like", {
         type: "button",
         height: 24
