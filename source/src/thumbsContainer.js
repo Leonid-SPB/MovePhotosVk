@@ -482,11 +482,7 @@
       var src_alt = "logo150.png";
 
       if (("sizes" in vk_img) && vk_img.sizes.length) {
-        src_alt = vk_img.sizes[0].src;
-      } else if ("photo_130" in vk_img) {
-        return vk_img.photo_130;
-      } else if ("photo_75" in vk_img) {
-        return vk_img.photo_75;
+        src_alt = vk_img.sizes[0].url;
       } else {
         console.log(PluginName + ":getSelSizeUrl() - can't find vk image urls!");
         return src_alt;
@@ -495,7 +491,7 @@
       for (var j = 0; j < szLiterPrefs.length; ++j) {
         for (var i = 0; i < vk_img.sizes.length; ++i) {
           if (vk_img.sizes[i].type == szLiterPrefs[j]) {
-            return vk_img.sizes[i].src;
+            return vk_img.sizes[i].url;
           }
         }
       }

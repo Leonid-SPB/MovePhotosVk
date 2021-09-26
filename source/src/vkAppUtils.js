@@ -141,11 +141,7 @@ var VkAppUtils = {
     var src_alt = "logo150.png";
 
     if (("sizes" in vk_img) && vk_img.sizes.length) {
-      src_alt = vk_img.sizes[0].src;
-    } else if ("photo_130" in vk_img) {
-      return vk_img.photo_130;
-    } else if ("photo_75" in vk_img) {
-      return vk_img.photo_75;
+      src_alt = vk_img.sizes[0].url;
     } else {
       console.error("VkAppUtils::getSelSizeUrl() - can't find vk image urls!");
       return src_alt;
@@ -154,7 +150,7 @@ var VkAppUtils = {
     for (var j = 0; j < szLiterPrefs.length; ++j) {
       for (var i = 0; i < vk_img.sizes.length; ++i) {
         if (vk_img.sizes[i].type == szLiterPrefs[j]) {
-          return vk_img.sizes[i].src;
+          return vk_img.sizes[i].url;
         }
       }
     }
@@ -185,15 +181,12 @@ var VkAppUtils = {
 
   ///retreive from VK Api image object a link to an image with smallest size
   getVkImgSmallUrl: function (vk_img, alt_url) {
-    var src_alt = alt_url;
-
-    if ("photo_75" in vk_img) {
-      return vk_img.photo_75;
-    } else if ("photo_130" in vk_img) {
-      return vk_img.photo_130;
+    var url = VkAppUtils.getSelSizeUrl(vk_img, ['s', 'm', 'o', 'p']);
+    if (url != "logo150.png") {
+        return url;
     } else {
       console.error("VkAppUtils::getVkImgSmallUrl() - can't find vk image urls, ids = " + vk_img.id + ", " + vk_img.album_id + ", " + vk_img.owner_id);
-      return src_alt;
+      return alt_url;
     }
   },
 
@@ -202,7 +195,7 @@ var VkAppUtils = {
     var sz = 0;
     for (var i = 0; i < vk_img.sizes.length; ++i) {
       if (vk_img.sizes[i].width >= sz) {
-        src = vk_img.sizes[i].src;
+        src = vk_img.sizes[i].url;
         sz = vk_img.sizes[i].width;
       }
     }
