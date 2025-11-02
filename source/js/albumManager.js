@@ -7,6 +7,7 @@
 
 var Settings = {
   VkAppLocation: "https://vk.com/movephotos3",
+  VkAppID: 54291183,
 
   GetPhotosChunksSz: 200,
   MaxTotalPhotos: 1000000,
@@ -45,8 +46,7 @@ var Settings = {
   RevSortOrderDefaultsSaved: true,
   QueryUserFields: "first_name,last_name,screen_name,first_name_gen,last_name_gen",
 
-  vkUserId: null,
-  vkSid: null
+  vkUserId: null
 };
 
 /* Album manager */
@@ -1969,10 +1969,9 @@ var AMApi = {
 
 //Initialize application
 $(function () {
-  Settings.vkUserId = Utils.sanitizeParameter(Utils.getParameterByName("viewer_id"));
-  Settings.vkSid = Utils.sanitizeParameter(Utils.getParameterByName("sid"));
+  Settings.vkUserId = Utils.sanitizeParameter(Utils.getParameterByName("vk_user_id"));
 
-  VkAppUtils.validateApp(Settings.vkSid, Settings.VkAppLocation, Settings.RedirectDelay);
+  //VkAppUtils.validateApp(Settings.vkUserId, Settings.VkAppLocation, Settings.RedirectDelay);
 
   $("#ThumbsViewer").ThumbsViewer({
     disableSel: false
@@ -2035,32 +2034,54 @@ $(function () {
 
   Utils.showSpinner();
 
+  // VK Widgets init
+  VK.init({apiId: Settings.VkAppID, onlyWidgets: true});
+  VK.Widgets.Like("vk_like", {type: "button", height: 24});
+ 
+  // VK Bridge JS API init
   var d = $.Deferred();
-  VK.init(
-    function () {
+  vkBridge.send("VKWebAppInit", {})
+  .then((data) => { 
+    if (data.result) {
       // API initialization succeeded
-      VkApiWrapper.init({
-        errorHandler: AMApi.displayError
-      });
-
-      VK.Widgets.Like("vk_like", {
-        type: "button",
-        height: 24
-      }, 500);
-
       d.resolve();
-    },
-    function () {
-      // API initialization failed
-      VkAppUtils.displayError("Не удалось инициализировать VK JS API! Попробуйте перезагрузить приложение.", "GlobalErrorBox");
+    } else {
+      VkAppUtils.displayError("Не удалось инициализировать VK Bridge JS API! Попробуйте перезагрузить приложение.", "GlobalErrorBox");
       d.reject();
-    },
-    '5.131'
-  );
+    }
+  })
+  .catch((error) => {
+    // API initialization failed
+    console.log(error);
+    VkAppUtils.displayError("Не удалось инициализировать VK Bridge JS API! Попробуйте перезагрузить приложение.", "GlobalErrorBox");
+    d.reject();
+  });
 
-  //VK API init finished: query user data
+  // VK Bridge API init finished: get auth token
+  var dd = $.Deferred();
   d.done(function () {
+    vkBridge.send("VKWebAppGetAuthToken", {app_id: Settings.VkAppID, scope: 'status,photos'})
+    .then((data) => { 
+      if (data.access_token) {
+        // AuthToken retrieval succeeded
+        VkApiWrapper.init({errorHandler: AMApi.displayError, authToken: data.access_token});
+        dd.resolve();
+      } else {
+        VkAppUtils.displayError("Не удалось получить токен авторизации для VK API! Попробуйте перезагрузить приложение.", "GlobalErrorBox");
+        dd.reject();
+      }
+    })
+    .catch((error) => {
+      // AuthToken retrieval failed
+      console.log(error);
+      VkAppUtils.displayError("Не удалось получить токен авторизации для VK API! Попробуйте перезагрузить приложение.", "GlobalErrorBox");
+      dd.reject();
+    });
     Utils.hideSpinner();
+  });
+
+  // Finally query user info
+  dd.done(function () {
     AMApi.init();
   });
 });

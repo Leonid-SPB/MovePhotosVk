@@ -1,1 +1,0 @@
-method=friends.areFriends&user_ids=105876&need_sign=0&format=json&v=5.62

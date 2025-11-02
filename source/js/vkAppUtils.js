@@ -640,8 +640,8 @@ var VkAppUtils = {
     return ddd.promise();
   },
 
-  validateApp: function (vkSid, appLocation, delay) {
-    if (vkSid) { //looks like a valid run
+  validateApp: function (vkUserId, appLocation, delay) {
+    if (vkUserId) { //looks like a valid run
       return;
     }
 

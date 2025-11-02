@@ -1,0 +1,16 @@
+# New features:
+- select multiple photos using shift+click
+- progress bar label?
+
+# Bugs:
+- hide tagged photos album
+- mobile version user interface
+
+# Etc:
+- update help wiki page
+- style tuning: better loadding gif, fonts, etc...
+- video "how to use"
+
+# No go:
+- arrow bg image for album select form
+- donate button (disable ads)

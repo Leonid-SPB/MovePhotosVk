@@ -1,4 +1,4 @@
-/** Copyright (c) 2012-2016 Leonid Azarenkov
+/** Copyright (c) 2012-2025 Leonid Azarenkov
 	Licensed under the MIT license
 */
 
@@ -6,6 +6,9 @@
 
 var VkApiWrapper = {
   defaults_: {
+    authToken: '',
+    apiVersion: '5.199',
+
     //allowed: 3 requests in 1000 ms
     apiMaxCallsCount: 3,
     apiMaxCallsPeriod: 1000,
@@ -67,24 +70,51 @@ var VkApiWrapper = {
           }, timeout);
         }
 
-        VK.api(vkApiMethod, methodParams, function (data) {
-          //don't resolve/reject again on duplicate request
+        $.extend(methodParams, {
+          v: self.settings_.apiVersion,
+          access_token: self.settings_.authToken
+        });
+        vkBridge.send('VKWebAppCallAPIMethod', {
+          method: vkApiMethod,
+          params: methodParams
+        })
+        .then((data) => { 
+          // don't resolve/reject again on duplicate request
           if (d.state() !== "pending") {
             return;
           }
 
           if ("response" in data) {
             d.resolve(data.response);
-          } else if ("error" in data) {
-            console.log("VkApiWrapper: " + data.error.error_msg);
-            d.reject(data.error);
           } else {
-            var e = {
-              error_msg: "VK.API call failed, unknow error!"
+            var err = {
+              error_msg: "VK.API call failed, unknow error!",
+              response: data
             };
-            console.log(e.error_msg);
-            d.reject(e);
+            console.log("VkApiWrapper: " + err.error_msg + ' Response: ' + JSON.stringify(data));
+            d.reject(err);
           }
+        })
+        .catch((error) => {
+            // don't resolve/reject again on duplicate request
+            if (d.state() !== "pending") {
+              return;
+            }
+            var err_descr = "Unknown error.";
+            if ("error_reason" in error.error_data) {
+              err_descr = error.error_data.error_reason;
+            } else if ("error_msg" in error.error_data) {
+              err_descr = error.error_data.error_msg;
+            }
+            if ("error_description" in error.error_data) {
+              err_descr = err_descr + " " + error.error_data.error_description;
+            }
+            var err = {
+              error_msg: "VK.API call failed, " + err_descr,
+              response: error
+            };
+            console.log("VkApiWrapper: " + err.error_msg);
+            d.reject(err);
         });
       });
     }

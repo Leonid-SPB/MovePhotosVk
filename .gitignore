@@ -1,5 +1,12 @@
 /doc/etc/
-/prod
-/lib
-/source/.ftpsync_settings
-/scripts/log.txt
+/build/
+/lib/
+/scripts/
+/node_modules/
+
+*.log
+*.tmp
+*.bak
+*.swp
+build.zip
+doc/dev_notes.txt

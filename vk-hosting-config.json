@@ -1,0 +1,9 @@
+{
+  "static_path": "build",
+  "app_id": 54291183,
+  "endpoints": {
+    "mobile": "albumManager3.html",
+    "web": "albumManager3.html",
+    "mvk": "albumManager3.html"
+  }
+}

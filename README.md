@@ -8,7 +8,7 @@
 * search duplicates in selected album or in all photos;
 * works for groups where user is admin, editor or moderator.
 
-### App link at VK.com https://vk.com/movephotos3, 295K installs
+### App link at VK.com https://vk.com/movephotos3, 650K installs
 
 ### Screenshots
 

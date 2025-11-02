@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@vkontakte/vk-bridge": "^2.13.0",
+    "@vkontakte/vk-miniapps-deploy": "^1.0.1"
+  },
+  "scripts": {
+    "build": "scripts/build.sh",
+    "predeploy": "npm run build",
+    "deploy": "vk-miniapps-deploy"
+  },
+  "homepage": "."
+}
