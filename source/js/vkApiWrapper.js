@@ -39,6 +39,19 @@ var VkApiWrapper = {
     this.rateLimiter_ = new RateLimit(this.settings_.apiMaxCallsCount, this.settings_.apiMaxCallsPeriod, false);
   },
 
+  getVkBridgeErrDescr: function (error) {
+    var err_descr = "Unknown error.";
+    if ("error_reason" in error.error_data) {
+      err_descr = error.error_data.error_reason;
+    } else if ("error_msg" in error.error_data) {
+      err_descr = error.error_data.error_msg;
+    }
+    if ("error_description" in error.error_data) {
+      err_descr = err_descr + "\n" + error.error_data.error_description;
+    }
+    return err_descr;
+  },
+
   //calls VK API method with specified parameters
   //returns Deferred.promise()
   callVkApi: function (vkApiMethod, methodParams, noTimeout) {
@@ -100,17 +113,8 @@ var VkApiWrapper = {
             if (d.state() !== "pending") {
               return;
             }
-            var err_descr = "Unknown error.";
-            if ("error_reason" in error.error_data) {
-              err_descr = error.error_data.error_reason;
-            } else if ("error_msg" in error.error_data) {
-              err_descr = error.error_data.error_msg;
-            }
-            if ("error_description" in error.error_data) {
-              err_descr = err_descr + " " + error.error_data.error_description;
-            }
             var err = {
-              error_msg: "VK.API call failed, " + err_descr,
+              error_msg: "VK.API call failed, " + self.getVkBridgeErrDescr(error),
               response: error
             };
             console.log("VkApiWrapper: " + err.error_msg);
@@ -555,6 +559,34 @@ return {ph_cnt:phl.items.length,err_cnt:err_cnt};";
       key: key,
       value: value
     });
+  },
+
+  resizeAppWindow: function (width, height) {
+    var d = $.Deferred();
+
+    vkBridge.send("VKWebAppResizeWindow", {width: width, height: height})
+    .then((data) => {
+      if (data.width) {
+        d.resolve(data);
+      } else {
+        var err = {
+          error_msg: "VKWebAppResizeWindow call failed, unknow error!",
+          response: data
+        };
+        console.log("VkApiWrapper: " + err.error_msg + ' Response: ' + JSON.stringify(data));
+        d.reject(err);
+      }
+    })
+    .catch((error) => {
+      var err = {
+        error_msg: "VKWebAppResizeWindow call failed, " + self.getVkBridgeErrDescr(error),
+        response: error
+      };
+      console.log("VkApiWrapper: " + err.error_msg);
+      d.reject(err);
+    });
+
+    return d.promise();
   }
 
 };
